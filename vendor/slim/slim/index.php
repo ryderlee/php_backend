@@ -166,16 +166,22 @@ $app->get('/restaurantInfo', function() use ($app){
 	//echo $output;
 });
 
+$app->post('/resrevations', function() use ($app){
+	$result = array();	
+	$result['result'] = true;
+	echo json_encode($result);
+});
+
 $app->get('/merchants/:merchantID', function() use ($app){
 	$action = $app->request()->params('action');
 	$returnValue = array(
-		"RESTAURANT_NAME"=>"Name of the restaurant",
-		"RESTAURANT_ADDRESS" => "address of the restaurant",
+		"RESTAURANT_NAME"=>"Bibo",
+		"RESTAURANT_ADDRESS" => "Holywood Road",
 		"RESTAURANT_PHONE" => "(852)1234567",
-		"RESTAURANT_CUISINE" => "Italy with little india style",
-		"RESTAURANT_PRICE" => "5 - 5000",
+		"RESTAURANT_CUISINE" => "Italian with little india style",
+		"RESTAURANT_PRICE" => "100 - 5000",
 		"RESTAURANT_HOURS" => "4AM - 5AM",
-		"RESTAURANT_PARKING" => "YES with tickets every 10 mins",
+		"RESTAURANT_PARKING" => "YES with tickets every 15 mins",
 		"RESTAURANT_DESCRIPTION" => "Description of a restaurant which is Italy with little india style",
 		"RESTAURANT_MENU" => "1 dish only",
 		"RESTAURANT_REVIEW_OVERALL" => 4,
