@@ -166,6 +166,29 @@ $app->get('/restaurantInfo', function() use ($app){
 	//echo $output;
 });
 
+$app->get('/merchants/:merchantID', function() use ($app){
+	$action = $app->request()->params('action');
+	$returnValue = array(
+		"RESTAURANT_NAME"=>"Name of the restaurant",
+		"RESTAURANT_ADDRESS" => "address of the restaurant",
+		"RESTAURANT_PHONE" => "(852)1234567",
+		"RESTAURANT_CUISINE" => "Italy with little india style",
+		"RESTAURANT_PRICE" => "5 - 5000",
+		"RESTAURANT_HOURS" => "4AM - 5AM",
+		"RESTAURANT_PARKING" => "YES with tickets every 10 mins",
+		"RESTAURANT_DESCRIPTION" => "Description of a restaurant which is Italy with little india style",
+		"RESTAURANT_MENU" => "1 dish only",
+		"RESTAURANT_REVIEW_OVERALL" => 4,
+		"RESTAURANT_REVIEW_FOOD" => 4,
+		"RESTAURANT_REVIEW_SERVICE" => 4,
+		"RESTAURANT_REVIEW_AMBIANCE" => 4,
+		"RESTAURANT_REVIEWS" => array("good","bad", "good", "bad"),
+		"RESTAURANT_BOOKING_SLOTS" => array('18:00','18:30','19:00','19:30','20:00','20:30','21:00','21:30')
+	);
+	echo json_encode($returnValue);
+});
+
+
 
 $app->get('/restaurant', function() use ($app){
 	$keyword = $app->request()->params('k');
@@ -217,7 +240,7 @@ if ($username == 'ikky@ikky.com' && $pwd=='123456') {
 echo json_encode($result);
 
 
-}
+});
 
 // POST route
 $app->post('/post', function () {
