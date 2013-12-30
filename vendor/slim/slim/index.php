@@ -214,7 +214,7 @@ $app->get('/restaurant', function() use ($app){
 	//echo json_encode($returnValue, JSON_PRETTY_PRINT);
 	//echo $output;
 });
-$app->post('/login', function(){
+$app->post('/login', function() use ($app){
 	$result = array();
 	$username = $app->request()->params('username');
 	$pwd = $app->request()->params('pwd');
