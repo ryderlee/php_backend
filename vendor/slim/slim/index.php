@@ -166,17 +166,42 @@ $app->get('/restaurantInfo', function() use ($app){
 	//echo $output;
 });
 
-$app->post('/resrevations', function() use ($app){
+$app->post('/reservations', function() use ($app){
 	$result = array();	
+
+	//$userID = 0;
+	//$merchantID = 0;
+	//$timeslot = "19:00";
+	$userID = $app->request()->params('userID');
+	$merchantID = $app->request()->params('merchantID');
+	$datetime = $app->request()->params('datetime');
+	$numberOfParticipant = $app->request()->params('numberOfParticipant');
+	$specialRequest = $app->request()->params('specialRequest');
+	$timeArr = strptime($datetime, '%Y-%m-%d %H:%M');
+	$ts = mktime(intval($timeArr['tm_hour']), intval($timeArr['tm_min']), intval($timeArr['tm_sec']), intval($timeArr['tm_mon']) + 1 , intval($timeArr['tm_mday']) , intval($timeArr['tm_year'] + 1900));
+	
+	DB::insert('booking', $values = array(
+		'user_id' => $userID, 
+		'merchant_id' => $merchantID,
+		'booking_ts' => date('Y-m-d H:i:s' , $ts),
+		'no_of_participants' => $numberOfParticipant,
+		'create_ts' => DB::sqleval('NOW()')
+	));
+
 	$result['result'] = true;
+	$result['values'] = $values;
 	echo json_encode($result);
 });
 
-$app->get('/merchants/:merchantID', function() use ($app){
+$app->get('/merchants/:merchantID', function($merchantID) use ($app){
 	$action = $app->request()->params('action');
+	$rs = DB::query("SELECT * FROM restaurants_hongkong_csv WHERE LICNO = %s" , $merchantID);
+	//var_dump($rs);
+	$r = $rs[0];
 	$returnValue = array(
-		"RESTAURANT_NAME"=>"Bibo",
-		"RESTAURANT_ADDRESS" => "Holywood Road",
+		"RESTAURANT_ID"=>$r['LICNO'],
+		"RESTAURANT_NAME"=>$r['SS'],
+		"RESTAURANT_ADDRESS" => $r['ADR'],
 		"RESTAURANT_PHONE" => "(852)1234567",
 		"RESTAURANT_CUISINE" => "Italian with little india style",
 		"RESTAURANT_PRICE" => "100 - 5000",
@@ -204,9 +229,9 @@ $app->get('/restaurant', function() use ($app){
 	$resultPerPage = 10;
 	if (is_null($keyword)){ 
 		//echo $page * $resultPerPage;
-		$rs= DB::query("SELECT * FROM restaurants ORDER BY LICNO LIMIT %d, %d",  $page * $resultPerPage , $resultPerPage);
+		$rs= DB::query("SELECT * FROM restaurants_hongkong_csv ORDER BY LICNO LIMIT %d, %d",  $page * $resultPerPage , $resultPerPage);
 	}else{
-		$rs= DB::query("SELECT * FROM restaurants WHERE SS LIKE '%ss%' ORDER BY LICNO LIMIT %d, %d", $keyword, $page * $resultPerPage , $resultPerPage);
+		$rs= DB::query("SELECT * FROM restaurants_hongkong_csv WHERE SS LIKE '%ss%' OR ADR LIKE '%ss%' ORDER BY LICNO LIMIT %d, %d", $keyword, $keyword, $page * $resultPerPage , $resultPerPage);
 	}
 	//echo "test";
 	//var_dump($rs);
@@ -245,7 +270,6 @@ if ($username == 'ikky@ikky.com' && $pwd=='123456') {
 
 echo json_encode($result);
 
-
 });
 
 // POST route
@@ -261,6 +285,10 @@ $app->put('/put', function () {
 // DELETE route
 $app->delete('/delete', function () {
     echo 'This is a DELETE route';
+});
+
+$app->get('/phpinfo', function(){
+	phpinfo();
 });
 
 /**
