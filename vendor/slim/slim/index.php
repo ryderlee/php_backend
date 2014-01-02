@@ -32,10 +32,12 @@ $app = new \Slim\Slim();
  * is an anonymous function.
  */
 
-DB::$user = "root";
-DB::$password = "root";
+DB::$host = "10.0.1.8";
+DB::$user = "ikky";
+DB::$password = "ikky123";
 DB::$dbName = "ikky_test";
-DB::$encoding='utf8';
+DB::$encoding = 'utf8';
+DB::$port = "8889";
 
 
 
@@ -221,7 +223,7 @@ $app->post('/reservations', function() use ($app){
 	$datetime = $app->request()->params('datetime');
 	$numberOfParticipant = $app->request()->params('numberOfParticipant');
 	$specialRequest = $app->request()->params('specialRequest');
-	$timeArr = strptime($datetime, '%Y-%m-%d %H:%M');
+	$timeArr = strptime($datetime, '%Y-%m-%d %H:%M:%S');
 	$ts = mktime(intval($timeArr['tm_hour']), intval($timeArr['tm_min']), intval($timeArr['tm_sec']), intval($timeArr['tm_mon']) + 1 , intval($timeArr['tm_mday']) , intval($timeArr['tm_year'] + 1900));
 	
 	DB::insert('booking', $values = array(
@@ -229,6 +231,7 @@ $app->post('/reservations', function() use ($app){
 		'merchant_id' => $merchantID,
 		'booking_ts' => date('Y-m-d H:i:s' , $ts),
 		'no_of_participants' => $numberOfParticipant,
+		'special_request' => $specialRequest,
 		'create_ts' => DB::sqleval('NOW()')
 	));
 
