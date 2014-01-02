@@ -307,7 +307,34 @@ $app->get('/restaurant', function() use ($app){
 	}
 	//echo "test";
 	//var_dump($rs);
-	echo json_encode($rs );
+
+	$images = array(
+		"http://giverny.org/hotels/corniche/piscine2.jpg",
+		"http://giverny.org/hotels/corniche/terrasse-resto.jpg",
+		"http://giverny.org/hotels/corniche/restaurant-room.jpg",
+		"http://giverny.org/hotels/corniche/standard-bedroom.jpg",
+		"http://giverny.org/hotels/corniche/superior-bedroom.jpg",
+		"http://giverny.org/hotels/corniche/cuisine2.jpg",
+		"http://giverny.org/hotels/corniche/cuisine3.jpg",
+		"http://giverny.org/hotels/corniche/cuisine1.jpg",
+		"http://giverny.org/tour/versailles.jpg",
+		"http://giverny.org/tour/ravoux.jpg",
+		"http://giverny.org/hotels/corniche/piscine2.jpg",
+		"http://giverny.org/hotels/corniche/terrasse-resto.jpg",
+		"http://giverny.org/hotels/corniche/restaurant-room.jpg",
+		"http://giverny.org/hotels/corniche/standard-bedroom.jpg",
+		"http://giverny.org/hotels/corniche/superior-bedroom.jpg",
+		"http://giverny.org/hotels/corniche/cuisine2.jpg",
+		"http://giverny.org/hotels/corniche/cuisine3.jpg",
+		"http://giverny.org/hotels/corniche/cuisine1.jpg",
+		"http://giverny.org/tour/versailles.jpg",
+		"http://giverny.org/tour/ravoux.jpg"
+	);
+
+	foreach ($rs as $idx => $restaurant) {
+		$rs[$idx]['IMAGE'] = $images[array_rand($images)];
+	}
+	echo json_encode($rs);
 	//echo json_encode($returnValue, JSON_PRETTY_PRINT);
 	//echo $output;
 });
