@@ -300,7 +300,7 @@ $app->get('/restaurant', function() use ($app){
 		//echo $page * $resultPerPage;
 		$rs= DB::query("SELECT * FROM restaurants_hongkong_csv ORDER BY LICNO LIMIT %d, %d",  $page * $resultPerPage , $resultPerPage);
 	}else{
-		$rs= DB::query("SELECT * FROM restaurants_hongkong_csv WHERE SS LIKE '%ss%' OR ADR LIKE '%ss%' ORDER BY LICNO LIMIT %d, %d", $keyword, $keyword, $page * $resultPerPage , $resultPerPage);
+		$rs= DB::query("SELECT * FROM restaurants_hongkong_csv WHERE SS LIKE %s OR ADR LIKE %s ORDER BY LICNO LIMIT %d, %d", '%'.$keyword.'%', '%'.$keyword.'%', $page * $resultPerPage , $resultPerPage);
 	}
 	//echo "test";
 	//var_dump($rs);
