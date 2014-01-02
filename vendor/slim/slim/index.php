@@ -166,6 +166,50 @@ $app->get('/restaurantInfo', function() use ($app){
 	//echo $output;
 });
 
+$app->post('/users', function() use ($app){
+	$result = array();	
+
+	//$userID = 0;
+	//$merchantID = 0;
+	//$timeslot = "19:00";
+	$firstName = $app->request()->params('firstName');
+	$lastName = $app->request()->params('lastName');
+	$email = $app->request()->params('email');
+	$phone = $app->request()->params('phone');
+	$password = $app->request()->params('password');
+	
+	DB::insert('user', $values = array(
+		'first_name' => $firstname, 
+		'last_name' => $lastName,
+		'email' => $email,
+		'phone' => $phone,
+		'password' => $password,
+		'create_ts' => DB::sqleval('NOW()')
+	));
+	$values['userID'] = DB::insertId();
+	$result['result'] = true;
+	$result['values'] = $values;
+	echo json_encode($result);
+});
+
+$app->get('/users/:email', function($email) use ($app){
+	$action = $app->request()->params('action');
+	$returnValue = array();
+	$returnValue['result'] = false;
+	if($action == "login"){
+		$returnValue = DB::queryFirstRow("SELECT * FROM user WHERE email = %s" , $email);
+		$result['result'] = true;
+		$result['user']['first_name'] = $returnValue['first_name'];
+		$result['user']['last_name'] = $returnValue['last_name'];
+		$result['user']['email'] = $returnValue['email'];
+		$result['user']['phone'] = $returnValue['phone'];
+		$result['user']['user_id'] = $returnValue['user_id'];
+	}
+	//var_dump($rs);
+	echo json_encode($returnValue);
+
+});
+
 $app->post('/reservations', function() use ($app){
 	$result = array();	
 
@@ -195,13 +239,12 @@ $app->post('/reservations', function() use ($app){
 
 $app->get('/merchants/:merchantID', function($merchantID) use ($app){
 	$action = $app->request()->params('action');
-	$rs = DB::query("SELECT * FROM restaurants_hongkong_csv WHERE LICNO = %s" , $merchantID);
+	$rs = DB::queryFirstRow("SELECT * FROM restaurants_hongkong_csv WHERE LICNO = %s" , $merchantID);
 	//var_dump($rs);
-	$r = $rs[0];
 	$returnValue = array(
-		"RESTAURANT_ID"=>$r['LICNO'],
-		"RESTAURANT_NAME"=>$r['SS'],
-		"RESTAURANT_ADDRESS" => $r['ADR'],
+		"RESTAURANT_ID"=>$rs['LICNO'],
+		"RESTAURANT_NAME"=>$rs['SS'],
+		"RESTAURANT_ADDRESS" => $rs['ADR'],
 		"RESTAURANT_PHONE" => "(852)1234567",
 		"RESTAURANT_CUISINE" => "Italian with little india style",
 		"RESTAURANT_PRICE" => "100 - 5000",
@@ -240,7 +283,12 @@ $app->get('/restaurant', function() use ($app){
 	//echo $output;
 });
 $app->post('/login', function() use ($app){
-	$result = array();
+
+	$returnValue = DB::queryFirstRow("SELECT * FROM user WHERE email = %s" , $email);
+	//var_dump($rs);
+
+
+
 	$username = $app->request()->params('username');
 	$pwd = $app->request()->params('pwd');
 if ($username == 'ikky@ikky.com' && $pwd=='123456') {
