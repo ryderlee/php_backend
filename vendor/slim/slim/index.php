@@ -181,7 +181,7 @@ $app->post('/users', function() use ($app){
 	$password = $app->request()->params('password');
 	
 	DB::insert('user', $values = array(
-		'first_name' => $firstname, 
+		'first_name' => $firstName, 
 		'last_name' => $lastName,
 		'email' => $email,
 		'phone' => $phone,
@@ -189,6 +189,7 @@ $app->post('/users', function() use ($app){
 		'create_ts' => DB::sqleval('NOW()')
 	));
 	$values['userID'] = DB::insertId();
+	$values['token'] = '1231231234';
 	$result['result'] = true;
 	$result['values'] = $values;
 	echo json_encode($result);
