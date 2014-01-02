@@ -194,12 +194,33 @@ $app->post('/users', function() use ($app){
 	echo json_encode($result);
 });
 
+$app->post('/users/:email', function($email) use ($app){
+	$action = $app->request()->params('action');
+	
+	$firstName = $app->request()->params('firstName');
+	$lastName = $app->request()->params('lastName');
+	$phone = $app->request()->params('phone');
+	$returnValue = array();
+	$returnValue['result'] = false;
+	if($action == "updateProfile"){
+		DB::update('users', array(
+			"firstname" => $firstName,
+			"lastname" => $lastName,
+			"phone" => $phone
+		), "email=%s", $email);
+		$returnValue['result'] = true;
+	}
+	//var_dump($rs);
+	echo json_encode($returnValue);
+
+});
+
 $app->get('/users/:email', function($email) use ($app){
 	$action = $app->request()->params('action');
 	$returnValue = array();
 	$returnValue['result'] = false;
 	if($action == "login"){
-		$returnValue = DB::queryFirstRow("SELECT * FROM user WHERE email = %s" , $email);
+		$returnValue = DB::queryFirstRow("SELECT * FROM user WHERE email = %s AND password = %s" , $email, $password);
 		$result['result'] = true;
 		$result['user']['first_name'] = $returnValue['first_name'];
 		$result['user']['last_name'] = $returnValue['last_name'];
@@ -211,6 +232,8 @@ $app->get('/users/:email', function($email) use ($app){
 	echo json_encode($returnValue);
 
 });
+
+
 
 $app->post('/reservations', function() use ($app){
 	$result = array();	
