@@ -215,18 +215,21 @@ $app->post('/users/:email', function($email) use ($app){
 
 });
 
-$app->get('/users/:email', function($email) use ($app){
+$app->post('/users/session/:email', function($email) use ($app){
 	$action = $app->request()->params('action');
+	$password= $app->request()->params('password');
 	$returnValue = array();
 	$returnValue['result'] = false;
 	if($action == "login"){
 		$returnValue = DB::queryFirstRow("SELECT * FROM user WHERE email = %s AND password = %s" , $email, $password);
+		if(sizeof($returnValue) ==1){
 		$result['result'] = true;
 		$result['user']['first_name'] = $returnValue['first_name'];
 		$result['user']['last_name'] = $returnValue['last_name'];
 		$result['user']['email'] = $returnValue['email'];
 		$result['user']['phone'] = $returnValue['phone'];
 		$result['user']['user_id'] = $returnValue['user_id'];
+		$result['user']['token'] = '1231231234';
 	}
 	//var_dump($rs);
 	echo json_encode($returnValue);
