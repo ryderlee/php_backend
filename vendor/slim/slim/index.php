@@ -181,7 +181,7 @@ $app->post('/users', function() use ($app){
 	$password = $app->request()->params('password');
 	
 	DB::insert('user', $values = array(
-		'first_name' => $firstname, 
+		'first_name' => $firstName, 
 		'last_name' => $lastName,
 		'email' => $email,
 		'phone' => $phone,
@@ -219,22 +219,22 @@ $app->post('/users/:email', function($email) use ($app){
 $app->post('/users/session/:email', function($email) use ($app){
 	$action = $app->request()->params('action');
 	$password= $app->request()->params('password');
-	$returnValue = array();
-	$returnValue['result'] = false;
+	$result = array();
+	$result['result'] = false;
 	if($action == "login"){
 		$returnValue = DB::queryFirstRow("SELECT * FROM user WHERE email = %s AND password = %s" , $email, $password);
-		if(sizeof($returnValue) ==1){
-		$result['result'] = true;
-		$result['user']['first_name'] = $returnValue['first_name'];
-		$result['user']['last_name'] = $returnValue['last_name'];
-		$result['user']['email'] = $returnValue['email'];
-		$result['user']['phone'] = $returnValue['phone'];
-		$result['user']['user_id'] = $returnValue['user_id'];
-		$result['user']['token'] = '1231231234';
+		if(!is_null($returnValue)){
+			$result['result'] = true;
+			$result['user']['first_name'] = $returnValue['first_name'];
+			$result['user']['last_name'] = $returnValue['last_name'];
+			$result['user']['email'] = $returnValue['email'];
+			$result['user']['phone'] = $returnValue['phone'];
+			$result['user']['user_id'] = $returnValue['user_id'];
+			$result['user']['token'] = '1231231234';
+		}
 	}
 	//var_dump($rs);
-	echo json_encode($returnValue);
-
+	echo json_encode($result);
 });
 
 
@@ -308,7 +308,34 @@ $app->get('/restaurant', function() use ($app){
 	}
 	//echo "test";
 	//var_dump($rs);
-	echo json_encode($rs );
+
+	$images = array(
+		"http://giverny.org/hotels/corniche/piscine2.jpg",
+		"http://giverny.org/hotels/corniche/terrasse-resto.jpg",
+		"http://giverny.org/hotels/corniche/restaurant-room.jpg",
+		"http://giverny.org/hotels/corniche/standard-bedroom.jpg",
+		"http://giverny.org/hotels/corniche/superior-bedroom.jpg",
+		"http://giverny.org/hotels/corniche/cuisine2.jpg",
+		"http://giverny.org/hotels/corniche/cuisine3.jpg",
+		"http://giverny.org/hotels/corniche/cuisine1.jpg",
+		"http://giverny.org/tour/versailles.jpg",
+		"http://giverny.org/tour/ravoux.jpg",
+		"http://giverny.org/hotels/corniche/piscine2.jpg",
+		"http://giverny.org/hotels/corniche/terrasse-resto.jpg",
+		"http://giverny.org/hotels/corniche/restaurant-room.jpg",
+		"http://giverny.org/hotels/corniche/standard-bedroom.jpg",
+		"http://giverny.org/hotels/corniche/superior-bedroom.jpg",
+		"http://giverny.org/hotels/corniche/cuisine2.jpg",
+		"http://giverny.org/hotels/corniche/cuisine3.jpg",
+		"http://giverny.org/hotels/corniche/cuisine1.jpg",
+		"http://giverny.org/tour/versailles.jpg",
+		"http://giverny.org/tour/ravoux.jpg"
+	);
+
+	foreach ($rs as $idx => $restaurant) {
+		$rs[$idx]['IMAGE'] = $images[array_rand($images)];
+	}
+	echo json_encode($rs);
 	//echo json_encode($returnValue, JSON_PRETTY_PRINT);
 	//echo $output;
 });
