@@ -189,6 +189,7 @@ $app->post('/users', function() use ($app){
 		'create_ts' => DB::sqleval('NOW()')
 	));
 	$values['userID'] = DB::insertId();
+	$values['token'] = "1231231234";
 	$result['result'] = true;
 	$result['values'] = $values;
 	echo json_encode($result);
@@ -286,7 +287,7 @@ $app->get('/merchants/:merchantID', function($merchantID) use ($app){
 		"RESTAURANT_REVIEW_SERVICE" => 4,
 		"RESTAURANT_REVIEW_AMBIANCE" => 4,
 		"RESTAURANT_REVIEWS" => array("good","bad", "good", "bad"),
-		"RESTAURANT_BOOKING_SLOTS" => array('18:00','18:30','19:00','19:30','20:00','20:30','21:00','21:30')
+		"RESTAURANT_BOOKING_SLOTS" => array('18:00','18:15', '18:30','18:45', '19:00','19:15', '19:30','19:45', '20:00','20:15', '20:30','20:45', '21:00','21:15', '21:30', '21:45')
 	);
 	echo json_encode($returnValue);
 });
