@@ -250,6 +250,8 @@ $app->get('/reservations', function() use ($app){
 $app->put('/reservations/:bookingID', function($bookingID) use ($app){
 	$returnValue = array();
 	$values = array();
+	$returnValue['result'] = false;
+	
 	if($app->request()->params('status') <> null)
 		$values['status'] = $app->request()->params('status');
 	if($app->request()->params('special_request') <> null)
@@ -263,11 +265,12 @@ $app->put('/reservations/:bookingID', function($bookingID) use ($app){
 		$ts = mktime(intval($timeArr['tm_hour']), intval($timeArr['tm_min']), intval($timeArr['tm_sec']), intval($timeArr['tm_mon']) + 1 , intval($timeArr['tm_mday']) , intval($timeArr['tm_year'] + 1900));
 		$values['booking_ts'] = date('Y-m-d H:i:s', $ts);
 	}
-
-	DB::update('booking', $values, 'booking_id=%d', $bookingID);
-
-	$returnValue['result'] = true;
-	$returnValue['values'] = $values;
+	if(sizeof($values) > 0){
+		DB::update('booking', $values, 'booking_id=%d', $bookingID);
+		$returnValue['result'] = true;
+		$returnValue['values'] = $values;
+		
+	}
 	echo json_encode($returnValue);
 });
 
