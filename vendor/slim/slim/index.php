@@ -240,7 +240,7 @@ $app->post('/users/session/:email', function($email) use ($app){
 $app->get('/reservations', function() use ($app){
 	$returnValue = array();
 	if( ($userID = $app->request()->params('userID')) <> null){
-		$returnValue = DB::query("SELECT booking.booking_id, booking.user_id, booking.booking_ts, booking.no_of_participants, booking.special_request, booking.status, restaurants_hongkong_csv.LICNO, restaurants_hongkong_csv.SS, restaurants_hongkong_csv.ADR FROM booking LEFT JOIN restaurants_hongkong_csv ON booking.merchant_id = restaurants_hongkong_csv.LICNO WHERE booking.user_id = %d", $userID);
+		$returnValue = DB::query("SELECT booking.booking_id, booking.user_id, booking.booking_ts, booking.no_of_participants, booking.special_request, booking.status, restaurants_hongkong_csv.LICNO, restaurants_hongkong_csv.SS, restaurants_hongkong_csv.ADR FROM booking LEFT JOIN restaurants_hongkong_csv ON booking.merchant_id = restaurants_hongkong_csv.LICNO WHERE booking.user_id = %d AND booking.status > -1", $userID);
 	}
 	echo json_encode($returnValue);
 });
