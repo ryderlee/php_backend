@@ -240,7 +240,7 @@ $app->post('/users/session/:email', function($email) use ($app){
 $app->get('/reservations', function() use ($app){
 	$returnValue = array();
 	if( ($userID = $app->request()->params('userID')) <> null){
-		$returnValue = DB::query("SELECT booking.booking_id, booking.user_id, booking.booking_ts, booking.no_of_participants, booking.special_request, restaurants_hongkong_csv.LICNO, restaurants_hongkong_csv.SS, restaurants_hongkong_csv.ADR FROM booking LEFT JOIN restaurants_hongkong_csv ON booking.merchant_id = restaurants_hongkong_csv.LICNO WHERE booking.user_id = %d", $userID);
+		$returnValue = DB::query("SELECT booking.booking_id, booking.user_id, booking.booking_ts, booking.no_of_participants, booking.special_request, booking.status, restaurants_hongkong_csv.LICNO, restaurants_hongkong_csv.SS, restaurants_hongkong_csv.ADR FROM booking LEFT JOIN restaurants_hongkong_csv ON booking.merchant_id = restaurants_hongkong_csv.LICNO WHERE booking.user_id = %d", $userID);
 	}
 	echo json_encode($returnValue);
 });
@@ -249,23 +249,26 @@ $app->get('/reservations', function() use ($app){
 
 $app->put('/reservations/:bookingID', function($bookingID) use ($app){
 	$returnValue = array();
-	$userID = $app->request()->params('userID');
-	$merchantID = $app->request()->params('merchantID');
-	$datetime = $app->request()->params('datetime');
-	$numberOfParticipant = $app->request()->params('numberOfParticipant');
-	$specialRequest = $app->request()->params('specialRequest');
-	$timeArr = strptime($datetime, '%Y-%m-%d %H:%M:%S');
-	$ts = mktime(intval($timeArr['tm_hour']), intval($timeArr['tm_min']), intval($timeArr['tm_sec']), intval($timeArr['tm_mon']) + 1 , intval($timeArr['tm_mday']) , intval($timeArr['tm_year'] + 1900));
-	DB::update('booking', $values = array(
-		'booking_ts' => date('Y-m-d H:i:s' , $ts),
-		'no_of_participants' => $numberOfParticipant,
-		'special_request' => $specialRequest,
-	), 'user_id=%s', $userID);
+	$values = array();
+	if($app->request()->params('status') <> null)
+		$values['status'] = $app->request()->params('status');
+	if($app->request()->params('special_request') <> null)
+		$values['special_request'] = $app->request()->params('special_request');
+	if($app->request()->params('numberOfParticipant') <> null)
+		$values['no_of_participants'] = $app->request()->params('numberOfParticipant');
+	
+	if($app->request()->params('datetime') <> null){
+		$datetime = $app->request()->params('datetime');
+		$timeArr = strptime($datetime, '%Y-%m-%d %H:%M:%S');
+		$ts = mktime(intval($timeArr['tm_hour']), intval($timeArr['tm_min']), intval($timeArr['tm_sec']), intval($timeArr['tm_mon']) + 1 , intval($timeArr['tm_mday']) , intval($timeArr['tm_year'] + 1900));
+		$values['booking_ts'] = date('Y-m-d H:i:s', $ts);
+	}
+
+	DB::update('booking', $values, 'booking_id=%d', $bookingID);
 
 	$returnValue['result'] = true;
 	$returnValue['values'] = $values;
 	echo json_encode($returnValue);
-	
 });
 
 
@@ -289,6 +292,7 @@ $app->post('/reservations', function() use ($app){
 		'booking_ts' => date('Y-m-d H:i:s' , $ts),
 		'no_of_participants' => $numberOfParticipant,
 		'special_request' => $specialRequest,
+		'status' => 0,
 		'create_ts' => DB::sqleval('NOW()')
 	));
 	$result['bookingID'] = DB::insertId();
