@@ -261,7 +261,7 @@ $app->post('/reservations', function() use ($app){
 		'special_request' => $specialRequest,
 		'create_ts' => DB::sqleval('NOW()')
 	));
-
+	$result['bookingID'] = DB::insertId();
 	$result['result'] = true;
 	$result['values'] = $values;
 	echo json_encode($result);
