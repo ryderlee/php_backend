@@ -32,12 +32,12 @@ $app = new \Slim\Slim();
  * is an anonymous function.
  */
 
-DB::$host = "10.0.1.8";
+DB::$host = "ikky.ciits52gpuzt.ap-southeast-1.rds.amazonaws.com";
 DB::$user = "ikky";
-DB::$password = "ikky123";
-DB::$dbName = "ikky_test";
+DB::$password = "ikky1234";
+DB::$dbName = "ikky";
 DB::$encoding = 'utf8';
-DB::$port = "8889";
+DB::$port = "3306";
 
 
 
