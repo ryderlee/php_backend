@@ -252,6 +252,13 @@ $app->get('/mms/bookings/:merchantID', function($merchantID) use ($app){
 	}
 	echo json_encode($returnValue);
 });
+$app->get('/mms/bookings/:merchantID/:bookingID', function($merchantID, $bookingID) use ($app){
+	$returnValue = array();
+	if ($merchantID != null && $bookingID != null) {
+		$returnValue = DB::query("SELECT CONCAT(first_name, ' ', last_name) name, phone, b.booking_id, CONCAT(UNIX_TIMESTAMP(b.booking_ts), '000') booking_ts, b.no_of_participants, b.special_request, b.status FROM booking b JOIN user u ON b.user_id = u.user_id WHERE merchant_id = %d AND booking_id = %d", $merchantID, $bookingID);
+	}
+	echo json_encode($returnValue);
+});
 
 
 
