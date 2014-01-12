@@ -40,6 +40,11 @@ DB::$encoding = 'utf8';
 DB::$port = "3306";
 
 
+// AWS SDK
+$aws = Aws\Common\Aws::factory('awsSDKConfigs.json');
+$sns = $aws->get('v1.sns');
+$sns->set_region(AmazonSNS::REGION_SINGAPORE);
+
 
 
 
@@ -316,6 +321,19 @@ $app->post('/reservations', function() use ($app){
 	$result['bookingID'] = DB::insertId();
 	$result['result'] = true;
 	$result['values'] = $values;
+
+	// Publish new message (Amazon SNS)
+	$message = array(
+		'topic'=>'1001',
+		'bookingId'=>$result['bookingID'];
+	);
+	$snsResponse = $sns->publish('merchant-1001', json_encode($message), array(
+		'Subject' => ''
+	));
+	if ($snsResponse->isOK()) {
+		// Successfully published
+	}
+
 	echo json_encode($result);
 });
 
