@@ -41,7 +41,7 @@ DB::$port = "3306";
 
 
 // AWS SDK
-$aws = Aws\Common\Aws::factory('awsSDKConfigs.json');
+$aws = Aws\Common\Aws::factory('awsSDKConfigs.php');
 $sns = $aws->get('v1.sns');
 $sns->set_region(AmazonSNS::REGION_SINGAPORE);
 

@@ -5,9 +5,9 @@ return array(
     'services' => array(
         'default_settings' => array(
             'params' => array(
-                'key'    => 'your-aws-access-key-id',
-                'secret' => 'your-aws-secret-access-key',
-                'region' => 'us-west-2'
+                'key'    => $_ENV['AWS_ACCESS_KEY_ID'],
+                'secret' => $_ENV['AWS_SECRET_KEY'],
+                'region' => 'singapore'
             )
         )
     )
