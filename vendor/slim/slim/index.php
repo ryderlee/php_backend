@@ -42,9 +42,7 @@ DB::$port = "3306";
 
 // AWS SDK
 $aws = Aws\Common\Aws::factory('awsSDKConfigs.php');
-$sns = $aws->get('v1.sns');
-$sns->set_region(AmazonSNS::REGION_SINGAPORE);
-
+$sns = $aws->get('Sns');
 
 
 
@@ -323,16 +321,15 @@ $app->post('/reservations', function() use ($app){
 	$result['values'] = $values;
 
 	// Publish new message (Amazon SNS)
+	global $sns;
 	$message = array(
 		'topic'=>'1001',
-		'bookingId'=>$result['bookingID'];
+		'bookingId'=>$result['bookingID']
 	);
-	$snsResponse = $sns->publish('merchant-1001', json_encode($message), array(
-		'Subject' => ''
+	$sns->publish(array(
+		'Message' => json_encode($message),
+		'TopicArn' => 'arn:aws:sns:ap-southeast-1:442675153455:merchant-1001'
 	));
-	if ($snsResponse->isOK()) {
-		// Successfully published
-	}
 
 	echo json_encode($result);
 });
@@ -361,7 +358,6 @@ $app->get('/merchants/:merchantID', function($merchantID) use ($app){
 	);
 	echo json_encode($returnValue);
 });
-
 
 
 $app->get('/restaurant', function() use ($app){
