@@ -160,6 +160,10 @@ $app->get('/', function () use ($app){
 });
 $app->group('/api', function () use($app){
 
+	$app->get('/phpinfo', function(){
+		phpinfo();
+	});
+
 	$app->get('/restaurantInfo', function() use ($app){
 		$id = $app->request()->params('id');
 		$returnValue = array(
@@ -626,9 +630,6 @@ $app->delete('/delete', function () {
     echo 'This is a DELETE route';
 });
 
-$app->get('/phpinfo', function(){
-	phpinfo();
-});
 
 /**
  * Step 4: Run the Slim application
