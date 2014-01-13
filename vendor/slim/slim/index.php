@@ -251,14 +251,14 @@ $app->get('/reservations', function() use ($app){
 $app->get('/mms/bookings/:merchantID', function($merchantID) use ($app){
 	$returnValue = array();
 	if ($merchantID != null) {
-		$returnValue = DB::query("SELECT CONCAT(first_name, ' ', last_name) name, phone, b.booking_id, CONCAT(UNIX_TIMESTAMP(b.booking_ts), '000') booking_ts, b.no_of_participants, b.special_request, b.status FROM booking b JOIN user u ON b.user_id = u.user_id WHERE merchant_id = %d", $merchantID);
+		$returnValue = DB::query("SELECT CONCAT(first_name, ' ', last_name) name, phone, b.booking_id, b.booking_ts, b.no_of_participants, b.special_request, b.status FROM booking b JOIN user u ON b.user_id = u.user_id WHERE merchant_id = %d", $merchantID);
 	}
 	echo json_encode($returnValue);
 });
 $app->get('/mms/bookings/:merchantID/:bookingID', function($merchantID, $bookingID) use ($app){
 	$returnValue = array();
 	if ($merchantID != null && $bookingID != null) {
-		$returnValue = DB::query("SELECT CONCAT(first_name, ' ', last_name) name, phone, b.booking_id, CONCAT(UNIX_TIMESTAMP(b.booking_ts), '000') booking_ts, b.no_of_participants, b.special_request, b.status FROM booking b JOIN user u ON b.user_id = u.user_id WHERE merchant_id = %d AND booking_id = %d", $merchantID, $bookingID);
+		$returnValue = DB::query("SELECT CONCAT(first_name, ' ', last_name) name, phone, b.booking_id, b.booking_ts, b.no_of_participants, b.special_request, b.status FROM booking b JOIN user u ON b.user_id = u.user_id WHERE merchant_id = %d AND booking_id = %d", $merchantID, $bookingID);
 	}
 	echo json_encode($returnValue);
 });
@@ -288,6 +288,17 @@ $app->put('/reservations/:bookingID', function($bookingID) use ($app){
 		$returnValue['result'] = true;
 		$returnValue['values'] = $values;
 		
+		// Publish new message (Amazon SNS)
+		global $sns;
+		$message = array(
+			'topic'=>'1001',
+			'bookingId'=>$bookingID,
+			'action'=>'update'
+		);
+		$sns->publish(array(
+			'Message' => json_encode($message),
+			'TopicArn' => 'arn:aws:sns:ap-southeast-1:442675153455:merchant-1001'
+		));
 	}
 	echo json_encode($returnValue);
 });
@@ -303,7 +314,7 @@ $app->post('/reservations', function() use ($app){
 	$merchantID = $app->request()->params('merchantID');
 	$datetime = $app->request()->params('datetime');
 	$numberOfParticipant = $app->request()->params('numberOfParticipant');
-	$specialRequest = $app->request()->params('specialRequest');
+	$specialRequest = is_null($app->request()->params('specialRequest'))?'':$app->request()->params('specialRequest');
 	$timeArr = strptime($datetime, '%Y-%m-%d %H:%M:%S');
 	$ts = mktime(intval($timeArr['tm_hour']), intval($timeArr['tm_min']), intval($timeArr['tm_sec']), intval($timeArr['tm_mon']) + 1 , intval($timeArr['tm_mday']) , intval($timeArr['tm_year'] + 1900));
 	
@@ -324,7 +335,8 @@ $app->post('/reservations', function() use ($app){
 	global $sns;
 	$message = array(
 		'topic'=>'1001',
-		'bookingId'=>$result['bookingID']
+		'bookingId'=>$result['bookingID'],
+		'action'=>'new'
 	);
 	$sns->publish(array(
 		'Message' => json_encode($message),
