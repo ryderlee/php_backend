@@ -16,11 +16,16 @@ if ($merchantService->isLogin()) {
   	<title>Merchant Management System - Login</title>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.7/angular.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.7/angular-resource.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.7/angular-animate.min.js"></script>
+    <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="http://autobahn.s3.amazonaws.com/js/autobahn.min.js"></script>
     <script src="js/app.js"></script>
     <script src="js/controllers.js"></script>
     <script src="js/services.js"></script>
-    <script src="http://autobahn.s3.amazonaws.com/js/autobahn.min.js"></script>
+    <script src="js/filters.js"></script>
+    <script src="js/animations.js"></script>
     <link rel="stylesheet" type="text/css" href="css/style.css">
+    <meta charset="UTF-8">
   </head>
   <body>
     <div class="main-wrapper">

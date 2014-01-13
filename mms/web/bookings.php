@@ -2,6 +2,9 @@
 
 require_once dirname(__FILE__) . '/common/global.php';
 
+$resourceUri = '/merchants/' . $merchantService->getMerchantId();
+$merchantInfo = json_decode(HttpService::get($resourceUri));
+
 ?>
 <!doctype html>
 <html ng-app="mmsApp">
@@ -11,17 +14,20 @@ require_once dirname(__FILE__) . '/common/global.php';
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.7/angular-resource.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.7/angular-animate.min.js"></script>
     <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="http://autobahn.s3.amazonaws.com/js/autobahn.min.js"></script>
     <script src="js/app.js"></script>
     <script src="js/controllers.js"></script>
     <script src="js/services.js"></script>
     <script src="js/filters.js"></script>
     <script src="js/animations.js"></script>
-    <script src="http://autobahn.s3.amazonaws.com/js/autobahn.min.js"></script>
     <link rel="stylesheet" type="text/css" href="css/style.css">
+    <meta charset="UTF-8">
   </head>
   <body>
     <div class="main-wrapper">
       <h1>BOOKING LIST</h1>
+      <h3><?php echo $merchantInfo->RESTAURANT_NAME ?></h3>
+      <h5>(<?php echo $merchantInfo->RESTAURANT_ADDRESS ?>)</h5>
       <div style="width:100%; text-align:right"><a href="logout.php" style="color:black;">LOGOUT</a></div>
       <hr>
       <div class="list-content datagrid" ng-controller="BookingListCtrl">

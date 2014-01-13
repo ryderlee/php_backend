@@ -12,6 +12,7 @@ require_once $project_root . 'configs/sitemap.php';
 
 // require services
 require_once $project_root . 'service/SitemapService.php';
+require_once $project_root . 'service/HttpService.php';
 require_once $project_root . 'service/MerchantService.php';
 require_once $project_root . 'service/BookingService.php';
 
