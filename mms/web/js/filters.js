@@ -7,6 +7,9 @@ angular.module('mmsFilters', []).filter('bookingStatus', function() {
     case '1':
     	return "Confirmed";
     	break;
+    	case '2':
+    	return "Attended";
+    	break;
     case '-1':
     	return "Cancelled";
     	break;

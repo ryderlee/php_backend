@@ -5,12 +5,23 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking',
 		$scope.bookings = [];
 		// Use service to get booking records
 		$scope.bookings = Booking.getBookings();
+		$scope.bookings.$promise.then(function(newBookings) {
+			checkTime(newBookings);
+		});
 		// Pre-set the predicate (sorting) field
 		$scope.predicate = 'booking_ts';
 		
 		// Monitor the record passed
 		function timePassing() {
-			angular.forEach($scope.bookings, function(value, key) {
+			checkTime($scope.bookings);
+			$scope.$digest();
+		}
+		setInterval(function() {
+			timePassing();
+		}, 10000);
+		
+		function checkTime(bookings) {
+			angular.forEach(bookings, function(value, key) {
 				var arr = value.booking_ts.split(' ');
 				var dArr = arr[0].split('-');
 				var tArr = arr[1].split(':');
@@ -20,11 +31,7 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking',
 					value.past = true;
 				}
 			});
-			$scope.$digest();
 		}
-		setInterval(function() {
-			timePassing();
-		}, 1000);
 		
 		// Listen from WebSocket server for new / update records		
 		var wsuri = "ws://ikky-phpapp-env.elasticbeanstalk.com:8081";
@@ -36,7 +43,7 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking',
 					if (json.action == 'new') {
 						Booking.getBookings({bookingId:json.bookingId}).$promise.then(function(newBookings) {
 							angular.forEach(newBookings, function(value, key) {
-								value['flash'] = true;
+								value.flash = true;
 							});
 							console.log(newBookings);
 							$scope.bookings = $scope.bookings.concat(newBookings);
@@ -60,6 +67,11 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking',
 				console.log(reason);
 			}
 		);
+		
+		$scope.attended = function(booking) {
+			booking.loading = true;
+			Booking.updateBooking({bookingId:booking.booking_id});
+		};
 	}
 ])
 .directive('bookingRow', function($timeout) {
@@ -72,6 +84,17 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking',
 				jQuery(element).delay(5000, 'wait').animate({'backgroundColor':'#ffffff'}, {duration:1000, queue:'wait'}).dequeue('wait');
 			}
 		});
+		
+		$(element).tooltip({
+			position: {
+				my: "left",
+				at: "right+10 top",
+				using: function( position, feedback ) {
+					$( this ).css( position );
+					$( "<div>" ).appendTo( this );
+				}
+			}
+		});
 	};
 	
 	return {
@@ -79,4 +102,5 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking',
 		restrict: 'A',
 		link: link
 	};
+	
 });

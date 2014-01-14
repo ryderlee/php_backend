@@ -1,10 +1,14 @@
 body { font-family: Georgia; }
 
+.hide { display:none; }
+
 .datagrid table tbody tr.past { text-decoration: line-through; }
 
 .datagrid table tbody td.red { color: red; }
 .datagrid table tbody td.green { color: green; }
 .datagrid table tbody td.blue { color: blue; }
+.datagrid table tbody td.grey { color: grey; }
+.datagrid table tbody td.lightgreen { color: LightGreen; }
 
 .datagrid table { border-collapse: collapse; text-align: left; width: 100%; }
 .datagrid { font: normal 12px/150% Georgia, Times New Roman, Times, serif; background: #fff; overflow: hidden; border: 1px solid #006699; -webkit-border-radius: 8px; -moz-border-radius: 8px; border-radius: 8px; }
@@ -24,3 +28,4 @@ body { font-family: Georgia; }
 .datagrid table tfoot li a { text-decoration: none; display: inline-block;  padding: 2px 8px; margin: 1px;color: #FFFFFF;border: 1px solid #006699;-webkit-border-radius: 3px; -moz-border-radius: 3px; border-radius: 3px; background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #006699), color-stop(1, #00557F) );background:-moz-linear-gradient( center top, #006699 5%, #00557F 100% );filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#006699', endColorstr='#00557F');background-color:#006699; }
 .datagrid table tfoot ul.active, .datagrid table tfoot ul a:hover { text-decoration: none;border-color: #00557F; color: #FFFFFF; background: none; background-color:#006699; }
 div.dhtmlx_window_active, div.dhx_modal_cover_dv { position: fixed !important; }
+
