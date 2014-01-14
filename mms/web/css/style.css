@@ -1,5 +1,7 @@
 body { font-family: Georgia; }
 
+.datagrid table tbody tr.past { text-decoration: line-through; }
+
 .datagrid table tbody td.red { color: red; }
 .datagrid table tbody td.green { color: green; }
 .datagrid table tbody td.blue { color: blue; }

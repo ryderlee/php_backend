@@ -14,6 +14,7 @@ $merchantInfo = json_decode(HttpService::get($resourceUri));
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.7/angular-resource.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.7/angular-animate.min.js"></script>
     <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
     <script src="http://autobahn.s3.amazonaws.com/js/autobahn.min.js"></script>
     <script src="js/app.js"></script>
     <script src="js/controllers.js"></script>
@@ -44,7 +45,7 @@ $merchantInfo = json_decode(HttpService::get($resourceUri));
             </tr>
           </thead>
           <tbody>
-            <tr ng-repeat="booking in bookings | orderBy:predicate:reverse" class="bookingRow">
+            <tr ng-repeat="booking in bookings | orderBy:predicate:reverse" class="bookingRow" booking-row ng-class="{true:'past'}[booking.past]">
               <td>{{booking.booking_ts | bookingDatetime}}</td>
               <td>{{booking.name}}</td>
               <td>{{booking.phone}}</td>
