@@ -53,7 +53,7 @@ $merchantInfo = json_decode(HttpService::get($resourceUri));
               <td>{{booking.phone}}</td>
               <td>{{booking.no_of_participants}}</td>
               <td>{{booking.special_request}}</td>
-              <td><button ng-class="{'hide':booking.status=='-1'||booking.status=='2'||booking.past}" ng-click="attended(booking)" ng-disabled="booking.loading">Attended</button></td>
+              <td><button ng-class="{'hide':booking.status!='1'&&booking.status!='0'}" ng-click="attended(booking)" ng-disabled="booking.loading">Attended</button></td>
             </tr>
           </tbody>
         </table>

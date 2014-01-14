@@ -3,6 +3,7 @@ body { font-family: Georgia; }
 .hide { display:none; }
 
 .datagrid table tbody tr.past { text-decoration: line-through; }
+.datagrid table tbody tr:hover { background-color: #F0F0F0; }
 
 .datagrid table tbody td.red { color: red; }
 .datagrid table tbody td.green { color: green; }

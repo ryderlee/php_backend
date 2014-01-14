@@ -81,7 +81,9 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking',
 			if (scope.booking.flash) {
 				scope.booking.flash = false;
 				jQuery(element).css('backgroundColor', '#80AED2');
-				jQuery(element).delay(5000, 'wait').animate({'backgroundColor':'#ffffff'}, {duration:1000, queue:'wait'}).dequeue('wait');
+				jQuery(element).delay(5000, 'wait').animate({'backgroundColor':'none'}, {duration:1000, queue:'wait', complete:function() {
+					jQuery(element).css('backgroundColor', '');
+				}}).dequeue('wait');
 			}
 		});
 		
