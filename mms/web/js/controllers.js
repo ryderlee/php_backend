@@ -68,16 +68,17 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking',
 			}
 		);
 		
-		// Monitor browser and refresh if it's been away for more than 5s
-		var lastSync = new Date().getTime();
+		// Monitor browser heartbeat
+		var lastBeat = new Date().getTime();
 		setInterval(function() {
 			var now = new Date().getTime();
-  			if ((now - lastSync) > 5000 ) {
-  				console.log("Refresh Now!, The interval is: "+(now-lastSync));
+  			if (now - lastBeat > 10000) {
+  				// Temp solution: Refresh page
+  				// Better solution: Get records between last beat time and now; Reconnect to WebSocket server if connection lost
     			location.reload();
   			}
-  			lastSync = new Date().getTime();
-		}, 1000);
+  			lastBeat = new Date().getTime();
+		}, 2000);
 		
 		// Click on attended button
 		$scope.attended = function(booking) {
