@@ -2,6 +2,8 @@ body { font-family: Georgia; }
 
 .hide { display:none; }
 
+.error { color:red; }
+
 .datagrid table tbody tr.past { text-decoration: line-through; }
 .datagrid table tbody tr:hover { background-color: #F0F0F0; }
 

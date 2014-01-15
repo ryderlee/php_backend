@@ -74,6 +74,18 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking',
 		};
 	}
 ])
+.controller('LoginCtrl', ['$scope',
+	function($scope) {
+		$scope.submit = function() {
+			if ($scope.loginForm.$valid) {
+				jQuery('form').submit();
+			} else {
+				$scope.loginForm.merchantId.$dirty = true;
+				$scope.loginForm.password.$dirty = true;
+			}
+		};
+	}
+])
 .directive('bookingRow', function($timeout) {
 	function link(scope, element, attrs) {
 		// Monitor if booking has flash flag
