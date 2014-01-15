@@ -68,6 +68,18 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking',
 			}
 		);
 		
+		// Monitor browser and refresh if it's been away for more than 5s
+		var lastSync = new Date().getTime();
+		setInterval(function() {
+			var now = new Date().getTime();
+  			if ((now - lastSync) > 5000 ) {
+  				console.log("Refresh Now!, The interval is: "+(now-lastSync));
+    			location.reload();
+  			}
+  			lastSync = new Date().getTime();
+		}, 1000);
+		
+		// Click on attended button
 		$scope.attended = function(booking) {
 			booking.loading = true;
 			Booking.updateBooking({bookingId:booking.booking_id});
