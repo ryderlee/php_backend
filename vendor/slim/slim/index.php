@@ -366,6 +366,7 @@ $app->group('/api', function () use($app){
 		$lat= $app->request()->params('lat');
 		$lng = $app->request()->params('lng');
 		$distanceUnit = $app->request()->params('du');
+		$distance = $app->request()->params('dt');
 		if(is_null($page))
 			$page = 0;
 		$resultPerPage = 10;
@@ -373,6 +374,8 @@ $app->group('/api', function () use($app){
 		if(!$hasLocation)
 			$sql = "SELECT * FROM restaurants_hongkong_csv ";
 		else{	
+			if(is_null($distance))
+				$distance = 0.3;
 			$unit = ($distanceUnit =="km"?6371:3959);
 			$sql = "SELECT *,  (" . $unit . "* acos( cos( radians(" . $lat . "))* cos( radians( lat_dec ))* cos( radians( lng_dec )- radians( " . $lng . "))+ sin( radians(" . $lat . "))* sin( radians( lat)))) AS distance FROM restaurants_hongkong_csv ";
 		}
@@ -382,7 +385,7 @@ $app->group('/api', function () use($app){
 				$sql = $sql . " (SS LIKE '%" . $keyword . "%' OR ADR LIKE '%" . $keyword . "%')";
 		}
 		if($hasLocation)
-			$sql = $sql . ' HAVING distance < 0.3';
+			$sql = $sql . ' HAVING distance < ' . $distance . ' ';
 
 
 		$sql = $sql . ' ORDER BY LICNO LIMIT ' . $page * $resultPerPage .  ',' . $resultPerPage;
