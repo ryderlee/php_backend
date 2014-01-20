@@ -363,9 +363,32 @@ $app->group('/api', function () use($app){
 	$app->get('/restaurant', function() use ($app){
 		$keyword = $app->request()->params('k');
 		$page = $app->request()->params('p');
+		$lat= $app->request()->params('lat');
+		$lng = $app->request()->params('lng');
+		$distanceUnit = $app->request()->params('du');
 		if(is_null($page))
 			$page = 0;
 		$resultPerPage = 10;
+		$hasLocation = (!is_null($lat) && !is_null($lng));
+		if(!$hasLocation)
+			$sql = "SELECT * FROM restaurants_hongkong_csv ";
+		else{	
+			$unit = ($distanceUnit =="km"?6371:3959);
+			$sql = "SELECT *,  (" . $unit . "* acos( cos( radians(" . $lat . "))* cos( radians( lat_dec ))* cos( radians( lng_dec )- radians( " . $lng . "))+ sin( radians(" . $lat . "))* sin( radians( lat)))) AS distance FROM restaurants_hongkong_csv ";
+		}
+		if (!is_null($keyword) ){
+			$sql = $sql . " WHERE ";
+			if(!is_null($keyword))
+				$sql = $sql . " (SS LIKE '%" . $keyword . "%' OR ADR LIKE '%" . $keyword . "%')";
+		}
+		if($hasLocation)
+			$sql = $sql . ' HAVING distance < 0.3';
+
+
+		$sql = $sql . ' ORDER BY LICNO LIMIT ' . $page * $resultPerPage .  ',' . $resultPerPage;
+		$rs = DB::query($sql);
+			
+		/*
 		if (is_null($keyword)){ 
 			//echo $page * $resultPerPage;
 			$rs= DB::query("SELECT * FROM restaurants_hongkong_csv ORDER BY LICNO LIMIT %d, %d",  $page * $resultPerPage , $resultPerPage);
@@ -374,7 +397,7 @@ $app->group('/api', function () use($app){
 		}
 		//echo "test";
 		//var_dump($rs);
-
+		*/
 		$images = array(
 			"http://giverny.org/hotels/corniche/piscine2.jpg",
 			"http://giverny.org/hotels/corniche/terrasse-resto.jpg",
