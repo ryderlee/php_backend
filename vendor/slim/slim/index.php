@@ -241,7 +241,7 @@ $app->group('/api', function () use($app){
 		$result = array();
 		$result['result'] = false;
 		if($action == "login"){
-			$returnValue = DB::queryFirstRow("SELECT * FROM user WHERE email = %s AND password = %s" , $email, $password);
+			$returnValue = DB::queryFirstRow("SELECT * FROM user WHERE login_id = %s AND password = %s" , $email, $password);
 			if(!is_null($returnValue)){
 				$result['result'] = true;
 				$result['user']['first_name'] = $returnValue['first_name'];
