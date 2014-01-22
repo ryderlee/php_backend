@@ -196,18 +196,23 @@ $app->group('/api', function () use($app){
 		$phone = $app->request()->params('phone');
 		$password = $app->request()->params('password');
 		
-		DB::insert('user', $values = array(
-			'first_name' => $firstName, 
-			'last_name' => $lastName,
-			'email' => $email,
-			'phone' => $phone,
-			'password' => $password,
-			'create_ts' => DB::sqleval('NOW()')
-		));
-		$values['userID'] = DB::insertId();
-		$values['token'] = "1231231234";
-		$result['result'] = true;
-		$result['values'] = $values;
+		if (DB::queryFirstRow("SELECT * FROM user WHERE email = %s", $email)) {
+			$result['result'] = false;
+		} else {
+			DB::insert('user', $values = array(
+				'first_name' => $firstName, 
+				'last_name' => $lastName,
+				'email' => $email,
+				'phone' => $phone,
+				'password' => $password,
+				'type' => 1,
+				'create_ts' => DB::sqleval('NOW()')
+			));
+			$values['userID'] = DB::insertId();
+			$values['token'] = "1231231234";
+			$result['result'] = true;
+			$result['values'] = $values;
+		}
 		echo json_encode($result);
 	});
 
@@ -324,6 +329,27 @@ $app->group('/api', function () use($app){
 		//$merchantID = 0;
 		//$timeslot = "19:00";
 		$userID = $app->request()->params('userID');
+		if (is_null($userID)) {
+			// Create new (guest) user
+			$firstName = $app->request()->params("firstName");
+			$lastName = $app->request()->params("lastName");
+			$email = $app->request()->params("email");
+			$phone = $app->request()->params("phone");
+			DB::insert('user', $values = array(
+				'first_name' => $firstName, 
+				'last_name' => $lastName,
+				'email' => $email,
+				'phone' => $phone,
+				'type' => 2,
+				'create_ts' => DB::sqleval('NOW()')
+			));
+			$values['userID'] = DB::insertId();
+			$result['result'] = true;
+			$result['values'] = $values;
+			echo json_encode($result);
+		}
+		
+		
 		$merchantID = $app->request()->params('merchantID');
 		$datetime = $app->request()->params('datetime');
 		$numberOfParticipant = $app->request()->params('numberOfParticipant');
