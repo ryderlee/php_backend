@@ -196,21 +196,35 @@ $app->group('/api', function () use($app){
 		$phone = $app->request()->params('phone');
 		$password = $app->request()->params('password');
 		
-		DB::insert('user', $values = array(
-			'login_id' => $email,
+		$result['result'] = false;
+		DB::insertIgnore('user', $values = array(
 			'password' => $password,
 			'type' => 1,
+			'email' => $email,
 			'first_name' => $firstName, 
 			'last_name' => $lastName,
-			'email' => $email,
 			'phone' => $phone,
 			'create_ts' => DB::sqleval('NOW()')
 		));
-		$values['userID'] = DB::insertId();
-		$values['token'] = "1231231234";
-		$result['result'] = true;
-		$result['values'] = $values;
+		if (DB::insertId() == 0) {
+			DB::update('user', array(
+				'password' => $password,
+				'type' => 1,
+				'first_name' => $firstName, 
+				'last_name' => $lastName,
+				'phone' => $phone,
+			), 'type=%d AND email=%s AND password IS NULL', 2, $email);
+			$row = DB::queryFirstRow("SELECT user_id FROM user WHERE email = %s", $email);
+			$values['userID'] = $row['user_id'];
+		} else {
+			$values['userID'] = DB::insertId();
+		}
+		if (DB::affectedRows() == 1) {
+			$values['token'] = "1231231234";
+			$result['result'] = true;
+		}
 		
+		$result['values'] = $values;
 		echo json_encode($result);
 	});
 
@@ -241,7 +255,7 @@ $app->group('/api', function () use($app){
 		$result = array();
 		$result['result'] = false;
 		if($action == "login"){
-			$returnValue = DB::queryFirstRow("SELECT * FROM user WHERE login_id = %s AND password = %s" , $email, $password);
+			$returnValue = DB::queryFirstRow("SELECT * FROM user WHERE email = %s AND password = %s" , $email, $password);
 			if(!is_null($returnValue)){
 				$result['result'] = true;
 				$result['user']['first_name'] = $returnValue['first_name'];
@@ -321,56 +335,72 @@ $app->group('/api', function () use($app){
 	});
 
 	$app->post('/reservations', function() use ($app){
-		$result = array();	
+		$result = array();
 		
-		$userID = $app->request()->params('userID');
-		if (is_null($userID)) {
-				
-			// Temp. login_id for guest
-			$characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-			$randomString = '';
-			for ($i = 0; $i < 10; $i++) {
-				$randomString .= $characters[rand(0, strlen($characters) - 1)];
-			}
-			// Temp. login_id for guest	
-			
-			// Create new (guest) user
-			$firstName = $app->request()->params("firstName");
-			$lastName = $app->request()->params("lastName");
-			$email = $app->request()->params("email");
-			$phone = $app->request()->params("phone");
-			DB::insert('user', $values = array(
-				'first_name' => $firstName, 
-				'last_name' => $lastName,
-				'login_id' => $randomString,
-				'email' => $email,
-				'phone' => $phone,
-				'type' => 2,
-				'create_ts' => DB::sqleval('NOW()')
-			));
-			$values['userID'] = DB::insertId();
-			$result['result'] = true;
-			$result['values'] = $values;
-			echo json_encode($result);
-		}
-		
-		
-		$merchantID = $app->request()->params('merchantID');
+		// User (Guest) Information
+		$type = $app->request()->params('type');
+		$userID = $app->request()->params('userID');		
+		$email = $app->request()->params('email');
+		$firstName = $app->request()->params('firstName');
+		$lastName = $app->request()->params('lastName');
+		$phone = $app->request()->params('phone');
+		$sessionID = $app->request()->params('sessionID');
+
+		// Booking Information
+		$merchantID = $app->request()->params('merchantID');		
 		$datetime = $app->request()->params('datetime');
 		$numberOfParticipant = $app->request()->params('numberOfParticipant');
 		$specialRequest = is_null($app->request()->params('specialRequest'))?'':$app->request()->params('specialRequest');
 		$timeArr = strptime($datetime, '%Y-%m-%d %H:%M:%S');
 		$ts = mktime(intval($timeArr['tm_hour']), intval($timeArr['tm_min']), intval($timeArr['tm_sec']), intval($timeArr['tm_mon']) + 1 , intval($timeArr['tm_mday']) , intval($timeArr['tm_year'] + 1900));
 		
-		DB::insert('booking', $values = array(
+		// Guest Flow
+		if ($type == 2) {
+			$user = DB::queryFirstRow("SELECT user_id, first_name, last_name, phone, type FROM user WHERE email = %s", $email);
+			if (is_null($user)) {
+				DB::insert('user', $values = array(
+					'type' => 2,
+					'email' => $email,
+					'first_name' => $firstName, 
+					'last_name' => $lastName,
+					'phone' => $phone,
+					'create_ts' => DB::sqleval('NOW()')
+				));
+				$userID = DB::insertId();
+			} else if ($user['type'] == 1) {
+				// Email registered, user should login
+				$result['result'] = false;
+				echo json_encode($result);
+				return; 
+			} else {
+				$userID = $user['user_id'];
+				if ($firstName != $user['first_name'] || $lastName != $user['last_name'] || $phone != $user['phone']) {
+					// Update user information
+					DB::update("user", array(
+						'first_name' => $firstName,
+						'last_name' => $lastName,
+						'phone' => $phone
+					), "email = %s", $email);
+				}
+			}
+		}
+		
+		$values = array(
 			'user_id' => $userID, 
 			'merchant_id' => $merchantID,
+			'type' => $type,
+			'session_id' => $sessionID,
+			'first_name' => $firstName,
+			'last_name' => $lastName,
+			'phone' => $phone,
 			'booking_ts' => date('Y-m-d H:i:s' , $ts),
 			'no_of_participants' => $numberOfParticipant,
 			'special_request' => $specialRequest,
 			'status' => 0,
+			'attendance' => 0,
 			'create_ts' => DB::sqleval('NOW()')
-		));
+		);
+		DB::insert('booking', $values);
 		$result['bookingID'] = DB::insertId();
 		$result['result'] = true;
 		$result['values'] = $values;
@@ -462,42 +492,6 @@ $app->group('/api', function () use($app){
 		//echo json_encode($returnValue, JSON_PRETTY_PRINT);
 		//echo $output;
 	});
-	$app->post('/login', function() use ($app){
-
-		$returnValue = DB::queryFirstRow("SELECT * FROM user WHERE email = %s" , $email);
-		//var_dump($rs);
-
-
-
-		$username = $app->request()->params('username');
-		$pwd = $app->request()->params('pwd');
-		if ($username == 'ikky@ikky.com' && $pwd=='123456') {
-			$result['result'] = true;
-			$result['user']['first_name'] = 'Ikky';
-			$result['user']['last_name'] = 'Limited';
-			$result['user']['email'] = 'ikky@ikky.com';
-			$result['user']['phone'] = '12345678';
-			$result['user']['uid'] = '1';
-		} else if ($username == 'marvin@ikky.com' && $pwd == '123456') {
-			$result['result'] = true;
-			$result['user']['first_name'] = 'Marvin';
-			$result['user']['last_name'] = 'Lam';
-			$result['user']['email'] = 'marvin@ikky.com';
-			$result['user']['phone'] = '12345678';
-			$result['user']['uid'] = '2';
-		} else if ($username == 'ryder@ikky.com' && $pwd == '123456') {
-			$result['result'] = true;
-			$result['user']['first_name'] = 'Ryder';
-			$result['user']['last_name'] = 'Lee';
-			$result['user']['email'] = 'marvin@ikky.com';
-			$result['user']['phone'] = '12345678';
-			$result['user']['uid'] = '3';
-		} else {
-			$result['result'] = false;
-		}
-
-		echo json_encode($result);
-	});
 
 	$app->get('/reservations', function() use ($app){
 		$returnValue = array();
@@ -510,14 +504,14 @@ $app->group('/api', function () use($app){
 	$app->get('/mms/bookings/:merchantID', function($merchantID) use ($app){
 		$returnValue = array();
 		if ($merchantID != null) {
-			$returnValue = DB::query("SELECT CONCAT(first_name, ' ', last_name) name, phone, type, b.booking_id, b.booking_ts, b.no_of_participants, b.special_request, b.status FROM booking b JOIN user u ON b.user_id = u.user_id WHERE merchant_id = %d", $merchantID);
+			$returnValue = DB::query("SELECT IF(b.type=1, CONCAT(u.first_name, ' ', u.last_name), CONCAT(b.first_name, ' ', b.last_name)) name, u.phone, b.type, b.booking_id, b.booking_ts, b.no_of_participants, b.special_request, b.status FROM booking b JOIN user u ON b.user_id = u.user_id WHERE merchant_id = %d", $merchantID);
 		}
 		echo json_encode($returnValue);
 	});
 	$app->get('/mms/bookings/:merchantID/:bookingID', function($merchantID, $bookingID) use ($app){
 		$returnValue = array();
 		if ($merchantID != null && $bookingID != null) {
-			$returnValue = DB::query("SELECT CONCAT(first_name, ' ', last_name) name, phone, type, b.booking_id, b.booking_ts, b.no_of_participants, b.special_request, b.status FROM booking b JOIN user u ON b.user_id = u.user_id WHERE merchant_id = %d AND booking_id = %d", $merchantID, $bookingID);
+			$returnValue = DB::query("SELECT IF(b.type=1, CONCAT(u.first_name, ' ', u.last_name), CONCAT(b.first_name, ' ', b.last_name)) name, u.phone, b.type, b.booking_id, b.booking_ts, b.no_of_participants, b.special_request, b.status FROM booking b JOIN user u ON b.user_id = u.user_id WHERE merchant_id = %d AND booking_id = %d", $merchantID, $bookingID);
 		}
 		echo json_encode($returnValue);
 	});
