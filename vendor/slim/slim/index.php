@@ -192,7 +192,7 @@ $app->group('/api', function () use($app){
 		//$timeslot = "19:00";
 		$firstName = $app->request()->params('firstName');
 		$lastName = $app->request()->params('lastName');
-		$email = $app->request()->params('email');
+		$email = strtolower($app->request()->params('email'));
 		$phone = $app->request()->params('phone');
 		$password = $app->request()->params('password');
 		
@@ -233,6 +233,7 @@ $app->group('/api', function () use($app){
 		
 		$firstName = $app->request()->params('firstName');
 		$lastName = $app->request()->params('lastName');
+		$email = strtolower($email);
 		$phone = $app->request()->params('phone');
 		$returnValue = array();
 		$returnValue['result'] = false;
@@ -252,6 +253,7 @@ $app->group('/api', function () use($app){
 	$app->post('/users/session/:email', function($email) use ($app){
 		$action = $app->request()->params('action');
 		$password= $app->request()->params('password');
+		$email = strtolower($email);
 		$result = array();
 		$result['result'] = false;
 		if($action == "login"){
@@ -340,7 +342,7 @@ $app->group('/api', function () use($app){
 		// User (Guest) Information
 		$type = $app->request()->params('type');
 		$userID = $app->request()->params('userID');		
-		$email = $app->request()->params('email');
+		$email = strtolower($app->request()->params('email'));
 		$firstName = $app->request()->params('firstName');
 		$lastName = $app->request()->params('lastName');
 		$phone = $app->request()->params('phone');
