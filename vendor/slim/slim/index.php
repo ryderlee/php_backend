@@ -361,34 +361,77 @@ $app->group('/api', function () use($app){
 
 
 	$app->get('/restaurant', function() use ($app){
+		$actions = array();
+		$action = $app->request()->params('action');
+		//$actions[]  = $action;
 		$keyword = $app->request()->params('k');
 		$page = $app->request()->params('p');
+		$latMin= $app->request()->params('latmin');
+		$latMax= $app->request()->params('latmax');
+		$lngMin= $app->request()->params('lngmin');
+		$lngMax= $app->request()->params('lngmax');
+		
 		$lat= $app->request()->params('lat');
 		$lng = $app->request()->params('lng');
+
 		$distanceUnit = $app->request()->params('du');
 		$distance = $app->request()->params('dt');
+		$resultPerPage = $app->request()->params('rpp');
+
+
+		if(is_null($distance))
+			$distance = 0.3;
+		if(is_null($action))
+			$actions[] = "listQuery";
 		if(is_null($page))
 			$page = 0;
-		$resultPerPage = 10;
-		$hasLocation = (!is_null($lat) && !is_null($lng));
-		if(!$hasLocation)
+		if(is_null($resultPerPage))
+			$resultPerPage = 10;
+		if( !is_null($lat) && !is_null($lng) && !is_null($distanceUnit) && !is_null($distance) )
+			$actions[] = "hasLocationRadius";
+		if(!is_null($keyword))
+			$actions[] = "hasKeyword";
+		if(!is_null($latMin) && !is_null($latMax) && !is_null($lngMin) && !is_null($lngMax))
+			$actions[] = "mapRange";
+
+		if(!in_array("hasLocationRadius", $actions))
 			$sql = "SELECT * FROM restaurants_hongkong_csv ";
 		else{	
-			if(is_null($distance))
-				$distance = 0.3;
 			$unit = ($distanceUnit =="km"?6371:3959);
 			$sql = "SELECT *,  (" . $unit . "* acos( cos( radians(" . $lat . "))* cos( radians( lat_dec ))* cos( radians( lng_dec )- radians( " . $lng . "))+ sin( radians(" . $lat . "))* sin( radians( lat)))) AS distance FROM restaurants_hongkong_csv ";
 		}
-		if (!is_null($keyword) ){
-			$sql = $sql . " WHERE ";
-			if(!is_null($keyword))
-				$sql = $sql . " (SS LIKE '%" . $keyword . "%' OR ADR LIKE '%" . $keyword . "%')";
+
+		if(sizeof($actions) > 0){
+			$needAnd = 0;
+			$whereClause = "";
+			foreach($actions as $action){
+				$tempWhereClause = "";
+				switch($action){
+					case 'mapRange':
+						$tempWhereClause = " (lat_dec >= " . $latMin . " AND lat_dec <= " . $latMax . " AND lng_dec >= " . $lngMin . " AND lng_dec <= " . $lngMax . ") "; 
+						$needAnd++;
+						break;
+					case 'hasKeyword':
+						$tempWhereClause = " (SS LIKE '%" . $keyword . "%' OR ADR LIKE '%" . $keyword . "%') ";
+						$needAnd++;
+						break;
+				}
+				if($needAnd > 1)
+					$whereClause = $whereClause . " AND " . $tempWhereClause;
+				else
+					$whereClause = $whereClause . $tempWhereClause;
+			}
+
+			if(strlen($whereClause) > 0)
+				$sql = $sql . " WHERE " . $whereClause;
 		}
-		if($hasLocation)
+
+		if(in_array("hasLocationRadius", $actions))
 			$sql = $sql . ' HAVING distance < ' . $distance . ' ';
 
 
 		$sql = $sql . ' ORDER BY LICNO LIMIT ' . $page * $resultPerPage .  ',' . $resultPerPage;
+
 		$rs = DB::query($sql);
 			
 		/*
