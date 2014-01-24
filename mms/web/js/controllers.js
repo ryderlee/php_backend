@@ -75,7 +75,9 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking',
   			if (now - lastBeat > 10000) {
   				// Temp solution: Refresh page
   				// Better solution: Get records between last beat time and now; Reconnect to WebSocket server if connection lost
-    			location.reload();
+  				
+  				// Commented out since it's buggy 
+    			// location.reload();
   			}
   			lastBeat = new Date().getTime();
 		}, 2000);
