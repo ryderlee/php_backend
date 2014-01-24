@@ -199,7 +199,7 @@ $app->group('/api', function () use($app){
 		$result['result'] = false;
 		DB::insertIgnore('user', $values = array(
 			'password' => $password,
-			'type' => 1,
+			'is_guest' => 0,
 			'email' => $email,
 			'first_name' => $firstName, 
 			'last_name' => $lastName,
@@ -209,11 +209,11 @@ $app->group('/api', function () use($app){
 		if (DB::insertId() == 0) {
 			DB::update('user', array(
 				'password' => $password,
-				'type' => 1,
+				'is_guest' => 0,
 				'first_name' => $firstName, 
 				'last_name' => $lastName,
 				'phone' => $phone,
-			), 'type=%d AND email=%s AND password IS NULL', 2, $email);
+			), 'is_guest=%d AND email=%s AND password IS NULL', 1, $email);
 			$row = DB::queryFirstRow("SELECT user_id FROM user WHERE email = %s", $email);
 			$values['userID'] = $row['user_id'];
 		} else {
@@ -340,7 +340,7 @@ $app->group('/api', function () use($app){
 		$result = array();
 		
 		// User (Guest) Information
-		$type = $app->request()->params('type');
+		$isGuest = $app->request()->params('isGuest');
 		$userID = $app->request()->params('userID');		
 		$email = strtolower($app->request()->params('email'));
 		$firstName = $app->request()->params('firstName');
@@ -357,11 +357,11 @@ $app->group('/api', function () use($app){
 		$ts = mktime(intval($timeArr['tm_hour']), intval($timeArr['tm_min']), intval($timeArr['tm_sec']), intval($timeArr['tm_mon']) + 1 , intval($timeArr['tm_mday']) , intval($timeArr['tm_year'] + 1900));
 		
 		// Guest Flow
-		if ($type == 2) {
-			$user = DB::queryFirstRow("SELECT user_id, first_name, last_name, phone, type FROM user WHERE email = %s", $email);
+		if ($isGuest == 1) {
+			$user = DB::queryFirstRow("SELECT user_id, first_name, last_name, phone, is_guest FROM user WHERE email = %s", $email);
 			if (is_null($user)) {
 				DB::insert('user', $values = array(
-					'type' => 2,
+					'is_guest' => 1,
 					'email' => $email,
 					'first_name' => $firstName, 
 					'last_name' => $lastName,
@@ -369,7 +369,7 @@ $app->group('/api', function () use($app){
 					'create_ts' => DB::sqleval('NOW()')
 				));
 				$userID = DB::insertId();
-			} else if ($user['type'] == 1) {
+			} else if ($user['is_guest'] == 0) {
 				// Email registered, user should login
 				$result['result'] = false;
 				echo json_encode($result);
@@ -390,7 +390,7 @@ $app->group('/api', function () use($app){
 		$values = array(
 			'user_id' => $userID, 
 			'merchant_id' => $merchantID,
-			'type' => $type,
+			'is_guest' => $isGuest,
 			'session_id' => $sessionID,
 			'first_name' => $firstName,
 			'last_name' => $lastName,
@@ -506,14 +506,14 @@ $app->group('/api', function () use($app){
 	$app->get('/mms/bookings/:merchantID', function($merchantID) use ($app){
 		$returnValue = array();
 		if ($merchantID != null) {
-			$returnValue = DB::query("SELECT IF(b.type=1, CONCAT(u.first_name, ' ', u.last_name), CONCAT(b.first_name, ' ', b.last_name)) name, u.phone, b.type, b.booking_id, b.booking_ts, b.no_of_participants, b.special_request, b.status FROM booking b JOIN user u ON b.user_id = u.user_id WHERE merchant_id = %d", $merchantID);
+			$returnValue = DB::query("SELECT IF(b.is_guest=0, CONCAT(u.first_name, ' ', u.last_name), CONCAT(b.first_name, ' ', b.last_name)) name, u.phone, b.is_guest, b.booking_id, b.booking_ts, b.no_of_participants, b.special_request, b.status FROM booking b JOIN user u ON b.user_id = u.user_id WHERE merchant_id = %d", $merchantID);
 		}
 		echo json_encode($returnValue);
 	});
 	$app->get('/mms/bookings/:merchantID/:bookingID', function($merchantID, $bookingID) use ($app){
 		$returnValue = array();
 		if ($merchantID != null && $bookingID != null) {
-			$returnValue = DB::query("SELECT IF(b.type=1, CONCAT(u.first_name, ' ', u.last_name), CONCAT(b.first_name, ' ', b.last_name)) name, u.phone, b.type, b.booking_id, b.booking_ts, b.no_of_participants, b.special_request, b.status FROM booking b JOIN user u ON b.user_id = u.user_id WHERE merchant_id = %d AND booking_id = %d", $merchantID, $bookingID);
+			$returnValue = DB::query("SELECT IF(b.is_guest=1, CONCAT(u.first_name, ' ', u.last_name), CONCAT(b.first_name, ' ', b.last_name)) name, u.phone, b.is_guest, b.booking_id, b.booking_ts, b.no_of_participants, b.special_request, b.status FROM booking b JOIN user u ON b.user_id = u.user_id WHERE merchant_id = %d AND booking_id = %d", $merchantID, $bookingID);
 		}
 		echo json_encode($returnValue);
 	});
