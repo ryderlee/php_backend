@@ -1,4 +1,4 @@
-body { font-family: Georgia; }
+html, body { font-family: Georgia; margin: 0px !important; padding: 0px !important; min-width: 960px; overflow: hidden; }
 
 .hide { display:none; }
 
@@ -32,3 +32,25 @@ body { font-family: Georgia; }
 .datagrid table tfoot ul.active, .datagrid table tfoot ul a:hover { text-decoration: none;border-color: #00557F; color: #FFFFFF; background: none; background-color:#006699; }
 div.dhtmlx_window_active, div.dhx_modal_cover_dv { position: fixed !important; }
 
+
+.calendar-wrapper { padding-left: 10px; padding-right: 10px; }
+.calendar-wrapper ul { margin: 0px; padding: 0px; }
+.calendar-wrapper li { margin: 0px; padding: 0px; width: 14.2857%; display: inline-block; float: left; }
+
+.calendar { margin: 0px; padding: 0px; min-width: 960px; position: absolute; top: 212px; bottom: 0px; left: 10px; right: 10px; overflow: hidden; -webkit-overflow-scrolling: touch; }
+
+.week .week-cell { text-align: right; font-weight: bold; height:19px; border-bottom: 1px solid #bbb; margin-left: 4px; margin-right: 4px; padding-left: 4px; padding-right: 4px;  }
+.calendar .calendar-cell { text-align: right; height: 128px; border-top: 1px solid #bbb; border-bottom: 1px solid #fff; margin-left: 4px; margin-right: 4px; padding-left: 4px; padding-right: 4px; }
+.calendar .today { border: 1px solid #80AED2; color: #80AED2; font-weight: bold; }
+
+.current-date { font-size: 20px; height:24px; width: 100%; text-align: right; padding-bottom: 10px; padding-top: 10px; }
+.current-month { font-weight: bold; }
+
+.buttons-panel { float: left; font-size: 14px; }
+.buttons-panel a { border: 1px solid #bbb; cursor: pointer; padding: 3px; }
+
+.header { padding-left: 10px; padding-right: 10px; height: 111px; }
+
+.dayview-wrapper { display: none; }
+
+hr { margin: 8px; }

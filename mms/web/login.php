@@ -3,10 +3,10 @@
 require_once dirname(__FILE__) . '/common/global.php';
 
 if ($merchantService->isLogin()) {
-	$sitemapService->redirect('bookings.php');
+	$sitemapService->redirect('calendar.php');
 } else if (isset($_POST['merchantId']) && isset($_POST['password'])) {
 	$merchantService->login($_POST['merchantId'], $_POST['password']);
-	$sitemapService->redirect('bookings.php');
+	$sitemapService->redirect('calendar.php');
 }
 
 ?>

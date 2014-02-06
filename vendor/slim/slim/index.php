@@ -560,6 +560,13 @@ $app->group('/api', function () use($app){
 		}
 		echo json_encode($returnValue);
 	});
+	$app->get('/mms/loads/:merchantID', function($merchantID) use ($app){
+		$returnValue = array();
+		if ($merchantID != null) {
+			$returnValue = DB::query("SELECT date(booking_ts) d, count(*) cnt FROM booking b WHERE merchant_id = %d GROUP BY d", $merchantID);
+		}
+		echo json_encode($returnValue);
+	});
 
 	//var_dump($rs);
 });

@@ -15,6 +15,9 @@ if (isset($_GET['action'])) {
 			$paraMap = array('status'=>'2');
 			HttpService::put($resourceUri, $paraMap);
 		}
+	} else if ($_GET['action'] == 'loads') {
+		$resourceUri = '/mms/loads/' . $merchantService->getMerchantId();
+		echo HttpService::get($resourceUri);
 	}
 }
 
