@@ -26,26 +26,30 @@ $merchantInfo = json_decode(HttpService::get($resourceUri));
 		<link rel="stylesheet" type="text/css" href="css/style.css">
 		<link rel="stylesheet" href="http://code.jquery.com/ui/1.9.2/themes/smoothness/jquery-ui.css">
 		<meta charset="UTF-8">
+		<meta name="viewport" content="user-scalable=no, minimal-ui" />
 	</head>
 	<body>
 		<div class="main-wrapper">
+			<div class="header-background"></div>
 	    	<div class="header">
-				<h2><?php echo $merchantInfo->RESTAURANT_NAME ?></h2>
-				<h5>(<?php echo $merchantInfo->RESTAURANT_ADDRESS ?>)</h5>
-				<div style="width:100%; text-align:right"><a href="logout.php" style="color:black;">LOGOUT</a></div>
+	    		<div class="name"><?php echo $merchantInfo->RESTAURANT_NAME ?></div>
+				<div class="address"><?php echo ucwords(strtolower($merchantInfo->RESTAURANT_ADDRESS)) ?></div>
+				<div class="notification" ng-controller="NotificationCtrl"><a>{{notification.message}}</a></div>
+				<div class="logout"><a href="logout.php">Log Out</a></div>
 	    	</div>
-	    	<hr>
 	    	
-	    	<div class="calendar-wrapper" ng-controller="CalendarCtrl">
-	    		<div class="buttons-panel">
-	    			<a ng-click="prevMonth()"> &#x25C0 </a>
-	    			<a ng-click="goToToday()"> Today </a>
-	    			<a ng-click="nextMonth()"> &#x25B6 </a>
-	    		</div>
-	    		<div class="current-date">
-	    			<span class="current-month">{{current.month}}</span>
-	    			<span>{{current.year}}</span>
-	    		</div>
+	    	<div class="calendar-wrapper" ng-controller="CalendarCtrl" ng-show="show">
+	    		<div class="calendar-header">
+	    			<div class="buttons-panel">
+		    			<a ng-click="prevMonth()"> &#x25C0 </a>
+		    			<a ng-click="goToToday()"> Today </a>
+		    			<a ng-click="nextMonth()"> &#x25B6 </a>
+		    		</div>
+		    		<div class="current-date">
+		    			<span class="current-month">{{current.month}}</span>
+		    			<span>{{current.year}}</span>
+		    		</div>
+		    	</div>
 	    		<div class="week">
 	    			<ul>
 						<li><div class="week-cell">Sun</div></li>
@@ -66,32 +70,45 @@ $merchantInfo = json_decode(HttpService::get($resourceUri));
 				</div>
 			</div>
 			
-			<!-- <div class="dayview-wrapper datagrid" ng-controller="BookingListCtrl">
-				<table>
-					<thead>
-						<tr>
-							<th><a href="" ng-click="predicate='booking_ts'; reverse=!reverse">Date & Time</a></th>
-							<th><a href="" ng-click="predicate='status'; reverse=!reverse">Status</a></th>
-							<th><a href="" ng-click="predicate='name'; reverse=!reverse">Customer Name</a></th>
-							<th>Phone Number</th>
-							<th><a href="" ng-click="predicate='no_of_participants'; reverse=!reverse">Number of Participants</a></th>
-							<th>Special Request</th>
-							<th>Action</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr ng-repeat="booking in bookings | orderBy:predicate:reverse" class="bookingRow" booking-row ng-class="{'past':booking.past||booking.status==2}">
-							<td>{{booking.booking_ts | bookingDatetime}}</td>
-							<td ng-class="{'-1':'red', '0':'blue', '1':'green', '2':'lightgreen'}[booking.status]">{{booking.status | bookingStatus}}</td>
-							<td><a class="bookingName" title="Name:{{booking.name}} <br/> Phone:{{booking.phone}}">{{booking.name}}</a></td>
-							<td>{{booking.phone}}</td>
-							<td>{{booking.no_of_participants}}</td>
-							<td>{{booking.special_request}}</td>
-							<td><button ng-class="{'hide':booking.status!='1'&&booking.status!='0'}" ng-click="attended(booking)" ng-disabled="booking.loading">Attended</button></td>
-						</tr>
-					</tbody>
-				</table>
-			</div> -->
+			<div class="dayview-wrapper" ng-controller="BookingListCtrl" ng-show="show">
+				<div class="dayview-header">
+					<div class="buttons-panel">
+		    			<a ng-click="back()"> &#x25C0</a>
+		    			<a ng-click="back()">Back</a>
+		    		</div>
+		    		<div class="current-date">
+		    			<span>{{current.day}}</span>
+		    			<span class="current-month">{{current.month}}</span>
+		    			<span>{{current.year}}</span>
+		    		</div>
+				</div>
+				<div class="daylist">
+					<table class="datagrid">
+						<thead>
+							<tr>
+								<th><a href="" ng-click="predicate='booking_ts'; reverse=!reverse">Time</a></th>
+								<th><a href="" ng-click="predicate='status'; reverse=!reverse">Status</a></th>
+								<th><a href="" ng-click="predicate='name'; reverse=!reverse">Customer Name</a></th>
+								<th>Phone Number</th>
+								<th><a href="" ng-click="predicate='no_of_participants'; reverse=!reverse">No. of Participants</a></th>
+								<th>Special Request</th>
+								<th>Action</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr ng-repeat="booking in bookings | orderBy:predicate:reverse" class="bookingRow" booking-row ng-class="{'past':booking.past||booking.status==2}">
+								<td>{{booking.booking_ts | bookingDatetime}}</td>
+								<td ng-class="{'-1':'red', '0':'blue', '1':'green', '2':'lightgreen'}[booking.status]">{{booking.status | bookingStatus}}</td>
+								<td><a class="bookingName" title="Name:{{booking.name}} <br/> Phone:{{booking.phone}}">{{booking.name}}</a></td>
+								<td>{{booking.phone}}</td>
+								<td>{{booking.no_of_participants}}</td>
+								<td>{{booking.special_request}}</td>
+								<td><div class="attended-button" ng-class="{'hide':booking.status!='1'&&booking.status!='0'}" ng-click="attended(booking)" ng-disabled="booking.loading">Attended</div></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
 			
 		</div>
 	</body>

@@ -13,9 +13,9 @@ var mmsApp = angular.module('mmsApp', [
 					console.log("got event1: " + event);
 					var json = JSON.parse(event);
 					if (json.action == 'new') {
-						$rootScope.$emit('newBooking');
+						$rootScope.$emit('newBooking', json);
 					} else if (json.action == 'update') {
-						$rootScope.$emit('updateBooking');
+						$rootScope.$emit('updateBooking', json);
 					}
 			});
 		}, function (code, reason) {

@@ -1,26 +1,43 @@
 var mmsControllers = angular.module('mmsControllers', []);
 
+var monthNames = [ "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ];
+
+Date.prototype.yyyymmdd = function() {
+	var yyyy = this.getFullYear().toString();
+	var mm = (this.getMonth()+1).toString(); // getMonth() is zero-based
+	var dd  = this.getDate().toString();
+	return yyyy + (mm[1]?mm:"0"+mm[0]) + (dd[1]?dd:"0"+dd[0]); // padding
+};
+
 mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 	function($scope, Booking, $rootScope) {
-		$scope.bookings = [];
-		// Use service to get booking records
-		$scope.bookings = Booking.getBookings();
-		$scope.bookings.$promise.then(function(newBookings) {
-			checkTime(newBookings);
-		});
 		// Pre-set the predicate (sorting) field
-		$scope.predicate = 'booking_ts';
+		$scope.predicate = 'booking_ts';		
+		$scope.bookings = new Array();
+
+		
+		$rootScope.$on('showDayView', function(event, caldate, empty) {
+			var date = caldate.date;
+			if (!empty && (!$scope.current || $scope.current.date.getTime() != date.getTime())) {
+				$scope.current = {year:date.getFullYear(), month:monthNames[date.getMonth()], day:date.getDate(), date:caldate.date};
+				$scope.bookings = new Array();
+				$scope.bookings = Booking.getBookings({date:date.yyyymmdd()});
+				$scope.bookings.$promise.then(function(newBookings) {
+					$scope.checkTime(newBookings);
+				});
+			}
+			$scope.show = true;
+		});
 		
 		// Monitor the record passed
-		function timePassing() {
-			checkTime($scope.bookings);
+		$scope.timePassing = function() {
+			$scope.checkTime($scope.bookings);
 			$scope.$digest();
-		}
+		};
 		setInterval(function() {
-			timePassing();
+			$scope.timePassing();
 		}, 10000);
-		
-		function checkTime(bookings) {
+		$scope.checkTime = function(bookings) {
 			angular.forEach(bookings, function(value, key) {
 				var arr = value.booking_ts.split(' ');
 				var dArr = arr[0].split('-');
@@ -31,37 +48,51 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 					value.past = true;
 				}
 			});
-		}
+		};
 		
 		// Listen from WebSocket server for new / update records
-		$rootScope.$on('newBooking', function() {
-			Booking.getBookings({bookingId:json.bookingId}).$promise.then(function(newBookings) {
-				angular.forEach(newBookings, function(value, key) {
-					value.flash = true;
-				});
-				console.log(newBookings);
-				$scope.bookings = $scope.bookings.concat(newBookings);
-            });
+		$rootScope.$on('newBooking', function(event, json) {
+			var arr = json.bookingDate.split(' ');
+			var dArr = arr[0].split('-');
+			var d = new Date(dArr[0], dArr[1]-1, dArr[2], 0, 0, 0);
+			if ($scope.current && d.getTime() == $scope.current.date.getTime()) {
+				Booking.getBookings({bookingId:json.bookingId}).$promise.then(function(newBookings) {
+					angular.forEach(newBookings, function(value, key) {
+						value.flash = true;
+					});
+					console.log(newBookings);
+					$scope.bookings = $scope.bookings.concat(newBookings);
+	            });
+           }
 		});
-		$rootScope.$on('updateBooking', function() {
-			Booking.getBookings({bookingId:json.bookingId}).$promise.then(function(newBookings) {
-				angular.forEach($scope.bookings, function(value1, key1) {
-					angular.forEach(newBookings, function(value2, key2) {
-						if (value1.booking_id == value2.booking_id) {
-							angular.forEach(value1, function(value, key) {
-								value1[key] = value2[key];
-							});
-							value1['flash'] = true;
-						}
+		$rootScope.$on('updateBooking', function(event, json) {
+			var arr = json.bookingDate.split(' ');
+			var dArr = arr[0].split('-');
+			var d = new Date(dArr[0], dArr[1]-1, dArr[2], 0, 0, 0);
+			if ($scope.current && d.getTime() == $scope.current.date.getTime()) {
+				Booking.getBookings({bookingId:json.bookingId}).$promise.then(function(newBookings) {
+					angular.forEach($scope.bookings, function(value1, key1) {
+						angular.forEach(newBookings, function(value2, key2) {
+							if (value1.booking_id == value2.booking_id) {
+								angular.forEach(value1, function(value, key) {
+									value1[key] = value2[key];
+								});
+								value1['flash'] = true;
+							}
+						});
 					});
 				});
-	        });
+			}
 		});
 		
-		// Click on attended button
 		$scope.attended = function(booking) {
 			booking.loading = true;
 			Booking.updateBooking({bookingId:booking.booking_id});
+		};
+		
+		$scope.back = function() {
+			$scope.show = false;
+			$rootScope.$emit('showCalendar');
 		};
 	}
 ])
@@ -111,17 +142,20 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 })
 .controller('CalendarCtrl', ['$scope', 'Booking', '$rootScope', 
 	function($scope, Booking, $rootScope) {
-		var offScreenRow = 20;
+		var offScreenRow = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)?5:20;
 		var rowHeight = 130;
-		var monthNames = [ "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ];
 		var today = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate(), 0, 0, 0);
 		var rendered = false;
 		var lastTouchY;
 		var intermediateTime;
-		
+
+		$scope.show = true;
 		$scope.loadPercentages = new Array();
 		
 		$scope.current = {month:monthNames[today.getMonth()], year:today.getFullYear(), date:today};
+		$rootScope.$on('showCalendar', function() {
+			$scope.show = true;
+		});
 		$scope.$on('drawEnd', function() {
 			if (!rendered) {
 				rendered = true;
@@ -226,8 +260,9 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 			}
 		};
 		
-		$scope.dateClick = function(date) {
-			console.log(date);
+		$scope.dateClick = function(caldate) {
+			$scope.show = false;
+			$rootScope.$emit('showDayView', caldate, $scope.loadPercentages[caldate.date.getTime()]?false:true);
 		};
 		
 		$scope.getBgColor = function(loadPercentage) {
@@ -262,9 +297,17 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 	return function(scope, element, attrs) {
 		jQuery(element).kinetic({
 			filterTarget: function(target, e){
-				if (!/down|start/.test(e.type)){
-					return !(/div/i.test(target.tagName));
+				if (e.type == 'touchstart') {
+					jQuery(target).data('cancel', false);
+					setTimeout(function() {
+						jQuery(target).data('cancel', true);
+					}, 150);
+				} else if (e.type == 'touchend') {
+					if (!jQuery(target).data('cancel')) {
+						jQuery(target).click();
+					}
 				}
+				return true;
 			}
 		});
 		jQuery(element).on('scroll', function() {
@@ -283,5 +326,18 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 			});
 		}
   	};
-});
+})
+.controller('NotificationCtrl', ['$scope', '$rootScope',
+	function($scope, $rootScope) {
+		$scope.notification = {show:false, message:''};
+		$rootScope.$on('newBooking', function(event, json) {
+			var arr = json.bookingDate.split(' ');
+			var dArr = arr[0].split('-');
+			var tArr = arr[1].split(':');
+			var d = new Date(dArr[0], dArr[1]-1, dArr[2], tArr[0], tArr[1], tArr[2]);
+			$scope.notification.message = 'A new booking is made on ' + d.getDate() + ' ' + monthNames[d.getMonth()] + ' ' + d.getFullYear();
+			jQuery('.notification').slideUp(0).slideDown().delay(3000).slideUp();
+		});
+	}
+]);
 

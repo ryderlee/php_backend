@@ -1,56 +1,94 @@
-html, body { font-family: Georgia; margin: 0px !important; padding: 0px !important; min-width: 960px; overflow: hidden; }
+html, body { font-family: Georgia; margin: 0px; padding: 0px; overflow: hidden; }
 
-.hide { display:none; }
+/* Main Page - Header */
 
-.error { color:red; }
+.header { position: fixed; width: 100%; height: 100px; z-index: 9999; color: #fff; min-width: 960px; }
+.header-background { position: fixed; width: 100%; height: 100px; z-index: 1; background: url('../images/bg.jpg'); background-position: center; background-size: 100%; -webkit-filter: blur(3px); }
 
-.datagrid table tbody tr.past { text-decoration: line-through; }
-.datagrid table tbody tr:hover { background-color: #F0F0F0; }
+.header .notification { position: absolute; padding: 10px 16px 10px 16px; top: 13px; right: 20px; background-color: #F0F0F0; float: right; border-radius: 3px; }
+.header .notification a { font-weight: bold; font-size: 14px; color: #555 }
 
-.datagrid table tbody td.red { color: red; }
-.datagrid table tbody td.green { color: green; }
-.datagrid table tbody td.blue { color: blue; }
-.datagrid table tbody td.grey { color: grey; }
-.datagrid table tbody td.lightgreen { color: LightGreen; }
-
-.datagrid table { border-collapse: collapse; text-align: left; width: 100%; }
-.datagrid { font: normal 12px/150% Georgia, Times New Roman, Times, serif; background: #fff; overflow: hidden; border: 1px solid #006699; -webkit-border-radius: 8px; -moz-border-radius: 8px; border-radius: 8px; }
-.datagrid table td, .datagrid table th { padding: 6px 10px; }
-.datagrid table thead th { background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #006699), color-stop(1, #00557F) );background:-moz-linear-gradient( center top, #006699 5%, #00557F 100% );filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#006699', endColorstr='#00557F');background-color:#006699; color:#FFFFFF; font-size: 16px; font-weight: bold; border-left: 1px solid #0070A8; }
-.datagrid table thead th a { color:#FFFFFF; }
-.datagrid table thead th:first-child { border: none; }
-.datagrid table tbody td { color: #00557F; border-left: 1px solid #E1EEF4;font-size: 14px;font-weight: normal; }
-.datagrid table tbody .alt td { background: #E1EEf4; color: #00557F; }
-.datagrid table tbody td:first-child { border-left: none; }
-.datagrid table tbody tr:last-child td { border-bottom: none; }
-.datagrid table tfoot td div { border-top: 1px solid #006699;background: #E1EEf4;}
-.datagrid table tfoot td { padding: 0; font-size: 14px }
-.datagrid table tfoot td div { padding: 2px; }
-.datagrid table tfoot td ul { margin: 0; padding:0; list-style: none; text-align: right; }
-.datagrid table tfoot  li { display: inline; }
-.datagrid table tfoot li a { text-decoration: none; display: inline-block;  padding: 2px 8px; margin: 1px;color: #FFFFFF;border: 1px solid #006699;-webkit-border-radius: 3px; -moz-border-radius: 3px; border-radius: 3px; background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #006699), color-stop(1, #00557F) );background:-moz-linear-gradient( center top, #006699 5%, #00557F 100% );filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#006699', endColorstr='#00557F');background-color:#006699; }
-.datagrid table tfoot ul.active, .datagrid table tfoot ul a:hover { text-decoration: none;border-color: #00557F; color: #FFFFFF; background: none; background-color:#006699; }
-div.dhtmlx_window_active, div.dhx_modal_cover_dv { position: fixed !important; }
+.header .logout { position: absolute; padding: 2px 8px 2px 8px; bottom: 13px; right: 20px; background-color: #F0F0F0; float: right; border-radius: 3px; }
+.header .logout a { font-weight: bold; font-size: 14px; color: #888; text-decoration: none;}
+.header .name { position: absolute; font-weight: bold; font-size: 24px; top: 30px; left: 20px; text-shadow: 0px 0px 8px #888; }
+.header .address { position: absolute; font-size: 14px; top: 70px; left: 20px; text-shadow: 0px 0px 6px #222; }
 
 
-.calendar-wrapper { padding-left: 10px; padding-right: 10px; }
+
+/* Main Page - Calendar View */
+
+.calendar-wrapper { position: fixed; top: 101px; bottom: 0px; left: 10px; right: 10px; color:#222; overflow: hidden; min-width: 960px; }
 .calendar-wrapper ul { margin: 0px; padding: 0px; }
 .calendar-wrapper li { margin: 0px; padding: 0px; width: 14.2857%; display: inline-block; float: left; }
 
-.calendar { margin: 0px; padding: 0px; min-width: 960px; position: absolute; top: 212px; bottom: 0px; left: 10px; right: 10px; overflow: hidden; -webkit-overflow-scrolling: touch; }
+.calendar-header { height: 36px; }
 
-.week .week-cell { text-align: right; font-weight: bold; height:19px; border-bottom: 1px solid #bbb; margin-left: 4px; margin-right: 4px; padding-left: 4px; padding-right: 4px;  }
-.calendar .calendar-cell { text-align: right; height: 128px; border-top: 1px solid #bbb; border-bottom: 1px solid #fff; margin-left: 4px; margin-right: 4px; padding-left: 4px; padding-right: 4px; }
-.calendar .today { border: 1px solid #80AED2; color: #80AED2; font-weight: bold; }
-
-.current-date { font-size: 20px; height:24px; width: 100%; text-align: right; padding-bottom: 10px; padding-top: 10px; }
+.current-date { position: absolute; top: 8px; right: 0px; font-size: 20px; height: 24px; }
 .current-month { font-weight: bold; }
 
-.buttons-panel { float: left; font-size: 14px; }
-.buttons-panel a { border: 1px solid #bbb; cursor: pointer; padding: 3px; }
+.buttons-panel { position: absolute; top: 10px; font-size: 14px; }
+.buttons-panel a { cursor: pointer; margin: 2px; }
 
-.header { padding-left: 10px; padding-right: 10px; height: 111px; }
+.week { height: 20px; }
+.week .week-cell { text-align: right; font-weight: bold; height:19px; border-bottom: 1px solid #bbb; margin-left: 4px; margin-right: 4px; padding-left: 4px; padding-right: 4px; }
 
-.dayview-wrapper { display: none; }
+.calendar { margin: 0px; padding: 0px; position: absolute; top: 55px; bottom: 0px; overflow: hidden; }
 
-hr { margin: 8px; }
+.calendar .calendar-cell { text-align: right; height: 128px; border-top: 1px solid #bbb; border-bottom: 1px solid #fff; margin-left: 4px; margin-right: 4px; padding-left: 4px; padding-right: 4px; }
+.calendar .today { border: 1px solid #E41A1E; color: #E41A1E; font-weight: bold; }
+
+
+
+/* Main Page - Day View */
+
+.dayview-wrapper { position: fixed; top: 101px; bottom: 0px; left: 10px; right: 10px; color:#222; min-width: 960px; }
+
+.dayview-header { height: 36px; }
+
+.daylist { position: absolute; top: 36px; bottom: 0px; left: 0px; right: 0px; overflow: scroll; -webkit-overflow-scrolling: touch; }
+
+.datagrid { border-bottom: 1px solid #E1EEF4; }
+
+.datagrid thead tr { border-bottom: 1px solid #E1EEF4; }
+
+.datagrid tbody tr.past td { text-decoration: line-through; }
+.datagrid tbody tr.past td:last-child { text-decoration: none; }
+.datagrid tbody tr:hover { background-color: #EBF5FA; }
+
+.datagrid tbody td.red { color: #c6003d; }
+.datagrid tbody td.green { color: #009677; }
+.datagrid tbody td.blue { color: #0077bf; }
+.datagrid tbody td.grey { color: grey; }
+.datagrid tbody td.lightgreen { color: #9ec400; }
+
+.datagrid { border-collapse: collapse; text-align: left; width: 100%; }
+.datagrid td, .datagrid th { padding: 6px 10px; }
+.datagrid thead th { color:#222; } 
+.datagrid thead th a { color:#222; }
+/*.datagrid thead th { background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #006699), color-stop(1, #00557F) );background:-moz-linear-gradient( center top, #006699 5%, #00557F 100% );filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#006699', endColorstr='#00557F');background-color:#006699; color:#FFFFFF; font-size: 14px; font-weight: bold; border-left: 1px solid #0070A8; }
+.datagrid thead th a { color:#FFFFFF; }*/
+.datagrid thead th:first-child { border: none; }
+.datagrid tbody td { color: #222; border-left: 1px solid #E1EEF4;font-size: 14px;font-weight: normal; }
+/*.datagrid tbody td { color: #00557F; border-left: 1px solid #E1EEF4;font-size: 14px;font-weight: normal; }*/
+.datagrid tbody .alt td { background: #E1EEf4; color: #00557F; }
+.datagrid tbody td:first-child { border-left: none; }
+.datagrid tbody tr:last-child td { border-bottom: none; }
+.datagrid tfoot td div { border-top: 1px solid #006699;background: #E1EEf4;}
+.datagrid tfoot td { padding: 0; font-size: 14px }
+.datagrid tfoot td div { padding: 2px; }
+.datagrid tfoot td ul { margin: 0; padding:0; list-style: none; text-align: right; }
+.datagrid tfoot  li { display: inline; }
+.datagrid tfoot li a { text-decoration: none; display: inline-block;  padding: 2px 8px; margin: 1px;color: #FFFFFF;border: 1px solid #006699;-webkit-border-radius: 3px; -moz-border-radius: 3px; border-radius: 3px; background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #006699), color-stop(1, #00557F) );background:-moz-linear-gradient( center top, #006699 5%, #00557F 100% );filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#006699', endColorstr='#00557F');background-color:#006699; }
+.datagrid tfoot ul.active, .datagrid tfoot ul a:hover { text-decoration: none;border-color: #00557F; color: #FFFFFF; background: none; background-color:#006699; }
+div.dhtmlx_window_active, div.dhx_modal_cover_dv { position: fixed !important; }
+
+.datagrid tbody tr td .attended-button {padding: 2px; font-size: 14px; font-weight: bold; background-color: #F0F0F0; color: #888; border-radius: 4px; cursor: pointer; text-align: center; }
+
+
+/* Login Page */
+
+.login-wrapper { text-align: center; }
+.login-wrapper table { margin-left: auto; margin-right: auto; }
+
+.hide { display:none; }
+.error { color:red; }

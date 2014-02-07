@@ -30,7 +30,7 @@ if ($merchantService->isLogin()) {
     <meta charset="UTF-8">
   </head>
   <body>
-    <div class="main-wrapper">
+    <div class="login-wrapper">
       <h1>LOGIN</h1>
       <hr>
       <form method="POST" name="loginForm" ng-submit="submit()" ng-controller="LoginCtrl" novalidate>

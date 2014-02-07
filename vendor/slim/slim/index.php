@@ -293,6 +293,11 @@ $app->group('/api', function () use($app){
 		}
 		if(sizeof($values) > 0){
 			DB::update('booking', $values, 'booking_id=%d', $bookingID);
+			if (!isset($ts)) {
+				$datetime = DB::queryFirstField('SELECT booking_ts FROM booking WHERE booking_id = %d', $bookingID);
+				$timeArr = strptime($datetime, '%Y-%m-%d %H:%M:%S');
+				$ts = mktime(intval($timeArr['tm_hour']), intval($timeArr['tm_min']), intval($timeArr['tm_sec']), intval($timeArr['tm_mon']) + 1 , intval($timeArr['tm_mday']) , intval($timeArr['tm_year'] + 1900));
+			}
 			$returnValue['result'] = true;
 			$returnValue['values'] = $values;
 			
@@ -301,6 +306,7 @@ $app->group('/api', function () use($app){
 			$message = array(
 				'topic'=>'1001',
 				'bookingId'=>$bookingID,
+				'bookingDate'=>date('Y-m-d H:i:s' , $ts),
 				'action'=>'update'
 			);
 			$sns->publish(array(
@@ -412,6 +418,7 @@ $app->group('/api', function () use($app){
 		$message = array(
 			'topic'=>'1001',
 			'bookingId'=>$result['bookingID'],
+			'bookingDate'=>date('Y-m-d H:i:s' , $ts),
 			'action'=>'new'
 		);
 		$sns->publish(array(
@@ -546,17 +553,17 @@ $app->group('/api', function () use($app){
 		echo json_encode($returnValue);
 	});
 
-	$app->get('/mms/bookings/:merchantID', function($merchantID) use ($app){
+	$app->get('/mms/bookings/:merchantID/:bookingDate', function($merchantID, $bookingDate) use ($app){
 		$returnValue = array();
 		if ($merchantID != null) {
-			$returnValue = DB::query("SELECT IF(b.is_guest=0, CONCAT(u.first_name, ' ', u.last_name), CONCAT(b.first_name, ' ', b.last_name)) name, u.phone, b.is_guest, b.booking_id, b.booking_ts, b.no_of_participants, b.special_request, b.status FROM booking b JOIN user u ON b.user_id = u.user_id WHERE merchant_id = %d", $merchantID);
+			$returnValue = DB::query("SELECT IF(b.is_guest=0, CONCAT(u.first_name, ' ', u.last_name), CONCAT(b.first_name, ' ', b.last_name)) name, u.phone, b.is_guest, b.booking_id, b.booking_ts, b.no_of_participants, b.special_request, b.status FROM booking b JOIN user u ON b.user_id = u.user_id WHERE merchant_id = %d AND date(booking_ts) = %s", $merchantID, $bookingDate);
 		}
 		echo json_encode($returnValue);
 	});
-	$app->get('/mms/bookings/:merchantID/:bookingID', function($merchantID, $bookingID) use ($app){
+	$app->get('/mms/bookings/:bookingID', function($bookingID) use ($app){
 		$returnValue = array();
-		if ($merchantID != null && $bookingID != null) {
-			$returnValue = DB::query("SELECT IF(b.is_guest=1, CONCAT(u.first_name, ' ', u.last_name), CONCAT(b.first_name, ' ', b.last_name)) name, u.phone, b.is_guest, b.booking_id, b.booking_ts, b.no_of_participants, b.special_request, b.status FROM booking b JOIN user u ON b.user_id = u.user_id WHERE merchant_id = %d AND booking_id = %d", $merchantID, $bookingID);
+		if ($bookingID != null) {
+			$returnValue = DB::query("SELECT IF(b.is_guest=0, CONCAT(u.first_name, ' ', u.last_name), CONCAT(b.first_name, ' ', b.last_name)) name, u.phone, b.is_guest, b.booking_id, b.booking_ts, b.no_of_participants, b.special_request, b.status FROM booking b JOIN user u ON b.user_id = u.user_id WHERE booking_id = %d", $bookingID);
 		}
 		echo json_encode($returnValue);
 	});
