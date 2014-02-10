@@ -33,7 +33,7 @@ $merchantInfo = json_decode(HttpService::get($resourceUri));
 			<div class="header-background"></div>
 	    	<div class="header">
 	    		<div class="name"><?php echo $merchantInfo->RESTAURANT_NAME ?></div>
-				<div class="address"><?php echo ucwords(strtolower($merchantInfo->RESTAURANT_ADDRESS)) ?></div>
+				<div class="address"><a href="http://maps.google.com/maps?q=<?php echo $merchantInfo->RESTAURANT_LAT.",".$merchantInfo->RESTAURANT_LONG ?>"><?php echo ucwords(strtolower($merchantInfo->RESTAURANT_ADDRESS)) ?></a></div>
 				<div class="notification" ng-controller="NotificationCtrl"><a>{{notification.message}}</a></div>
 				<div class="logout"><a href="logout.php">Log Out</a></div>
 	    	</div>
@@ -88,14 +88,20 @@ $merchantInfo = json_decode(HttpService::get($resourceUri));
 							<tr>
 								<th><a href="" ng-click="predicate='booking_ts'; reverse=!reverse">Time</a></th>
 								<th><a href="" ng-click="predicate='status'; reverse=!reverse">Status</a></th>
-								<th><a href="" ng-click="predicate='name'; reverse=!reverse">Customer Name</a></th>
-								<th>Phone Number</th>
-								<th><a href="" ng-click="predicate='no_of_participants'; reverse=!reverse">No. of Participants</a></th>
+								<th><a href="" ng-click="predicate='name'; reverse=!reverse">Customer</a></th>
+								<th>Phone</th>
+								<th><a href="" ng-click="predicate='no_of_participants'; reverse=!reverse">Participants</a></th>
 								<th>Special Request</th>
-								<th>Action</th>
+								<th></th>
 							</tr>
 						</thead>
 						<tbody>
+							<tr ng-show="loading">
+								<td colspan="7">Loading...</td>
+							</tr>
+							<tr ng-show="!loading && bookings.length==0">
+								<td colspan="7">No booking found</td>
+							</tr>
 							<tr ng-repeat="booking in bookings | orderBy:predicate:reverse" class="bookingRow" booking-row ng-class="{'past':booking.past||booking.status==2}">
 								<td>{{booking.booking_ts | bookingDatetime}}</td>
 								<td ng-class="{'-1':'red', '0':'blue', '1':'green', '2':'lightgreen'}[booking.status]">{{booking.status | bookingStatus}}</td>

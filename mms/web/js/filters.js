@@ -26,6 +26,6 @@ angular.module('mmsFilters', []).filter('bookingStatus', function() {
 		var tArr = arr[1].split(':');
 		var d = new Date(dArr[0], dArr[1]-1, dArr[2], tArr[0], tArr[1], tArr[2]);
 		// console.log(d);
-		return angularDateFilter(d.getTime(), 'medium');
+		return angularDateFilter(d.getTime(), 'shortTime');
    };
 });

@@ -1,6 +1,6 @@
 var mmsControllers = angular.module('mmsControllers', []);
-
 var monthNames = [ "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ];
+var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
 Date.prototype.yyyymmdd = function() {
 	var yyyy = this.getFullYear().toString();
@@ -14,17 +14,24 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 		// Pre-set the predicate (sorting) field
 		$scope.predicate = 'booking_ts';		
 		$scope.bookings = new Array();
+		// $scope.loading = true;
 
 		
 		$rootScope.$on('showDayView', function(event, caldate, empty) {
 			var date = caldate.date;
-			if (!empty && (!$scope.current || $scope.current.date.getTime() != date.getTime())) {
+			if (!$scope.current || $scope.current.date.getTime() != date.getTime()) {
 				$scope.current = {year:date.getFullYear(), month:monthNames[date.getMonth()], day:date.getDate(), date:caldate.date};
+				$scope.loading = true;
 				$scope.bookings = new Array();
-				$scope.bookings = Booking.getBookings({date:date.yyyymmdd()});
-				$scope.bookings.$promise.then(function(newBookings) {
-					$scope.checkTime(newBookings);
-				});
+				if (!empty) {
+					$scope.bookings = Booking.getBookings({date:date.yyyymmdd()});
+					$scope.bookings.$promise.then(function(newBookings) {
+						$scope.loading = false;
+						$scope.checkTime(newBookings);
+					});
+				} else {
+					$scope.loading = false;
+				}
 			}
 			$scope.show = true;
 		});
@@ -142,7 +149,7 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 })
 .controller('CalendarCtrl', ['$scope', 'Booking', '$rootScope', 
 	function($scope, Booking, $rootScope) {
-		var offScreenRow = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)?5:20;
+		var offScreenRow = isMobile?5:20;
 		var rowHeight = 130;
 		var today = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate(), 0, 0, 0);
 		var rendered = false;
@@ -177,6 +184,10 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 		});
 		$scope.$on('mousewheel', function(event, wheelEvent) {
 			var scrollY = Math.abs(wheelEvent.deltaY)>100?(wheelEvent.deltaY<0?-100:100):wheelEvent.deltaY;
+			if (!/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mac/i.test(navigator.platform) && wheelEvent.deltaFactor > 0) {
+				console.log(wheelEvent);
+				// scrollY *= wheelEvent.deltaFactor;
+			}
 			jQuery('.calendar').scrollTop(jQuery('.calendar').scrollTop()-scrollY);
 			var before = jQuery('.calendar').scrollTop() < rowHeight*offScreenRow;
 			if (Math.abs(jQuery('.calendar').scrollTop() - rowHeight*offScreenRow) >= rowHeight) {
@@ -295,21 +306,23 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 ])
 .directive('calendarView', function() {
 	return function(scope, element, attrs) {
-		jQuery(element).kinetic({
-			filterTarget: function(target, e){
-				if (e.type == 'touchstart') {
-					jQuery(target).data('cancel', false);
-					setTimeout(function() {
-						jQuery(target).data('cancel', true);
-					}, 150);
-				} else if (e.type == 'touchend') {
-					if (!jQuery(target).data('cancel')) {
-						jQuery(target).click();
+		if (isMobile) {
+			jQuery(element).kinetic({
+				filterTarget: function(target, e){
+					if (e.type == 'touchstart') {
+						jQuery(target).data('cancel', false);
+						setTimeout(function() {
+							jQuery(target).data('cancel', true);
+						}, 150);
+					} else if (e.type == 'touchend') {
+						if (!jQuery(target).data('cancel')) {
+							jQuery(target).click();
+						}
 					}
+					return true;
 				}
-				return true;
-			}
 		});
+		}
 		jQuery(element).on('scroll', function() {
 			scope.$emit('scroll');
 		});
