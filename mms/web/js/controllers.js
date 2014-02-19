@@ -121,6 +121,7 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 ])
 .controller('LoginCtrl', ['$scope',
 	function($scope) {
+		$scope.merchantId = '2214036464';
 		$scope.submit = function() {
 			if ($scope.loginForm.$valid) {
 				jQuery('form').submit();
