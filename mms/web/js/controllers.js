@@ -14,8 +14,6 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 		// Pre-set the predicate (sorting) field
 		$scope.predicate = 'booking_ts';		
 		$scope.bookings = new Array();
-		// $scope.loading = true;
-
 		
 		$rootScope.$on('showDayView', function(event, caldate, empty) {
 			var date = caldate.date;
@@ -26,6 +24,8 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 				if (!empty) {
 					$scope.bookings = Booking.getBookings({date:date.yyyymmdd()});
 					$scope.bookings.$promise.then(function(newBookings) {
+						/** To be replaced: Server Timestamp **/
+						$rootScope.lastResponseTs = Math.floor(new Date().getTime()/1000);
 						$scope.loading = false;
 						$scope.checkTime(newBookings);
 					});
@@ -57,7 +57,6 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 			});
 		};
 		
-		// Listen from WebSocket server for new / update records
 		$rootScope.$on('newBooking', function(event, json) {
 			var arr = json.bookingDate.split(' ');
 			var dArr = arr[0].split('-');
@@ -78,13 +77,30 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 			var d = new Date(dArr[0], dArr[1]-1, dArr[2], 0, 0, 0);
 			if ($scope.current && d.getTime() == $scope.current.date.getTime()) {
 				Booking.getBookings({bookingId:json.bookingId}).$promise.then(function(newBookings) {
-					angular.forEach($scope.bookings, function(value1, key1) {
-						angular.forEach(newBookings, function(value2, key2) {
-							if (value1.booking_id == value2.booking_id) {
-								angular.forEach(value1, function(value, key) {
-									value1[key] = value2[key];
-								});
-								value1['flash'] = true;
+					/** To be replaced: Server Timestamp **/
+					$rootScope.lastResponseTs = Math.floor(new Date().getTime()/1000);
+					angular.forEach($scope.bookings, function(oBooking, key) {
+						angular.forEach(newBookings, function(nBooking, key2) {
+							if (oBooking.booking_id == nBooking.booking_id) {
+								nBooking.flash = true;
+								$scope.bookings[key] = nBooking;
+							}
+						});
+					});
+				});
+			}
+		});
+		$rootScope.$on('wake', function() {
+			if ($scope.show) {
+				Booking.getBookings({date:$scope.current.date.yyyymmdd(), lastResponseTs:$rootScope.lastResponseTs}).$promise.then(function(bookings) {
+					/** To be replaced: Server Timestamp **/
+					$rootScope.lastResponseTs = Math.floor(new Date().getTime()/1000);
+					$scope.checkTime(bookings);
+					angular.forEach($scope.bookings, function(oBooking, key) {
+						angular.forEach(bookings, function(nBooking, key2) {
+							if (oBooking.booking_id == nBooking.booking_id) {
+								nBooking.flash = true;
+								$scope.bookings[key] = nBooking;
 							}
 						});
 					});
@@ -157,7 +173,7 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 		var intermediateTime;
 
 		$scope.show = true;
-		$scope.loadPercentages = new Array();
+		$scope.occupancyRates = new Array();
 		
 		$scope.current = {month:monthNames[today.getMonth()], year:today.getFullYear(), date:today};
 		$rootScope.$on('showCalendar', function() {
@@ -202,7 +218,10 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 			$scope.$digest();
 		});
 		$rootScope.$on('newBooking', function() {
-			$scope.refreshLoads();
+			$scope.refreshOccupancyRate();
+		});
+		$rootScope.$on('wake', function() {
+			$scope.refreshOccupancyRate();
 		});
 		
 		$scope.updateMonth = function() {
@@ -234,11 +253,11 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 		
 		$scope.genWeek = function(target, start, before, clear) {
 			for (j=0; j<7; j++) {
-				var loadPercentage = $scope.loadPercentages[start.getTime()];
+				var occupancyRate = $scope.occupancyRates[start.getTime()];
 				var caldate = {
 					date:new Date(start.getTime()),
 					displayDate:start.getDate()==1?start.getDate()+' '+monthNames[start.getMonth()]:start.getDate(),
-					bgColor:$scope.getBgColor(loadPercentage)
+					bgColor:$scope.getBgColor(occupancyRate)
 				};
 				if (start.getTime()==today.getTime()) {
 					caldate.className = 'today';
@@ -273,34 +292,36 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 		
 		$scope.dateClick = function(caldate) {
 			$scope.show = false;
-			$rootScope.$emit('showDayView', caldate, $scope.loadPercentages[caldate.date.getTime()]?false:true);
+			$rootScope.$emit('showDayView', caldate, $scope.occupancyRates[caldate.date.getTime()]?false:true);
 		};
 		
-		$scope.getBgColor = function(loadPercentage) {
-			var bgColor = "rgba(255, 0, 0, "+loadPercentage+")";
-			if (loadPercentage <= 1/3) {
-				bgColor = "rgba(0, 255, 0, "+loadPercentage+")";
-			} else if (loadPercentage <= 2/3) {
-				bgColor = "rgba(255, 255, 0, "+loadPercentage+")";
+		$scope.getBgColor = function(occupancyRate) {
+			var bgColor = "rgba(255, 0, 0, "+occupancyRate+")";
+			if (occupancyRate <= 1/3) {
+				bgColor = "rgba(0, 255, 0, "+occupancyRate+")";
+			} else if (occupancyRate <= 2/3) {
+				bgColor = "rgba(255, 255, 0, "+occupancyRate+")";
 			}
 			return {"background-color":bgColor};
 		};
-		$scope.refreshLoads = function() {
-			Booking.getLoads().$promise.then(function(loads) {
-				angular.forEach(loads, function(value, key) {
+		$scope.refreshOccupancyRate = function() {
+			Booking.getOccupancyRate().$promise.then(function(occupancy) {
+				/** To be replaced: Server Timestamp **/
+				$rootScope.lastResponseTs = Math.floor(new Date().getTime()/1000);
+				angular.forEach(occupancy, function(value, key) {
 					var dArr = value.d.split('-');
 					var d = new Date(dArr[0], dArr[1]-1, dArr[2], 0, 0, 0);
-					$scope.loadPercentages[d.getTime()] = value.cnt/30;
+					$scope.occupancyRates[d.getTime()] = value.cnt/30;
 				});
 				angular.forEach($scope.caldates, function(value, key) {
-					var loadPercentage = $scope.loadPercentages[value.date.getTime()];
-					value.bgColor = $scope.getBgColor(loadPercentage);
+					var occupancyRate = $scope.occupancyRates[value.date.getTime()];
+					value.bgColor = $scope.getBgColor(occupancyRate);
 				});
 			});
 		};
 		
 		$scope.genForDate(today);
-		$scope.refreshLoads();
+		$scope.refreshOccupancyRate();
 		
 	}
 ])
@@ -348,7 +369,7 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 			var dArr = arr[0].split('-');
 			var tArr = arr[1].split(':');
 			var d = new Date(dArr[0], dArr[1]-1, dArr[2], tArr[0], tArr[1], tArr[2]);
-			$scope.notification.message = 'A new booking is made on ' + d.getDate() + ' ' + monthNames[d.getMonth()] + ' ' + d.getFullYear();
+			$scope.notification.message = 'A new booking on ' + d.getDate() + ' ' + monthNames[d.getMonth()] + ' ' + d.getFullYear();
 			jQuery('.notification').slideUp(0).slideDown().delay(3000).slideUp();
 		});
 	}

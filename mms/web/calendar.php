@@ -26,14 +26,14 @@ $merchantInfo = json_decode(HttpService::get($resourceUri));
 		<link rel="stylesheet" type="text/css" href="css/style.css">
 		<link rel="stylesheet" href="http://code.jquery.com/ui/1.9.2/themes/smoothness/jquery-ui.css">
 		<meta charset="UTF-8">
-		<meta name="viewport" content="user-scalable=no, minimal-ui" />
+		<meta name="viewport" content="user-scalable=no, minimal-ui, target-densitydpi=device-dpi" />
 	</head>
 	<body>
 		<div class="main-wrapper">
 			<div class="header-background"></div>
 	    	<div class="header">
 	    		<div class="name"><?php echo $merchantInfo->RESTAURANT_NAME ?></div>
-				<div class="address"><a href="http://maps.google.com/maps?q=<?php echo $merchantInfo->RESTAURANT_LAT.",".$merchantInfo->RESTAURANT_LONG ?>"><?php echo ucwords(strtolower($merchantInfo->RESTAURANT_ADDRESS)) ?></a></div>
+				<div class="address"><a href="http://maps.apple.com/?ll=<?php echo $merchantInfo->RESTAURANT_LAT.",".$merchantInfo->RESTAURANT_LONG ?>"><?php echo ucwords(strtolower($merchantInfo->RESTAURANT_ADDRESS)) ?></a></div>
 				<div class="notification" ng-controller="NotificationCtrl"><a>{{notification.message}}</a></div>
 				<div class="logout"><a href="logout.php">Log Out</a></div>
 	    	</div>
