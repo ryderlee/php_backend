@@ -195,10 +195,9 @@ $app->group('/api', function () use($app){
 		$expireTs = $app->request()->params('expireTs');
 		$email = strtolower($app->request()->params('email'));
 
-		$result['result'] = false;
-		$row = DB::queryFirstRow("SELECT * FROM user u LEFT JOIN user_social_network usn ON u.user_id = usn.user_id WHERE u.email = %s OR (usn.social_network_id = %s AND usn.social_network_user_id = %s)", $email, $snId, $snUserId);
+		$row = DB::queryFirstRow("SELECT u.*, usn.social_network_user_id FROM user u LEFT JOIN user_social_network usn ON u.user_id = usn.user_id WHERE u.email = %s OR (usn.social_network_id = %s AND usn.social_network_user_id = %s) ORDER BY usn.social_network_id = %s AND usn.social_network_user_id = %s DESC", $email, $snId, $snUserId, $snId, $snUserId);
 		if (isset($row)) {
-			if (empty($row['social_network_id'])) {
+			if ($row['is_guest'] == 1) {
 				DB::update('user', array(
 					'is_guest' => 0,
 				), 'is_guest=%d AND user_id=%d', 1, $row['user_id']);
@@ -212,7 +211,7 @@ $app->group('/api', function () use($app){
 				'social_network_firstname' => $firstName,
 				'social_network_lastname' => $lastName,
 				'access_token' => $token,
-				'access_token_expire_ts' => $expireTs,
+				'access_token_expire_ts' => DB::sqleval('FROM_UNIXTIME('.$expireTs.')'),
 				'status' => 1,
 				'create_ts' => DB::sqleval('NOW()')
 			), array(
@@ -237,12 +236,11 @@ $app->group('/api', function () use($app){
 				'email' => $email,
 				'first_name' => $firstName, 
 				'last_name' => $lastName,
-				'phone' => $phone,
 				'create_ts' => DB::sqleval('NOW()')
 			));
 			$userId = DB::insertId();
 			DB::insert('user_social_network', array(
-				'user_id' => $row['user_id'],
+				'user_id' => $userId,
 				'social_network_id' => $snId,
 				'social_network_user_id' => $snUserId,
 				'social_network_username' => $username,
@@ -250,7 +248,7 @@ $app->group('/api', function () use($app){
 				'social_network_firstname' => $firstName,
 				'social_network_lastname' => $lastName,
 				'access_token' => $token,
-				'access_token_expire_ts' => $expireTs,
+				'access_token_expire_ts' => DB::sqleval('FROM_UNIXTIME('.$expireTs.')'),
 				'status' => 1,
 				'create_ts' => DB::sqleval('NOW()')
 			));
@@ -263,7 +261,9 @@ $app->group('/api', function () use($app){
 				'token' => '1231231234'
 			);
 		}
-		$result['values'] = $values;
+		$result['result'] = true;
+		$result['user'] = $values;
+		echo json_encode($result);
 	});
 
 	$app->post('/users', function() use ($app){
