@@ -183,9 +183,91 @@ $app->group('/api', function () use($app){
 		//echo json_encode($returnValue, JSON_PRETTY_PRINT);
 		//echo $output;
 	});
+	
+	$app->post('/users/sn/:snId', function($snId) use ($app) { // sn: social network
+		$result = array();
+		
+		$snUserId = $app->request()->params('snUserId');
+		$username = $app->request()->params('username');
+		$firstName = $app->request()->params('firstName');
+		$lastName = $app->request()->params('lastName');
+		$token = $app->request()->params('token');
+		$expireTs = $app->request()->params('expireTs');
+		$email = strtolower($app->request()->params('email'));
+
+		$result['result'] = false;
+		$row = DB::queryFirstRow("SELECT * FROM user u LEFT JOIN user_social_network usn ON u.user_id = usn.user_id WHERE u.email = %s OR (usn.social_network_id = %s AND usn.social_network_user_id = %s)", $email, $snId, $snUserId);
+		if (isset($row)) {
+			if (empty($row['social_network_id'])) {
+				DB::update('user', array(
+					'is_guest' => 0,
+				), 'is_guest=%d AND user_id=%d', 1, $row['user_id']);
+			}
+			DB::insertUpdate('user_social_network', array(
+				'user_id' => $row['user_id'],
+				'social_network_id' => $snId,
+				'social_network_user_id' => $snUserId,
+				'social_network_username' => $username,
+				'social_network_email' => $email,
+				'social_network_firstname' => $firstName,
+				'social_network_lastname' => $lastName,
+				'access_token' => $token,
+				'access_token_expire_ts' => $expireTs,
+				'status' => 1,
+				'create_ts' => DB::sqleval('NOW()')
+			), array(
+				'social_network_username' => $username,
+				'social_network_email' => $email,
+				'social_network_firstname' => $firstName,
+				'social_network_lastname' => $lastName,
+				'access_token' => $token,
+				'access_token_expire_ts' => $expireTs,
+				'status' => 1
+			));
+			$values = array(
+				'user_id' => $row['user_id'],
+				'email' => $row['email'],
+				'first_name' => $firstName,
+				'last_name' => $lastName,
+				'phone' => $row['phone']
+			);
+		} else {
+			DB::insert('user', array(
+				'is_guest' => 0,
+				'email' => $email,
+				'first_name' => $firstName, 
+				'last_name' => $lastName,
+				'phone' => $phone,
+				'create_ts' => DB::sqleval('NOW()')
+			));
+			$userId = DB::insertId();
+			DB::insert('user_social_network', array(
+				'user_id' => $row['user_id'],
+				'social_network_id' => $snId,
+				'social_network_user_id' => $snUserId,
+				'social_network_username' => $username,
+				'social_network_email' => $email,
+				'social_network_firstname' => $firstName,
+				'social_network_lastname' => $lastName,
+				'access_token' => $token,
+				'access_token_expire_ts' => $expireTs,
+				'status' => 1,
+				'create_ts' => DB::sqleval('NOW()')
+			));
+			$values = array(
+				'user_id' => $userId,
+				'email' => $email,
+				'first_name' => $firstName,
+				'last_name' => $lastName,
+				'phone' => '',
+				'token' => '1231231234'
+			);
+		}
+		$result['values'] = $values;
+	});
 
 	$app->post('/users', function() use ($app){
-		$result = array();	
+		$result = array();
 
 		//$userID = 0;
 		//$merchantID = 0;
@@ -206,7 +288,7 @@ $app->group('/api', function () use($app){
 			'phone' => $phone,
 			'create_ts' => DB::sqleval('NOW()')
 		));
-		if (DB::insertId() == 0) {
+		if (DB::insertId() == 0) { // user exist, update it
 			DB::update('user', array(
 				'password' => $password,
 				'is_guest' => 0,
@@ -562,6 +644,13 @@ $app->group('/api', function () use($app){
 		}
 		echo json_encode($returnValue);
 	});
+	$app->get('/mms/bookings/:merchantID/:bookingDate/:lastResponseTs', function($merchantID, $bookingDate, $lastResponseTs) use ($app){
+		$returnValue = array();
+		if ($merchantID != null) {
+			$returnValue = DB::query("SELECT IF(b.is_guest=0, CONCAT(u.first_name, ' ', u.last_name), CONCAT(b.first_name, ' ', b.last_name)) name, u.phone, b.is_guest, b.booking_id, b.booking_ts, b.no_of_participants, b.special_request, b.status FROM booking b JOIN user u ON b.user_id = u.user_id WHERE merchant_id = %d AND date(booking_ts) = %s AND UNIX_TIMESTAMP(b.last_modified) >= %d", $merchantID, $bookingDate, $lastResponseTs);
+		}
+		echo json_encode($returnValue);
+	});
 	$app->get('/mms/bookings/:bookingID', function($bookingID) use ($app){
 		$returnValue = array();
 		if ($bookingID != null) {
@@ -569,7 +658,7 @@ $app->group('/api', function () use($app){
 		}
 		echo json_encode($returnValue);
 	});
-	$app->get('/mms/loads/:merchantID', function($merchantID) use ($app){
+	$app->get('/mms/occupancy/:merchantID', function($merchantID) use ($app){
 		$returnValue = array();
 		if ($merchantID != null) {
 			$returnValue = DB::query("SELECT date(booking_ts) d, count(*) cnt FROM booking b WHERE merchant_id = %d GROUP BY d", $merchantID);
