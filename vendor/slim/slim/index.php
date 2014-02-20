@@ -198,7 +198,12 @@ $app->group('/api', function () use($app){
 		$currentUserId = $app->request()->params('userId');
 
 		$result['result'] = false;
-		$row = DB::queryFirstRow("SELECT u.*, usn.social_network_user_id FROM user u LEFT JOIN user_social_network usn ON u.user_id = usn.user_id WHERE u.email = %s OR (usn.social_network_id = %s AND usn.social_network_user_id = %s) ORDER BY usn.social_network_id = %s AND usn.social_network_user_id = %s DESC", $email, $snId, $snUserId, $snId, $snUserId);
+		
+		if (is_null($currentUserId)) {
+			$row = DB::queryFirstRow("SELECT u.*, usn.social_network_user_id FROM user u LEFT JOIN user_social_network usn ON u.user_id = usn.user_id WHERE u.email = %s OR (usn.social_network_id = %s AND usn.social_network_user_id = %s) ORDER BY usn.social_network_id = %s AND usn.social_network_user_id = %s DESC", $email, $snId, $snUserId, $snId, $snUserId);
+		} else {
+			$row = DB::queryFirstRow("SELECT u.*, usn.social_network_user_id FROM user u LEFT JOIN user_social_network usn ON u.user_id = usn.user_id WHERE u.email = %s OR u.user_id = %d OR (usn.social_network_id = %s AND usn.social_network_user_id = %s) ORDER BY usn.social_network_id = %s AND usn.social_network_user_id = %s DESC, u.email = %s DESC", $email, $currentUserId, $snId, $snUserId, $snId, $snUserId, $email);
+		}
 		if (isset($row)) {
 			if (is_null($currentUserId) || $currentUserId == $row['user_id']) {
 				if ($row['is_guest'] == 1) {
@@ -234,6 +239,7 @@ $app->group('/api', function () use($app){
 					'last_name' => $lastName,
 					'phone' => $row['phone']
 				);
+				$result['result'] = true;
 			}
 		} else {
 			DB::insert('user', array(
@@ -265,8 +271,8 @@ $app->group('/api', function () use($app){
 				'phone' => '',
 				'token' => '1231231234'
 			);
+			$result['result'] = true;
 		}
-		$result['result'] = true;
 		$result['user'] = $values;
 		echo json_encode($result);
 	});
