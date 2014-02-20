@@ -344,18 +344,21 @@ $app->group('/api', function () use($app){
 		$result = array();
 		$result['result'] = false;
 		if($action == "login"){
-			$returnValue = DB::queryFirstRow("SELECT * FROM user WHERE email = %s AND password = %s" , $email, $password);
+			$row = DB::queryFirstRow("SELECT u.*, usn.access_token, usn.status FROM user u LEFT JOIN user_social_network usn ON u.user_id = usn.user_id AND usn.status = 1 WHERE email = %s AND password = %s" , $email, $password);
 			if(!is_null($returnValue)){
 				$result['result'] = true;
-				$result['user']['first_name'] = $returnValue['first_name'];
-				$result['user']['last_name'] = $returnValue['last_name'];
-				$result['user']['email'] = $returnValue['email'];
-				$result['user']['phone'] = $returnValue['phone'];
-				$result['user']['user_id'] = $returnValue['user_id'];
-				$result['user']['token'] = '1231231234';
+				$values = array(
+					'first_name' => $row['first_name'],
+					'last_name' => $row['last_name'],
+					'email' => $row['email'],
+					'phone' => $row['phone'],
+					'user_id' => $row['user_id'],
+					'token' => '1231231234',
+					'access_token' => $row['access_token']
+				);
+				$result['user'] = $values;
 			}
 		}
-		//var_dump($rs);
 		echo json_encode($result);
 	});
 
