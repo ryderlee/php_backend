@@ -345,7 +345,7 @@ $app->group('/api', function () use($app){
 		$result['result'] = false;
 		if($action == "login"){
 			$row = DB::queryFirstRow("SELECT u.*, usn.access_token, usn.status FROM user u LEFT JOIN user_social_network usn ON u.user_id = usn.user_id AND usn.status = 1 WHERE email = %s AND password = %s" , $email, $password);
-			if(!is_null($returnValue)){
+			if(!is_null($row)){
 				$result['result'] = true;
 				$values = array(
 					'first_name' => $row['first_name'],
