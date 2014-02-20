@@ -54,6 +54,10 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 				if (d.getTime() <= now.getTime()) {
 					value.past = true;
 				}
+				if (value.social_network_user_id) {
+					value.picture = "http://graph.facebook.com/"+value.social_network_user_id+"/picture?type=square";
+					value.pictureSmall = "http://graph.facebook.com/"+value.social_network_user_id+"/picture?type=square&width=29&height=29";
+				}
 			});
 		};
 		
@@ -145,10 +149,11 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 			}
 		});
 		
-		$(element).tooltip({
+		jQuery(element).tooltip({
 			position: {
-				my: "left",
-				at: "right+10 top",
+				my: "bottom",
+				at: "top",
+				// at: "right+10 top",
 				using: function( position, feedback ) {
 					$( this ).css( position );
 					$( "<div>" ).appendTo( this );

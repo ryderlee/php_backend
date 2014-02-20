@@ -64,6 +64,9 @@ html, body { font-family: Georgia; margin: 0px; padding: 0px; overflow: hidden; 
 
 .datagrid { border-collapse: collapse; text-align: left; width: 100%; }
 .datagrid td, .datagrid th { padding: 6px 10px; }
+.datagrid td.customer { padding: 0px; }
+.datagrid td.customer .picture { width: 36px; height: 29px; float: left; }
+.datagrid td.customer .name { padding-top: 6px; }
 .datagrid thead th { color:#222; } 
 .datagrid thead th a { color:#222; }
 /*.datagrid thead th { background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #006699), color-stop(1, #00557F) );background:-moz-linear-gradient( center top, #006699 5%, #00557F 100% );filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#006699', endColorstr='#00557F');background-color:#006699; color:#FFFFFF; font-size: 14px; font-weight: bold; border-left: 1px solid #0070A8; }

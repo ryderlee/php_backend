@@ -105,7 +105,7 @@ $merchantInfo = json_decode(HttpService::get($resourceUri));
 							<tr ng-repeat="booking in bookings | orderBy:predicate:reverse" class="bookingRow" booking-row ng-class="{'past':booking.past||booking.status==2}">
 								<td>{{booking.booking_ts | bookingDatetime}}</td>
 								<td ng-class="{'-1':'red', '0':'blue', '1':'green', '2':'lightgreen'}[booking.status]">{{booking.status | bookingStatus}}</td>
-								<td><a class="bookingName" title="Name:{{booking.name}} <br/> Phone:{{booking.phone}}">{{booking.name}}</a></td>
+								<td class="customer" title="<img src='{{booking.picture}}'><br/> Name:{{booking.name}} <br/> Phone:{{booking.phone}}"><div class="picture"><img ng-if="booking.pictureSmall != null" ng-src="{{booking.pictureSmall}}"></div><div class="name">{{booking.name}}</div></td>
 								<td>{{booking.phone}}</td>
 								<td>{{booking.no_of_participants}}</td>
 								<td>{{booking.special_request}}</td>
