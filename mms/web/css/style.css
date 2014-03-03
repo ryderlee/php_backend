@@ -1,4 +1,4 @@
-html, body { font-family: Georgia; margin: 0px; padding: 0px; overflow: hidden; }
+html, body { font-family: Georgia; margin: 0px; padding: 0px; overflow: hidden; min-width: 960px; }
 
 /* Main Page - Header */
 
@@ -9,10 +9,13 @@ html, body { font-family: Georgia; margin: 0px; padding: 0px; overflow: hidden; 
 .header .notification a { font-weight: bold; font-size: 14px; color: #555 }
 
 .header .logout { position: absolute; padding: 2px 8px 2px 8px; bottom: 13px; right: 20px; background-color: #F0F0F0; float: right; border-radius: 3px; }
-.header .logout a { font-weight: bold; font-size: 14px; color: #888; text-decoration: none;}
+.header .logout a { font-weight: bold; font-size: 14px; color: #888; text-decoration: none; }
 .header .name { position: absolute; font-weight: bold; font-size: 24px; top: 30px; left: 20px; text-shadow: 0px 0px 8px #888; }
 .header .address { position: absolute; font-size: 14px; top: 70px; left: 20px; text-shadow: 0px 0px 6px #222; }
 .header .address a { color: #F0F0F0; }
+
+.lightbutton { padding: 3px 4px 3px 4px; background-color: #F0F0F0; border-radius: 3px; text-align: center; cursor: pointer; float: left; margin: 0px 3px 0px 3px; height: 20px; }
+.lightbutton a { font-weight: bold; font-size: 14px; color: #888; text-decoration: none; cursor: pointer; margin: 5px; }
 
 
 
@@ -22,18 +25,17 @@ html, body { font-family: Georgia; margin: 0px; padding: 0px; overflow: hidden; 
 .calendar-wrapper ul { margin: 0px; padding: 0px; }
 .calendar-wrapper li { margin: 0px; padding: 0px; width: 14.2857%; display: inline-block; float: left; }
 
-.calendar-header { height: 36px; }
+.calendar-header { height: 42px; }
 
 .current-date { position: absolute; top: 8px; right: 0px; font-size: 20px; height: 24px; }
 .current-month { font-weight: bold; }
 
 .buttons-panel { position: absolute; top: 10px; font-size: 16px; font-weight: bold; -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none; }
-.buttons-panel a { cursor: pointer; margin: 2px; }
 
 .week { height: 20px; }
 .week .week-cell { text-align: right; font-weight: bold; height:19px; border-bottom: 1px solid #bbb; margin-left: 4px; margin-right: 4px; padding-left: 4px; padding-right: 4px; }
 
-.calendar { margin: 0px; padding: 0px; position: absolute; top: 55px; bottom: 0px; overflow: hidden; }
+.calendar { margin: 0px; padding: 0px; position: absolute; top: 61px; bottom: 0px; overflow: hidden; }
 
 .calendar .calendar-cell { text-align: right; height: 128px; border-top: 1px solid #bbb; border-bottom: 1px solid #fff; margin-left: 4px; margin-right: 4px; padding-left: 4px; padding-right: 4px; }
 .calendar .today { border: 1px solid #E41A1E; color: #E41A1E; font-weight: bold; }
@@ -42,11 +44,11 @@ html, body { font-family: Georgia; margin: 0px; padding: 0px; overflow: hidden; 
 
 /* Main Page - Day View */
 
-.dayview-wrapper { position: fixed; top: 101px; bottom: 0px; left: 10px; right: 10px; color:#222; min-width: 960px; }
+.dayview-wrapper { position: fixed; top: 101px; bottom: 0px; left: 10px; width: calc(40% - 10px); width: -webkit-calc(40% - 10px); width: -moz-calc(40% - 10px); color: #222; }
 
-.dayview-header { height: 36px; }
+.dayview-header { height: 42px; }
 
-.daylist { position: absolute; top: 36px; bottom: 0px; left: 0px; right: 0px; overflow: scroll; -webkit-overflow-scrolling: touch; }
+.daylist { position: absolute; top: 42px; bottom: 0px; left: 0px; right: 0px; overflow-y: scroll; -webkit-overflow-scrolling: touch; }
 
 .datagrid { border-bottom: 1px solid #E1EEF4; }
 
@@ -56,16 +58,17 @@ html, body { font-family: Georgia; margin: 0px; padding: 0px; overflow: hidden; 
 .datagrid tbody tr.past td:last-child { text-decoration: none; }
 .datagrid tbody tr:hover { background-color: #EBF5FA; }
 
-.datagrid tbody td.red { color: #c6003d; }
-.datagrid tbody td.green { color: #009677; }
-.datagrid tbody td.blue { color: #0077bf; }
-.datagrid tbody td.grey { color: grey; }
-.datagrid tbody td.lightgreen { color: #9ec400; }
+.datagrid tbody td.red, td.red { color: #c6003d; }
+.datagrid tbody td.green, td.green { color: #009677; }
+.datagrid tbody td.blue, td.blue { color: #0077bf; }
+.datagrid tbody td.grey, td.grey { color: grey; }
+.datagrid tbody td.lightgreen, td.lightgreen { color: #9ec400; }
 
 .datagrid { border-collapse: collapse; text-align: left; width: 100%; }
-.datagrid td, .datagrid th { padding: 6px 10px; }
+.datagrid td, .datagrid th { padding: 8px 10px; }
 .datagrid td.customer { padding: 0px; }
-.datagrid td.customer .picture { width: 36px; height: 29px; float: left; }
+.datagrid td.customer .picture { width: 36px; height: 32px; float: left; margin: 0px 2px 0px 2px; }
+.datagrid td.customer .picture img { width: 32px; height: 32px; }
 .datagrid td.customer .name { padding-top: 6px; }
 .datagrid thead th { color:#222; } 
 .datagrid thead th a { color:#222; }
@@ -77,7 +80,7 @@ html, body { font-family: Georgia; margin: 0px; padding: 0px; overflow: hidden; 
 .datagrid tbody .alt td { background: #E1EEf4; color: #00557F; }
 .datagrid tbody td:first-child { border-left: none; }
 .datagrid tbody tr:last-child td { border-bottom: none; }
-.datagrid tfoot td div { border-top: 1px solid #006699;background: #E1EEf4;}
+.datagrid tfoot td div { border-top: 1px solid #006699;background: #E1EEf4; }
 .datagrid tfoot td { padding: 0; font-size: 14px }
 .datagrid tfoot td div { padding: 2px; }
 .datagrid tfoot td ul { margin: 0; padding:0; list-style: none; text-align: right; }
@@ -86,7 +89,47 @@ html, body { font-family: Georgia; margin: 0px; padding: 0px; overflow: hidden; 
 .datagrid tfoot ul.active, .datagrid tfoot ul a:hover { text-decoration: none;border-color: #00557F; color: #FFFFFF; background: none; background-color:#006699; }
 div.dhtmlx_window_active, div.dhx_modal_cover_dv { position: fixed !important; }
 
-.datagrid tbody tr td .attended-button {padding: 2px; font-size: 14px; font-weight: bold; background-color: #F0F0F0; color: #888; border-radius: 4px; cursor: pointer; text-align: center; }
+.datagrid .time { width: 60px; text-align: center; }
+.datagrid .part { width: 24px; text-align: center; }
+.datagrid .status { width: 60px; text-align: center; }
+
+.dayview-message-table { display: table; width: 100%; height: 100%; }
+.dayview-message-cell { font-size: 28px; display: table-cell; width: 100%; height: 100%; text-align: center; vertical-align: middle; color: #888; }
+
+/* Main Page - Detail View */
+
+.bookingdetail-wrapper { position: fixed; top: 101px; bottom: 0px; right: 10px; width: calc(60% - 10px); width: -webkit-calc(60% - 10px); width: -moz-calc(60% - 10px); overflow-y: scroll; -webkit-overflow-scrolling: touch; }
+.bookingdetail-message-table { display: table; width: 100%; height: 100%; }
+.bookingdetail-message-cell { font-size: 28px; display: table-cell; width: 100%; height: 100%; text-align: center; vertical-align: middle; color: #888; }
+
+.bookingdetail { padding: 20px; color: #222; }
+.bookingdetail-basic span { font-weight: bold; font-size: 18px; }
+.bookingdetail-cover { position: relative; }
+.bookingdetail-name { font-size: 22px; font-weight: bold; }
+.bookingdetail-profile-pic { float: left; }
+.bookingdetail-profile-pic img { border: 2px solid #ccc; width:150px; height: 150px; background:url("http://static.ak.fbcdn.net/rsrc.php/v2/yL/r/HsTZSDw4avx.gif"); background-size: cover; background-position: 50% 50%; }
+
+.bookingdetail-current { position: absolute; bottom: 6px; right: 0px; width: calc(100% - 164px); width: -webkit-calc(100% - 164px); width: -moz-calc(100% - 164px); }
+.bookingdetail-col1 { float: left; margin-right: 15px; }
+.bookingdetail-col2 { float: left; }
+.bookingdetail-table { font-size: 14px; width: 100%; }
+.bookingdetail-table tr td:first-child { font-weight: bold; padding-right: 8px; }
+
+.bookingdetail-rating table tr td:first-child { width: 116px; } 
+
+.bookingdetail-request { vertical-align: top; }
+
+.bookingdetail-table textarea { width: 100%; height: 40px; max-width: 400px; }
+
+.bookingdetail-tables-line { height: 1px; border-top: 1px solid #E1EEF4; width: 100%; margin-top: 10px; margin-bottom: 10px; }
+
+.bookingdetail-buttonpanel { height: 28px; margin-top: 6px; margin-bottom: 6px; }
+
+.bookingdetail-history { border: 1px solid #E1EEF4; border-radius: 6px; margin-top: 20px; }
+.bookingdetail-history-title { font-size: 18px; font-weight: bold; text-align: center; border-bottom: 1px solid #E1EEF4; padding: 8px; }
+
+.bookingdetail-history-message { font-size: 18px; width: 100%; padding-top: 20px; margin-bottom: 20px; text-align: center; color: #888; }
+.bookingdetail-history .datagrid { border-bottom: none; }
 
 
 /* Login Page */
@@ -96,3 +139,11 @@ div.dhtmlx_window_active, div.dhx_modal_cover_dv { position: fixed !important; }
 
 .hide { display:none; }
 .error { color:red; }
+
+.clear { clear: both; }
+.center { text-align: center; }
+
+.calendar-wrapper.ng-hide {
+	display: block!important;
+	visibility: hidden;
+}

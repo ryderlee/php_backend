@@ -3,6 +3,7 @@
         "slim/slim": "2.*",
 	"sergeytsalkov/meekrodb" : "*",
 	"aws/aws-sdk-php": "*",
-        "amazonwebservices/aws-sdk-for-php": "*"
+        "amazonwebservices/aws-sdk-for-php": "*",
+	"phpmailer/phpmailer": "v5.2.7"
     }
 }

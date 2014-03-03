@@ -4,11 +4,12 @@ var mmsApp = angular.module('mmsApp', [
   'mmsFilters',
   'mmsAnimations'
 ])
-.run(function($rootScope) {
+.run(['$rootScope', '$location',
+	function($rootScope, $location) {
 	// Listen from WebSocket server for new / update records		
 	var wsuri = "ws://ikky-phpapp-env.elasticbeanstalk.com:8081";
 	/** To be replaced: Server Timestamp **/
-	ab.debug(true, true);
+	// ab.debug(true, true);
 	var connectWS = function() {
 		ab.connect(wsuri, function (session) {
 			$rootScope.session = session;
@@ -56,5 +57,25 @@ var mmsApp = angular.module('mmsApp', [
         setTimeout(heartbeatCheck, 500);
     };
     heartbeatCheck();
+    
+    // Monitor location
+    $rootScope.$watch(function() {
+    	return $location.path();
+    }, function(newVal, oldVal) {
+    	var paths = newVal.replace(/^\//, '').split('/');
+    	if (paths[0].length == 0) {
+    		$rootScope.$emit('showCalendar', $rootScope.viewDate);
+    	} else if (paths.length >= 1) {
+    		var date = new Date(paths[0].substring(0, 4), paths[0].substring(4, 6)-1, paths[0].substring(6), 0, 0, 0);
+    		$rootScope.viewDate = date;
+    		$rootScope.$emit('showDayView', date, false);
+    		if (paths.length >= 2) {
+    			$rootScope.$emit('showDetail', paths[1]);
+    		}
+    	}
+    });
 	
-});
+}])
+.config(['$locationProvider', function($locationProvider) {
+	$locationProvider.html5Mode(false).hashPrefix('!');
+}]);

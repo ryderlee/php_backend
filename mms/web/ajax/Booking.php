@@ -16,12 +16,17 @@ if (isset($_GET['action'])) {
 	} else if ($_GET['action'] == 'update') {
 		if (isset($_GET['bookingId']) && $_GET['bookingId'] > 0) {
 			$resourceUri = '/reservations/' . $_GET['bookingId'];
-			$paraMap = array('status'=>'2');
+			$paraMap = array('status'=>$_GET['status']);
 			echo HttpService::put($resourceUri, $paraMap);
 		}
 	} else if ($_GET['action'] == 'getOccupancyRate') {
 		$resourceUri = '/mms/occupancy/' . $merchantService->getMerchantId();
 		echo HttpService::get($resourceUri);
+	} else if ($_GET['action'] == 'getHistory') {
+		if (isset($_GET['userId'])) {
+			$resourceUri = '/mms/history/' . $merchantService->getMerchantId() . '/' . $_GET['userId'];
+			echo HttpService::get($resourceUri);
+		}
 	}
 }
 

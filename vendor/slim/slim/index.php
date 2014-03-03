@@ -50,10 +50,21 @@ $app->hook('slim.before.router', function () use ($app){
 	*/
 	return ;
 });
-$aws = Aws\Common\Aws::factory('awsSDKConfigs.php');
-$sns = $aws->get('Sns');
+$sns = Aws\Sns\SnsClient::factory(array(
+	'key'    => $_ENV['AWS_ACCESS_KEY_ID'],
+    'secret' => $_ENV['AWS_SECRET_KEY'],
+    'region' => 'ap-southeast-1'
+));
 
+$ses = Aws\Ses\SesClient::factory(array(
+	'key'    => $_ENV['AWS_ACCESS_KEY_ID'],
+    'secret' => $_ENV['AWS_SECRET_KEY'],
+    'region' => 'us-east-1'
+));
 
+// $aws = Aws\Common\Aws::factory('awsSDKConfigs.php');
+// $sns = $aws->get('Sns');
+// $ses = $aws->get('Ses');
 
 // GET route
 $app->get('/', function () {
@@ -523,6 +534,7 @@ $app->group('/api', function () use($app){
 			'Message' => json_encode($message),
 			'TopicArn' => 'arn:aws:sns:ap-southeast-1:442675153455:merchant-1001'
 		));
+		sendEmailNotification($firstName. ' ' . $lastName, $numberOfParticipant, $ts, DB::insertId());
 
 		echo json_encode($result);
 	});
@@ -654,21 +666,21 @@ $app->group('/api', function () use($app){
 	$app->get('/mms/bookings/:merchantID/:bookingDate', function($merchantID, $bookingDate) use ($app){
 		$returnValue = array();
 		if ($merchantID != null) {
-			$returnValue = DB::query("SELECT IF(b.is_guest=0, CONCAT(u.first_name, ' ', u.last_name), CONCAT(b.first_name, ' ', b.last_name)) name, u.phone, b.is_guest, b.booking_id, b.booking_ts, b.no_of_participants, b.special_request, b.status, usn.social_network_user_id FROM booking b JOIN user u ON b.user_id = u.user_id LEFT JOIN user_social_network usn ON u.user_id = usn.user_id WHERE merchant_id = %d AND date(booking_ts) = %s", $merchantID, $bookingDate);
+			$returnValue = DB::query("SELECT u.user_id, IF(b.is_guest=0, CONCAT(u.first_name, ' ', u.last_name), CONCAT(b.first_name, ' ', b.last_name)) name, u.phone, b.is_guest, b.booking_id, b.booking_ts, b.no_of_participants, b.special_request, b.status, usn.social_network_user_id FROM booking b JOIN user u ON b.user_id = u.user_id LEFT JOIN user_social_network usn ON u.user_id = usn.user_id WHERE merchant_id = %d AND date(booking_ts) = %s", $merchantID, $bookingDate);
 		}
 		echo json_encode($returnValue);
 	});
 	$app->get('/mms/bookings/:merchantID/:bookingDate/:lastResponseTs', function($merchantID, $bookingDate, $lastResponseTs) use ($app){
 		$returnValue = array();
 		if ($merchantID != null) {
-			$returnValue = DB::query("SELECT IF(b.is_guest=0, CONCAT(u.first_name, ' ', u.last_name), CONCAT(b.first_name, ' ', b.last_name)) name, u.phone, b.is_guest, b.booking_id, b.booking_ts, b.no_of_participants, b.special_request, b.status, usn.social_network_user_id FROM booking b JOIN user u ON b.user_id = u.user_id LEFT JOIN user_social_network usn ON u.user_id = usn.user_id WHERE merchant_id = %d AND date(booking_ts) = %s AND UNIX_TIMESTAMP(b.last_modified) >= %d", $merchantID, $bookingDate, $lastResponseTs);
+			$returnValue = DB::query("SELECT u.user_id, IF(b.is_guest=0, CONCAT(u.first_name, ' ', u.last_name), CONCAT(b.first_name, ' ', b.last_name)) name, u.phone, b.is_guest, b.booking_id, b.booking_ts, b.no_of_participants, b.special_request, b.status, usn.social_network_user_id FROM booking b JOIN user u ON b.user_id = u.user_id LEFT JOIN user_social_network usn ON u.user_id = usn.user_id WHERE merchant_id = %d AND date(booking_ts) = %s AND UNIX_TIMESTAMP(b.last_modified) >= %d", $merchantID, $bookingDate, $lastResponseTs);
 		}
 		echo json_encode($returnValue);
 	});
 	$app->get('/mms/bookings/:bookingID', function($bookingID) use ($app){
 		$returnValue = array();
 		if ($bookingID != null) {
-			$returnValue = DB::query("SELECT IF(b.is_guest=0, CONCAT(u.first_name, ' ', u.last_name), CONCAT(b.first_name, ' ', b.last_name)) name, u.phone, b.is_guest, b.booking_id, b.booking_ts, b.no_of_participants, b.special_request, b.status, usn.social_network_user_id FROM booking b JOIN user u ON b.user_id = u.user_id LEFT JOIN user_social_network usn ON u.user_id = usn.user_id WHERE booking_id = %d", $bookingID);
+			$returnValue = DB::query("SELECT u.user_id, IF(b.is_guest=0, CONCAT(u.first_name, ' ', u.last_name), CONCAT(b.first_name, ' ', b.last_name)) name, u.phone, b.is_guest, b.booking_id, b.booking_ts, b.no_of_participants, b.special_request, b.status, usn.social_network_user_id FROM booking b JOIN user u ON b.user_id = u.user_id LEFT JOIN user_social_network usn ON u.user_id = usn.user_id WHERE booking_id = %d", $bookingID);
 		}
 		echo json_encode($returnValue);
 	});
@@ -679,9 +691,45 @@ $app->group('/api', function () use($app){
 		}
 		echo json_encode($returnValue);
 	});
+	$app->get('/mms/history/:merchantID/:userId', function($merchantId, $userId) use ($app) {
+		$returnValue = array();
+		if ($merchantId != null && $userId != null) {
+			$returnValue = DB::query("SELECT * FROM booking WHERE merchant_id = %d AND user_id = %d", $merchantId, $userId);
+		}
+		echo json_encode($returnValue);
+	});
 
 	//var_dump($rs);
 });
+
+function sendEmailNotification($name, $numberOfParticipant, $ts, $bookingId) {
+	global $ses;
+	$url = 'http://ikky-phpapp-env.elasticbeanstalk.com/mms/calendar.php#!/' . date('Ymd', $ts) . '/' . $bookingId;
+	$result = $ses->sendEmail(array(
+		'Source' => 'marvin@ikky.com',
+		'Destination' => array(
+			'ToAddresses' => array('marvin@ikky.com'),
+		),
+		'Message' => array(
+			'Subject' => array(
+				'Data' => 'Table for '.$numberOfParticipant.' @ '.date('Y-m-d h:i a', $ts),
+				'Charset' => 'UTF-8'
+			),
+			'Body' => array(
+				'Text' => array(
+					'Data' => $name.' reserved a table for '.$numberOfParticipant.' on '.date('j M Y', $ts).' at '.date('h:i a', $ts)."\n".$url,
+					'Charset' => 'UTF-8'
+				),
+				'Html' => array(
+					'Data' => $name.' reserved a table for '.$numberOfParticipant.' on '.date('j M Y', $ts).' at '.date('h:i a', $ts)."<br>Click to view: <a href='".$url."'>".$url."</a>",
+					'Charset' => 'UTF-8'
+				)
+			)
+		),
+		'ReplyToAddresses' => array('mms_no_reply@ikky.com'),
+		'ReturnPath' => 'mms_no_reply@ikky.com'
+	));
+}
 
 
 // POST route

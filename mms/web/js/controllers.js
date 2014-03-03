@@ -9,16 +9,15 @@ Date.prototype.yyyymmdd = function() {
 	return yyyy + (mm[1]?mm:"0"+mm[0]) + (dd[1]?dd:"0"+dd[0]); // padding
 };
 
-mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
-	function($scope, Booking, $rootScope) {
+mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope', '$sce', '$location',
+	function($scope, Booking, $rootScope, $sce, $location) {
 		// Pre-set the predicate (sorting) field
 		$scope.predicate = 'booking_ts';		
 		$scope.bookings = new Array();
 		
-		$rootScope.$on('showDayView', function(event, caldate, empty) {
-			var date = caldate.date;
+		$rootScope.$on('showDayView', function(event, date, empty) {
 			if (!$scope.current || $scope.current.date.getTime() != date.getTime()) {
-				$scope.current = {year:date.getFullYear(), month:monthNames[date.getMonth()], day:date.getDate(), date:caldate.date};
+				$scope.current = {year:date.getFullYear(), month:monthNames[date.getMonth()], day:date.getDate(), date:date};
 				$scope.loading = true;
 				$scope.bookings = new Array();
 				if (!empty) {
@@ -27,7 +26,16 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 						/** To be replaced: Server Timestamp **/
 						$rootScope.lastResponseTs = Math.floor(new Date().getTime()/1000);
 						$scope.loading = false;
-						$scope.checkTime(newBookings);
+						$scope.processBooking(newBookings);
+						
+						if ($scope.pendingDetailBookingId) {
+							angular.forEach(newBookings, function(booking, key) {
+								if (booking.booking_id == $scope.pendingDetailBookingId) {
+									$rootScope.$emit('displayDetail', booking);
+								}
+							});
+							$scope.pendingDetailBookingId = null;
+						}
 					});
 				} else {
 					$scope.loading = false;
@@ -38,13 +46,13 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 		
 		// Monitor the record passed
 		$scope.timePassing = function() {
-			$scope.checkTime($scope.bookings);
+			$scope.processBooking($scope.bookings);
 			$scope.$digest();
 		};
 		setInterval(function() {
 			$scope.timePassing();
 		}, 10000);
-		$scope.checkTime = function(bookings) {
+		$scope.processBooking = function(bookings) {
 			angular.forEach(bookings, function(value, key) {
 				var arr = value.booking_ts.split(' ');
 				var dArr = arr[0].split('-');
@@ -55,11 +63,33 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 					value.past = true;
 				}
 				if (value.social_network_user_id) {
-					value.picture = "http://graph.facebook.com/"+value.social_network_user_id+"/picture?type=square";
-					value.pictureSmall = "http://graph.facebook.com/"+value.social_network_user_id+"/picture?type=square&width=29&height=29";
+					value.picture = "http://graph.facebook.com/"+value.social_network_user_id+"/picture?type=large&width=150&height=150";
+					value.pictureSmall = "http://graph.facebook.com/"+value.social_network_user_id+"/picture?type=square&width=32&height=32";
+				} else {
+					value.picture = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+					value.pictureSmall = "http://static.ak.fbcdn.net/rsrc.php/v2/yo/r/UlIqmHJn-SK.gif";
+				}
+				if (value.special_request.length > 0) {
+					value.special_request = $sce.trustAsHtml(value.special_request.replace(/\n/g, '<br>'));
 				}
 			});
 		};
+		
+		$scope.showDetail = function(booking) {
+			$location.path('/'+$scope.current.date.yyyymmdd()+'/'+booking.booking_id);
+		};
+		
+		$rootScope.$on("showDetail", function(event, booking_id) {
+			if ($scope.loading) {
+				$scope.pendingDetailBookingId = booking_id;
+			} else {
+				angular.forEach($scope.bookings, function(booking, key) {
+					if (booking.booking_id == booking_id) {
+						$rootScope.$emit('displayDetail', booking);
+					}
+				});
+			}
+		});
 		
 		$rootScope.$on('newBooking', function(event, json) {
 			var arr = json.bookingDate.split(' ');
@@ -67,6 +97,7 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 			var d = new Date(dArr[0], dArr[1]-1, dArr[2], 0, 0, 0);
 			if ($scope.current && d.getTime() == $scope.current.date.getTime()) {
 				Booking.getBookings({bookingId:json.bookingId}).$promise.then(function(newBookings) {
+					$scope.processBooking(newBookings);
 					angular.forEach(newBookings, function(value, key) {
 						value.flash = true;
 					});
@@ -83,8 +114,10 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 				Booking.getBookings({bookingId:json.bookingId}).$promise.then(function(newBookings) {
 					/** To be replaced: Server Timestamp **/
 					$rootScope.lastResponseTs = Math.floor(new Date().getTime()/1000);
+					$scope.processBooking(newBookings);
 					angular.forEach($scope.bookings, function(oBooking, key) {
 						angular.forEach(newBookings, function(nBooking, key2) {
+							$rootScope.$emit("updateBookingDetail", nBooking);
 							if (oBooking.booking_id == nBooking.booking_id) {
 								nBooking.flash = true;
 								$scope.bookings[key] = nBooking;
@@ -99,7 +132,7 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 				Booking.getBookings({date:$scope.current.date.yyyymmdd(), lastResponseTs:$rootScope.lastResponseTs}).$promise.then(function(bookings) {
 					/** To be replaced: Server Timestamp **/
 					$rootScope.lastResponseTs = Math.floor(new Date().getTime()/1000);
-					$scope.checkTime(bookings);
+					$scope.processBooking(bookings);
 					angular.forEach($scope.bookings, function(oBooking, key) {
 						angular.forEach(bookings, function(nBooking, key2) {
 							if (oBooking.booking_id == nBooking.booking_id) {
@@ -112,15 +145,13 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 			}
 		});
 		
-		$scope.attended = function(booking) {
-			booking.loading = true;
-			Booking.updateBooking({bookingId:booking.booking_id});
+		$scope.back = function() {
+			$location.path('/');
 		};
 		
-		$scope.back = function() {
+		$rootScope.$on('showCalendar', function() {
 			$scope.show = false;
-			$rootScope.$emit('showCalendar');
-		};
+		});
 	}
 ])
 .controller('LoginCtrl', ['$scope',
@@ -148,18 +179,6 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 				}}).dequeue('wait');
 			}
 		});
-		
-		jQuery(element).tooltip({
-			position: {
-				my: "bottom",
-				at: "top",
-				// at: "right+10 top",
-				using: function( position, feedback ) {
-					$( this ).css( position );
-					$( "<div>" ).appendTo( this );
-				}
-			}
-		});
 	};
 	
 	return {
@@ -169,8 +188,8 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 	};
 	
 })
-.controller('CalendarCtrl', ['$scope', 'Booking', '$rootScope', 
-	function($scope, Booking, $rootScope) {
+.controller('CalendarCtrl', ['$scope', 'Booking', '$rootScope', '$location', 
+	function($scope, Booking, $rootScope, $location) {
 		var offScreenRow = isMobile?5:20;
 		var rowHeight = 130;
 		var today = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate(), 0, 0, 0);
@@ -179,10 +198,15 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 		var intermediateTime;
 
 		$scope.show = true;
-		$scope.occupancyRates = new Array();
+		$rootScope.occupancyRates = new Array();
 		
 		$scope.current = {month:monthNames[today.getMonth()], year:today.getFullYear(), date:today};
-		$rootScope.$on('showCalendar', function() {
+		$rootScope.$on('showCalendar', function(event, date) {
+			if (date) {
+				$scope.genForDate(date);
+				$scope.updateMonth();
+				$scope.scrollToTarget();
+			}
 			$scope.show = true;
 		});
 		$scope.$on('drawEnd', function() {
@@ -259,7 +283,7 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 		
 		$scope.genWeek = function(target, start, before, clear) {
 			for (j=0; j<7; j++) {
-				var occupancyRate = $scope.occupancyRates[start.getTime()];
+				var occupancyRate = $rootScope.occupancyRates[start.getTime()];
 				var caldate = {
 					date:new Date(start.getTime()),
 					displayDate:start.getDate()==1?start.getDate()+' '+monthNames[start.getMonth()]:start.getDate(),
@@ -296,9 +320,12 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 			}
 		};
 		
-		$scope.dateClick = function(caldate) {
+		$rootScope.$on("showDayView", function() {
 			$scope.show = false;
-			$rootScope.$emit('showDayView', caldate, $scope.occupancyRates[caldate.date.getTime()]?false:true);
+		});
+		
+		$scope.dateClick = function(caldate) {
+			$location.path('/'+caldate.date.yyyymmdd());
 		};
 		
 		$scope.getBgColor = function(occupancyRate) {
@@ -317,10 +344,10 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 				angular.forEach(occupancy, function(value, key) {
 					var dArr = value.d.split('-');
 					var d = new Date(dArr[0], dArr[1]-1, dArr[2], 0, 0, 0);
-					$scope.occupancyRates[d.getTime()] = value.cnt/30;
+					$rootScope.occupancyRates[d.getTime()] = value.cnt/30;
 				});
 				angular.forEach($scope.caldates, function(value, key) {
-					var occupancyRate = $scope.occupancyRates[value.date.getTime()];
+					var occupancyRate = $rootScope.occupancyRates[value.date.getTime()];
 					value.bgColor = $scope.getBgColor(occupancyRate);
 				});
 			});
@@ -377,6 +404,54 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 			var d = new Date(dArr[0], dArr[1]-1, dArr[2], tArr[0], tArr[1], tArr[2]);
 			$scope.notification.message = 'A new booking on ' + d.getDate() + ' ' + monthNames[d.getMonth()] + ' ' + d.getFullYear();
 			jQuery('.notification').slideUp(0).slideDown().delay(3000).slideUp();
+		});
+	}
+])
+.controller('BookingDetailCtrl', ['$scope', '$rootScope', 'Booking',
+	function($scope, $rootScope, Booking) {
+		$scope.predicate = 'booking_ts';
+		$scope.reverse = true;
+		
+		$rootScope.$on('showDayView', function(event, date, empty) {
+			$scope.show = true;
+			$scope.booking = null;
+		});
+		$rootScope.$on('showCalendar', function() {
+			$scope.show = false;
+			$scope.booking = null;
+		});
+		$rootScope.$on('displayDetail', function(event, booking) {
+			if (!$scope.booking || $scope.booking.user_id != booking.user_id) {
+				$scope.histories = null;
+				$scope.loading = true;
+				$scope.histories = Booking.getHistory({userId:booking.user_id});
+				$scope.histories.$promise.then(function(histories) {
+					$scope.loading = false;
+					var indexToRemove = null;
+					angular.forEach(histories, function(value, key) {
+						if (value.booking_ts == booking.booking_ts) {
+							indexToRemove = key;
+						}
+					});
+					histories.splice(indexToRemove, 1);
+				});
+			}
+			$scope.booking = booking;
+		});
+		$scope.show = false;
+		
+		$scope.attend = function(booking) {
+			Booking.attendBooking({bookingId:booking.booking_id});
+		};
+		
+		$scope.cancel = function(booking) {
+			Booking.cancelBooking({bookingId:booking.booking_id});
+		};
+		
+		$rootScope.$on('updateBookingDetail', function(event, booking) {
+			if (booking.booking_id == $scope.booking.booking_id) {
+				$scope.booking = booking;
+			}
 		});
 	}
 ]);
