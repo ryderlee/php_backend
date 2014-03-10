@@ -11,6 +11,7 @@ ini_set("display_errors", "1");
 error_reporting(-1);
 require 'Slim/Slim.php';
 require '../../../vendor/autoload.php';
+require 'TemplateService.php';
 \Slim\Slim::registerAutoloader();
 
 /**
@@ -61,6 +62,8 @@ $ses = Aws\Ses\SesClient::factory(array(
     'secret' => $_ENV['AWS_SECRET_KEY'],
     'region' => 'us-east-1'
 ));
+
+$restaurantTemplateService = new RestaurantTemplateService();
 
 // $aws = Aws\Common\Aws::factory('awsSDKConfigs.php');
 // $sns = $aws->get('Sns');
@@ -691,12 +694,16 @@ $app->group('/api', function () use($app){
 		}
 		echo json_encode($returnValue);
 	});
-	$app->get('/mms/history/:merchantID/:userId', function($merchantId, $userId) use ($app) {
+	$app->get('/mms/history/:merchantID/:userID', function($merchantID, $userID) use ($app) {
 		$returnValue = array();
 		if ($merchantId != null && $userId != null) {
-			$returnValue = DB::query("SELECT * FROM booking WHERE merchant_id = %d AND user_id = %d", $merchantId, $userId);
+			$returnValue = DB::query("SELECT * FROM booking WHERE merchant_id = %d AND user_id = %d", $merchantID, $userID);
 		}
 		echo json_encode($returnValue);
+	});
+	$app->get('/restaurant/:merchantID/:date/:noOfParticipants', function($merchantID, $date, $noOfParticipants) use ($app) {
+		global $restaurantTemplateService;
+		print_r($restaurantTemplateService->getTemplate(1, '20140310'));
 	});
 
 	//var_dump($rs);
@@ -706,7 +713,7 @@ function sendEmailNotification($name, $numberOfParticipant, $ts, $bookingId) {
 	global $ses;
 	$url = 'http://ikky-phpapp-env.elasticbeanstalk.com/mms/calendar.php#!/' . date('Ymd', $ts) . '/' . $bookingId;
 	$result = $ses->sendEmail(array(
-		'Source' => 'marvin@ikky.com',
+		'Source' => 'mms_no_reply@ikky.com',
 		'Destination' => array(
 			'ToAddresses' => array('marvin@ikky.com'),
 		),
