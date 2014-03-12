@@ -14,8 +14,8 @@ date_default_timezone_set('UTC');
 
 require 'Slim/Slim.php';
 require '../../../vendor/autoload.php';
-require 'libs/MerchantTemplateService.php';
-require 'libs/BookingService.php';
+require_once 'libs/MerchantTemplateService.php';
+require_once 'libs/BookingService.php';
 \Slim\Slim::registerAutoloader();
 
 /**
@@ -68,6 +68,7 @@ $ses = Aws\Ses\SesClient::factory(array(
 ));
 
 $restaurantTemplateService = new RestaurantTemplateService();
+$restaurantBookingService = new RestaurantBookingService();
 
 // $aws = Aws\Common\Aws::factory('awsSDKConfigs.php');
 // $sns = $aws->get('Sns');
@@ -509,39 +510,30 @@ $app->group('/api', function () use($app){
 			}
 		}
 		
-		$values = array(
-			'user_id' => $userID, 
-			'merchant_id' => $merchantID,
-			'is_guest' => $isGuest,
-			'session_id' => $sessionID,
-			'first_name' => $firstName,
-			'last_name' => $lastName,
-			'phone' => $phone,
-			'booking_ts' => date('Y-m-d H:i:s' , $ts),
-			'no_of_participants' => $numberOfParticipant,
-			'special_request' => $specialRequest,
-			'status' => 0,
-			'attendance' => 0,
-			'create_ts' => DB::sqleval('NOW()')
-		);
-		DB::insert('booking', $values);
-		$result['bookingID'] = DB::insertId();
-		$result['result'] = true;
-		$result['values'] = $values;
+		global $restaurantBookingService;
+		$bookingId = $restaurantBookingService->makeBooking($userID, $merchantID, $isGuest, $sessionID, $firstName, $lastName, $phone, date('Y-m-d H:i:s' , $ts), $numberOfParticipant, $specialRequest);
+		if ($bookingId > -1) {
+			$result['bookingID'] = $bookingId;
+			$result['result'] = true;
+		} else {
+			$result['result'] = false;
+		}
 
 		// Publish new message (Amazon SNS)
-		global $sns;
-		$message = array(
-			'topic'=>'1001',
-			'bookingId'=>$result['bookingID'],
-			'bookingDate'=>date('Y-m-d H:i:s' , $ts),
-			'action'=>'new'
-		);
-		$sns->publish(array(
-			'Message' => json_encode($message),
-			'TopicArn' => 'arn:aws:sns:ap-southeast-1:442675153455:merchant-1001'
-		));
-		sendEmailNotification($firstName. ' ' . $lastName, $numberOfParticipant, $ts, DB::insertId());
+		if ($result['result']) {
+			global $sns;
+			$message = array(
+				'topic'=>'1001',
+				'bookingId'=>$result['bookingID'],
+				'bookingDate'=>date('Y-m-d H:i:s' , $ts),
+				'action'=>'new'
+			);
+			$sns->publish(array(
+				'Message' => json_encode($message),
+				'TopicArn' => 'arn:aws:sns:ap-southeast-1:442675153455:merchant-1001'
+			));
+			sendEmailNotification($firstName. ' ' . $lastName, $numberOfParticipant, $ts, DB::insertId());
+		}
 
 		echo json_encode($result);
 	});

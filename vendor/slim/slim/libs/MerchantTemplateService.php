@@ -31,13 +31,13 @@ class MerchantTemplate {
 }
 
 class OpeningSession {
-	private $merchantId, $openingSessionId, $openingSessionName, $startTime, $endTime, $settingsJson;
-	public function __construct($merchantId, $openingSessionId, $openingSessionName, $startTime, $endTime, $settings) {
+	private $merchantId, $openingSessionId, $openingSessionName, $startTime, $sessionLength, $settingsJson;
+	public function __construct($merchantId, $openingSessionId, $openingSessionName, $startTime, $sessionLength, $settings) {
 		$this->merchantId = $merchantId;
 		$this->openingSessionId = $openingSessionId;
 		$this->openingSessionName = $openingSessionName;
 		$this->startTime = $startTime;
-		$this->endTime = $endTime;
+		$this->sessionLength = $sessionLength;
 		$this->settingsJson = json_decode($settings, true);
 	}
 	public function getMerchantId() {
@@ -52,8 +52,8 @@ class OpeningSession {
 	public function getStartTime() {
 		return $this->startTime;
 	}
-	public function getEndTime() {
-		return $this->endTime;
+	public function getSessionLength() {
+		return $this->sessionLength;
 	}
 	public function getSettingsJson() {
 		return $this->settingsJson;
@@ -61,16 +61,12 @@ class OpeningSession {
 }
 
 class RestaurantOpeningSession extends OpeningSession {
-	private $mealDuration, $restaurantTables;
-	public function __construct($merchantId, $openingSessionId, $openingSessionName, $startTime, $endTime, $settings) {
-		parent::__construct($merchantId, $openingSessionId, $openingSessionName, $startTime, $endTime, $settings);
-		$this->restaurantTables = array();
+	private $mealDuration, $floorPlanId, $restaurantTables;
+	public function __construct($merchantId, $openingSessionId, $openingSessionName, $startTime, $sessionLength, $settings) {
+		parent::__construct($merchantId, $openingSessionId, $openingSessionName, $startTime, $sessionLength, $settings);
 		$settingsJson = $this->getSettingsJson();
 		if (!empty($settingsJson['floorPlanId'])) {
-			$result = DB::query('SELECT * FROM restaurant_table WHERE floor_plan_id = %d', $settingsJson['floorPlanId']);
-			foreach ($result as $restaurantTable) {
-				array_push($this->restaurantTables, new RestaurantTable($restaurantTable['merchant_id'], $restaurantTable['restaurant_table_id'], $restaurantTable['restaurant_table_name'], $restaurantTable['actual_cover'], $restaurantTable['min_cover'], $restaurantTable['max_cover']));
-			}
+			$this->floorPlanId = $settingsJson['floorPlanId'];
 		}
 		if (!empty($settingsJson['mealDuration'])) {
 			$this->mealDuration = $settingsJson['mealDuration'];
@@ -80,7 +76,15 @@ class RestaurantOpeningSession extends OpeningSession {
 		return $this->mealDuration;
 	}
 	public function getRestaurantTables() {
+		$result = DB::query('SELECT * FROM restaurant_table WHERE floor_plan_id = %d', $this->getFloorPlanId());
+		$this->restaurantTables = array();
+		foreach ($result as $restaurantTable) {
+			array_push($this->restaurantTables, new RestaurantTable($restaurantTable['merchant_id'], $restaurantTable['restaurant_table_id'], $restaurantTable['restaurant_table_name'], $restaurantTable['actual_cover'], $restaurantTable['min_cover'], $restaurantTable['max_cover']));
+		}
 		return $this->restaurantTables;
+	}
+	public function getFloorPlanId() {
+		return $this->floorPlanId;
 	}
 }
 
@@ -132,7 +136,7 @@ class RestaurantTemplateService implements MerchantTemplateServiceInterface {
 			if (empty($merchantTemplate)) {
 				$merchantTemplate = new MerchantTemplate($row['merchant_id'], $row['template_id'], $row['template_name'], $dateStr);
 			}
-			$openingSession = new RestaurantOpeningSession($row['merchant_id'], $row['opening_session_id'], $row['opening_session_name'], $row['start_time'], $row['end_time'], $row['settings']);
+			$openingSession = new RestaurantOpeningSession($row['merchant_id'], $row['opening_session_id'], $row['opening_session_name'], $row['start_time'], $row['session_length'], $row['settings']);
 			$merchantTemplate->putOpeningSession($openingSession);
 		}
 		return $merchantTemplate;
