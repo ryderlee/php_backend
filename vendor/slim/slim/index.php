@@ -14,7 +14,8 @@ date_default_timezone_set('UTC');
 
 require 'Slim/Slim.php';
 require '../../../vendor/autoload.php';
-require 'TemplateService.php';
+require 'libs/MerchantTemplateService.php';
+require 'libs/BookingService.php';
 \Slim\Slim::registerAutoloader();
 
 /**
