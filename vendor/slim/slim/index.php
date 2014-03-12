@@ -9,6 +9,9 @@
  */
 ini_set("display_errors", "1");
 error_reporting(-1);
+
+date_default_timezone_set('UTC');
+
 require 'Slim/Slim.php';
 require '../../../vendor/autoload.php';
 require 'TemplateService.php';
@@ -703,7 +706,7 @@ $app->group('/api', function () use($app){
 	});
 	$app->get('/restaurant/:merchantID/:date/:noOfParticipants', function($merchantID, $date, $noOfParticipants) use ($app) {
 		global $restaurantTemplateService;
-		print_r($restaurantTemplateService->getTemplate(1, '20140310'));
+		print_r($restaurantTemplateService->getTemplate(1, '2014-03-10 18:00:00'));
 	});
 
 	//var_dump($rs);
