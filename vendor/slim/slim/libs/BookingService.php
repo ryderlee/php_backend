@@ -35,13 +35,15 @@ class RestaurantBookingService implements BookingServiceInterface {
 			$bestTable = DB::queryFirstRow('SELECT * FROM restaurant_table WHERE merchant_id = %d AND floor_plan_id = %d AND restaurant_table_id NOT IN (SELECT restaurant_table_id FROM booking b JOIN booking_restaurant_table bt ON b.booking_id = bt.booking_id WHERE b.merchant_id = %d AND (%s >= booking_ts AND %s < DATE_ADD(booking_ts, INTERVAL booking_length MINUTE))) AND (%d >= min_cover AND %d <= max_cover) ORDER BY max_cover ASC, min_cover ASC LIMIT 1;', $merchantId, $floorPlanId, $merchantId, $datetime, $datetime, $noOfParticipants, $noOfParticipants);
 			if (!empty($bestTable)) {
 				$restaurantTable = new RestaurantTable($bestTable['merchant_id'], $bestTable['restaurant_table_id'], $bestTable['restaurant_table_name'], $bestTable['actual_cover'], $bestTable['min_cover'], $bestTable['max_cover']);
-				return $restaurantTable;
+				return array('booking_length'=>$targetOpeningSession->getMealDuration(), 'table'=>$restaurantTable);
 			}
 		}
 		return null;
 	}
 	public function makeBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest) {
-		$restaurantTable = $this->getBestTable($merchantId, $datetime, $noOfParticipants);
+		$info = $this->getBestTable($merchantId, $datetime, $noOfParticipants);
+		$restaurantTable = $info['table'];
+		$bookingLength = $info['booking_length'];
 		
 		if (!empty($restaurantTable)) {
 			$values = array(
@@ -53,6 +55,7 @@ class RestaurantBookingService implements BookingServiceInterface {
 				'last_name' => $lastName,
 				'phone' => $phone,
 				'booking_ts' => $datetime,
+				'booking_length' => $bookingLength,
 				'no_of_participants' => $noOfParticipants,
 				'special_request' => $specialRequest,
 				'status' => 0,
