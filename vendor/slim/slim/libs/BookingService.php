@@ -46,7 +46,7 @@ class RestaurantBookingService implements BookingServiceInterface {
 
 		$passed = true;
 		foreach($moduleArr as $m){
-			$passed = call_user_func($m , $merchantID, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);	
+			$passed = call_user_func(array($m, "lock") , $merchantID, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);	
 			if(!$passed)
 				break;
 
@@ -58,15 +58,13 @@ class RestaurantBookingService implements BookingServiceInterface {
 		$moduleArr = split(RestaurantBookingService::$bookingModuleList);
 
 		$passed = true;
+		foreach($moduleArr as $m){
+			$passed = call_user_func(array($m, "isAvailable") , $merchantID, $datetime, $noOfParticipants);	
+			if(!$passed)
+				break;
 
-
-		//TODO : add modules availability checking
-	
-				
-
-
-		return true;
-
+		}
+		return $passed;
 	}
 	public function makeBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest) {
 		if($this->isAvailableModules($merchantId, $datetime, $noOfParticipants)){
@@ -104,7 +102,7 @@ class RestaurantBookingService implements BookingServiceInterface {
 					$this->unlockAllModules($merchantId, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);
 					return $bookingId;
 				}
-				$this->unlockAllModules($merchantId, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);
+				$this->unlockModules($merchantId, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);
 			}
 		}
 		return -1;
