@@ -11,6 +11,7 @@ interface BookingServiceInterface {
 }
 
 class RestaurantBookingService implements BookingServiceInterface {
+	private static bookingModuleList = "RestaurantBookingManagment";
 	public function getBestTable($merchantId, $datetime, $noOfParticipants) {
 		$datetimeParts = explode(' ', $datetime);
 		$dateStr = $datetimeParts[0];
@@ -41,11 +42,24 @@ class RestaurantBookingService implements BookingServiceInterface {
 		return null;
 	}
 	private function bookingModulesLock($merchantID, $datetime, $noOfParticipants){
-		
+		$moduleArr = split(RestaurantBookingService::$bookingModuleList);
+
+		$passed = true;
+		foreach($moduleArr as $m){
+			$passed = call_user_func($m , $merchantID, $datetime, $noOfParticipants);	
+			if(!$passed)
+				break;
+
+		}
+		return $passed;
 	}	
 
 	public function isAvailabileByModules($merchantId, $bookingDatetime, $noOfParticipants){
 		//TODO : add modules availability checking
+	
+				
+
+
 		return true;
 
 	}
