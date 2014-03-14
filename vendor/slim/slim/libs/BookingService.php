@@ -52,6 +52,19 @@ class RestaurantBookingService implements BookingServiceInterface {
 
 		}
 		return $passed;
+	}
+	
+	private function unlockModules($merchantID, $datetime, $noOfParticipants, $restaurantTable, $bookingLength){
+		$moduleArr = split(RestaurantBookingService::$bookingModuleList);
+
+		$passed = true;
+		foreach($moduleArr as $m){
+			$passed = call_user_func(array($m, "unlock") , $merchantID, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);	
+			if(!$passed)
+				break;
+
+		}
+		return $passed;
 	}	
 
 	public function isAvailabileModules($merchantId, $bookingDatetime, $noOfParticipants){
