@@ -40,41 +40,58 @@ class RestaurantBookingService implements BookingServiceInterface {
 		}
 		return null;
 	}
-	public function makeBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest) {
-		$info = $this->getBestTable($merchantId, $datetime, $noOfParticipants);
-		$restaurantTable = $info['table'];
-		$bookingLength = $info['booking_length'];
+	private function bookingModulesLock($merchantID, $datetime, $noOfParticipants){
 		
-		if (!empty($restaurantTable)) {
-			$values = array(
-				'user_id' => $userId, 
-				'merchant_id' => $merchantId,
-				'is_guest' => $isGuest,
-				'session_id' => $sessionId,
-				'first_name' => $firstName,
-				'last_name' => $lastName,
-				'phone' => $phone,
-				'booking_ts' => $datetime,
-				'booking_length' => $bookingLength,
-				'no_of_participants' => $noOfParticipants,
-				'special_request' => $specialRequest,
-				'status' => 0,
-				'attendance' => 0,
-				'create_ts' => DB::sqleval('NOW()')
-			);
-			DB::insert('booking', $values);
-			$bookingId = DB::insertId();
-			if ($bookingId > 0) {
-				DB::insert('booking_restaurant_table', array(
-					'booking_id' => $bookingId,
-					'restaurant_table_id' => $restaurantTable->getTableId(),
-					'create_ts' => DB::sqleval('NOW()')
-				));
+	}	
+
+	public function isAvailabileByModules($merchantId, $bookingDatetime, $noOfParticipants){
+		//TODO : add modules availability checking
+		return true;
+
+	}
+	public function makeBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest) {
+		if($this->isAvailableByModules($merchantId, $datetime, $noOfParticipants)){
+			$info = $this->getBestTable($merchantId, $datetime, $noOfParticipants);
+			
+			if (!empty($info)) {
+				$restaurantTable = $info['table'];
+				$bookingLength = $info['booking_length'];
+				if( $this->lockAllModules($merchantId, $datetime, $noOfParticipants, $restaurantTable, $bookingLength)){
+					$values = array(
+						'user_id' => $userId, 
+						'merchant_id' => $merchantId,
+						'is_guest' => $isGuest,
+						'session_id' => $sessionId,
+						'first_name' => $firstName,
+						'last_name' => $lastName,
+						'phone' => $phone,
+						'booking_ts' => $datetime,
+						'booking_length' => $bookingLength,
+						'no_of_participants' => $noOfParticipants,
+						'special_request' => $specialRequest,
+						'status' => 0,
+						'attendance' => 0,
+						'create_ts' => DB::sqleval('NOW()')
+					);
+					DB::insert('booking', $values);
+					$bookingId = DB::insertId();
+					if ($bookingId > 0) {
+						DB::insert('booking_restaurant_table', array(
+							'booking_id' => $bookingId,
+							'restaurant_table_id' => $restaurantTable->getTableId(),
+							'create_ts' => DB::sqleval('NOW()')
+						));
+					}
+					$this->unlockAllModules($merchantId, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);
+					return $bookingId;
+				}
+				$this->unlockAllModules($merchantId, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);
 			}
-			return $bookingId;
 		}
 		return -1;
 	}
+
+
 	public function makeBookingByMerchant($tableId, $merchantId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest) {
 		
 	}
