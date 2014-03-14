@@ -41,7 +41,7 @@ class RestaurantBookingService implements BookingServiceInterface {
 		}
 		return null;
 	}
-	private function bookingModulesLock($merchantID, $datetime, $noOfParticipants, $restaurantTable, $bookingLength){
+	private function lockModules($merchantID, $datetime, $noOfParticipants, $restaurantTable, $bookingLength){
 		$moduleArr = split(RestaurantBookingService::$bookingModuleList);
 
 		$passed = true;
@@ -54,7 +54,12 @@ class RestaurantBookingService implements BookingServiceInterface {
 		return $passed;
 	}	
 
-	public function isAvailabileByModules($merchantId, $bookingDatetime, $noOfParticipants){
+	public function isAvailabileModules($merchantId, $bookingDatetime, $noOfParticipants){
+		$moduleArr = split(RestaurantBookingService::$bookingModuleList);
+
+		$passed = true;
+
+
 		//TODO : add modules availability checking
 	
 				
@@ -64,13 +69,13 @@ class RestaurantBookingService implements BookingServiceInterface {
 
 	}
 	public function makeBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest) {
-		if($this->isAvailableByModules($merchantId, $datetime, $noOfParticipants)){
+		if($this->isAvailableModules($merchantId, $datetime, $noOfParticipants)){
 			$info = $this->getBestTable($merchantId, $datetime, $noOfParticipants);
 			
 			if (!empty($info)) {
 				$restaurantTable = $info['table'];
 				$bookingLength = $info['booking_length'];
-				if( $this->lockAllModules($merchantId, $datetime, $noOfParticipants, $restaurantTable, $bookingLength)){
+				if( $this->lockModules($merchantId, $datetime, $noOfParticipants, $restaurantTable, $bookingLength)){
 					$values = array(
 						'user_id' => $userId, 
 						'merchant_id' => $merchantId,
