@@ -28,6 +28,17 @@ class MerchantTemplate {
 	public function getTemplateDate() {
 		return $this->templateDate;
 	}
+	public function getOpeningSession($timeStr) {
+		foreach ($this->getOpeningSessions() as $openingSession) {
+			$start = strtotime($openingSession->getStartTime());
+			$end = $start + 60 * $openingSession->getSessionLength();
+			$target = strtotime($timeStr);
+			if ($target >= $start && $target <= $end) {
+				return $openingSession;
+				break;
+			}
+		}
+	}
 }
 
 class OpeningSession {

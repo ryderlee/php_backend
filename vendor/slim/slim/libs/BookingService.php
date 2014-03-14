@@ -11,7 +11,7 @@ interface BookingServiceInterface {
 }
 
 class RestaurantBookingService implements BookingServiceInterface {
-	private static bookingModuleList = "RestaurantBookingManagment";
+	private static $bookingModuleList = "RestaurantBookingManagment";
 	public function getBestTable($merchantId, $datetime, $noOfParticipants) {
 		$datetimeParts = explode(' ', $datetime);
 		$dateStr = $datetimeParts[0];
@@ -19,17 +19,8 @@ class RestaurantBookingService implements BookingServiceInterface {
 		
 		global $restaurantTemplateService;
 		$merchantTemplate = $restaurantTemplateService->getTemplate($merchantId, $datetime);
-		$targetOpeningSession = null;
-		foreach ($merchantTemplate->getOpeningSessions() as $openingSession) {
-			$start = strtotime($openingSession->getStartTime());
-			$end = $start + 60 * $openingSession->getSessionLength();
-			$target = strtotime($timeStr);
-			// echo "START:$start END:$end TARGET:$target |||||||||||";
-			if ($target >= $start && $target <= $end) {
-				$targetOpeningSession = $openingSession;
-				break;
-			}
-		}
+		$targetOpeningSession = $merchantTemplate->getOpeningSession($timeStr);
+		
 		if (!empty($targetOpeningSession)) {
 			$floorPlanId = $targetOpeningSession->getFloorPlanId();
 			
