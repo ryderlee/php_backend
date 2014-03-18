@@ -9,6 +9,102 @@ $timestamp = mktime($hour, $minute, $second, $month, $day, $year);
 
 return $timestamp;
 }
+function getMerchantSettings($mid){
+	global $redis;
+	$limit = 1000;
+	$returnValue = array();
+	if($result = $redis->keys("merchantSetting|" . $mid . "*")){
+		unset($result['merchantSetting|' . $mid . "|_general"]);
+		$values = call_user_func(array($redis ,"mget"), $result);
+		foreach($values as $value){
+			parse_str($value, $tempArr);
+			$returnValue = array_merge($returnValue, $tempArr);
+		}
+	}
+	$value = $redis->get("merchantSetting|" . $mid . "|_general");
+	parse_str($value, $tempArr);
+	$returnValue = array_merge($returnValue, $tempArr);
+	return $returnValue;
+
+}
+function resetMerchantSettingsCache($mid = null){
+	if(is_null($mid))
+		$sql = "SELECT * FROM merchant_setting";
+	else
+		$sql = "SELECT * FROM merchant_setting WHERE key LIKE '" . $mid . "|%";
+	
+	$result = DB::query($sql);
+	$returnValue = array();
+	$temp = $result[$mid . '|_general'];
+	unset($result[$mid . '|_general']);
+	foreach($result as $key=>$value){
+		parse_str($value, $result);
+		$returnValue = array_merge($returnValue, $result);
+	}
+	parse_str($temp, $tempArr);
+	$returnValue = array_merge($returnValue, $tempArr);
+	return $returnValue;
+	
+		
+}
+function setMerchantSettings($mID, $values){
+	global $redis;
+	$limit = 900;
+	ksort($values);
+	if(strlen(http_build_query($values)) > $limit){
+		$tempArr = $values;
+		uasort($tempArr, function($a, $b){
+			$alen = strlen($a);
+			$blen = strlen($b);
+			if($alen == $blen)
+				return 0;
+			return ($alen > $blen?-1:1);
+		});
+		$loop = true;
+		$tempArr2 = array();
+		while ($loop && list($key, $val) = each($tempArr)){
+			if(strlen(http_build_query(array($key=>$val))) > $limit){
+				$theKey = $mID . "|" . $key;
+				$theValue= http_build_query(array($key=>$val));
+				DB::insertUpdate('merchant_settings', $values = array(
+					'key' => $theKey,
+					'value' => $theValue
+				));
+
+				$redis->set('merchantSetting|' . $theKey, $theValue);
+				unset($tempArr[$key]);
+			} else
+				$loop = false;
+		}
+		ksort($tempArr);
+		$theKey = $mID . "|" . "_general";
+		$theValue = http_build_query($tempArr);
+		/*	
+		DB::insert('merchants_settings', $values = array(
+			'key' => $theKey,
+			'value' => $theValue
+		));
+		*/
+		DB::insertUpdate('merchant_settings', $values = array(
+			'key' => $theKey,
+			'value' => $theValue
+		));
+		$redis->set('merchantSetting|' . $theKey, $theValue);
+	}else{
+		$theKey = $mID . "|" . "_general";
+		$theValue = http_build_query($values);
+		/*
+		DB::insert('merchants_settings', $values = array(
+			'key' => $theKey,
+			'value' => $theValue
+		));
+		*/
+		$redis->set('merchantSetting|' . $theKey, $theValue);
+		$theKey = $mID . "|" . "_general";
+	}
+}
+
+
 class RestaurantTableBookingModule{
 	public static $redis = null;
 
