@@ -19,15 +19,16 @@ class RestaurantBookingService implements BookingServiceInterface {
 		
 		global $restaurantTemplateService;
 		$merchantTemplate = $restaurantTemplateService->getTemplate($merchantId, $datetime);
-		$targetOpeningSession = $merchantTemplate->getOpeningSession($timeStr);
-		
-		if (!empty($targetOpeningSession)) {
-			$floorPlanId = $targetOpeningSession->getFloorPlanId();
-			
-			$bestTable = DB::queryFirstRow('SELECT * FROM restaurant_table WHERE merchant_id = %d AND floor_plan_id = %d AND restaurant_table_id NOT IN (SELECT restaurant_table_id FROM booking b JOIN booking_restaurant_table bt ON b.booking_id = bt.booking_id WHERE b.merchant_id = %d AND (%s >= booking_ts AND %s < DATE_ADD(booking_ts, INTERVAL booking_length MINUTE))) AND (%d >= min_cover AND %d <= max_cover) ORDER BY max_cover ASC, min_cover ASC LIMIT 1;', $merchantId, $floorPlanId, $merchantId, $datetime, $datetime, $noOfParticipants, $noOfParticipants);
-			if (!empty($bestTable)) {
-				$restaurantTable = new RestaurantTable($bestTable['merchant_id'], $bestTable['restaurant_table_id'], $bestTable['restaurant_table_name'], $bestTable['actual_cover'], $bestTable['min_cover'], $bestTable['max_cover']);
-				return array('booking_length'=>$targetOpeningSession->getMealDuration(), 'table'=>$restaurantTable);
+		if (!empty($merchantTemplate)) {
+			$targetOpeningSession = $merchantTemplate->getOpeningSession($datetime);
+			if (!empty($targetOpeningSession)) {
+				$floorPlanId = $targetOpeningSession->getFloorPlanId();
+				
+				$bestTable = DB::queryFirstRow('SELECT * FROM restaurant_table WHERE merchant_id = %d AND floor_plan_id = %d AND restaurant_table_id NOT IN (SELECT restaurant_table_id FROM booking b JOIN booking_restaurant_table bt ON b.booking_id = bt.booking_id WHERE b.merchant_id = %d AND (%s >= booking_ts AND %s < DATE_ADD(booking_ts, INTERVAL booking_length MINUTE))) AND (%d >= min_cover AND %d <= max_cover) ORDER BY max_cover ASC, min_cover ASC LIMIT 1;', $merchantId, $floorPlanId, $merchantId, $datetime, $datetime, $noOfParticipants, $noOfParticipants);
+				if (!empty($bestTable)) {
+					$restaurantTable = new RestaurantTable($bestTable['merchant_id'], $bestTable['restaurant_table_id'], $bestTable['restaurant_table_name'], $bestTable['actual_cover'], $bestTable['min_cover'], $bestTable['max_cover']);
+					return array('booking_length'=>$targetOpeningSession->getMealDuration(), 'table'=>$restaurantTable);
+				}
 			}
 		}
 		return null;
