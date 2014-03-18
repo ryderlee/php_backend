@@ -13,6 +13,7 @@ error_reporting(-1);
 date_default_timezone_set('UTC');
 
 require 'Slim/Slim.php';
+require '../../predis/predis/autoload.php';
 require '../../../vendor/autoload.php';
 require_once 'libs/MerchantTemplateService.php';
 require_once 'libs/BookingService.php';
@@ -66,6 +67,16 @@ $ses = Aws\Ses\SesClient::factory(array(
     'secret' => $_ENV['AWS_SECRET_KEY'],
     'region' => 'us-east-1'
 ));
+
+$redis = new Predis\Client(array(
+	//'host' => 'elasticcache.eeqrho.0001.apse1.cache.amazonaws.com',
+	'host' => '127.0.0.1',
+	'database' => 0,
+	'port'	=> 6379
+));
+
+
+
 
 $restaurantTemplateService = new RestaurantTemplateService();
 $restaurantBookingService = new RestaurantBookingService();
