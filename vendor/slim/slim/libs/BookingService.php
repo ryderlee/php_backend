@@ -1,6 +1,7 @@
 <?php
 
 require_once 'MerchantTemplateService.php';
+require_once 'RestaurantTableBookingModule.php';
 
 $restaurantTemplateService = new RestaurantTemplateService();
 
@@ -11,7 +12,7 @@ interface BookingServiceInterface {
 }
 
 class RestaurantBookingService implements BookingServiceInterface {
-	private static bookingModuleList = "RestaurantBookingManagment";
+	private static $bookingModuleList = "RestaurantTableBookingModule";
 	public function getBestTable($merchantId, $datetime, $noOfParticipants) {
 		$datetimeParts = explode(' ', $datetime);
 		$dateStr = $datetimeParts[0];
@@ -42,7 +43,7 @@ class RestaurantBookingService implements BookingServiceInterface {
 		return null;
 	}
 	private function lockModules($merchantID, $datetime, $noOfParticipants, $restaurantTable, $bookingLength){
-		$moduleArr = split(RestaurantBookingService::$bookingModuleList);
+		$moduleArr = explode(",", RestaurantBookingService::$bookingModuleList);
 
 		$passed = true;
 		foreach($moduleArr as $m){
@@ -55,7 +56,7 @@ class RestaurantBookingService implements BookingServiceInterface {
 	}
 	
 	private function unlockModules($merchantID, $datetime, $noOfParticipants, $restaurantTable, $bookingLength){
-		$moduleArr = split(RestaurantBookingService::$bookingModuleList);
+		$moduleArr = explode(",", RestaurantBookingService::$bookingModuleList);
 
 		$passed = true;
 		foreach($moduleArr as $m){
@@ -66,13 +67,26 @@ class RestaurantBookingService implements BookingServiceInterface {
 		}
 		return $passed;
 	}	
-
-	public function isAvailabileModules($merchantId, $bookingDatetime, $noOfParticipants){
-		$moduleArr = split(RestaurantBookingService::$bookingModuleList);
+	private function commitModules($merchantID, $datetime, $noOfParticipants, $restaurantTable, $bookingLength){
+		$moduleArr = explode(",", RestaurantBookingService::$bookingModuleList);
 
 		$passed = true;
 		foreach($moduleArr as $m){
-			$passed = call_user_func(array($m, "isAvailable") , $merchantID, $datetime, $noOfParticipants);	
+			$passed = call_user_func(array($m, "commit") , $merchantID, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);	
+			if(!$passed)
+				break;
+
+		}
+		return $passed;
+	}	
+
+	public function isAvailableModules($merchantId, $bookingDatetime, $noOfParticipants){
+		$moduleArr = explode(",", RestaurantBookingService::$bookingModuleList);
+
+		$passed = true;
+		foreach($moduleArr as $m){
+			echo $m;
+			$passed = call_user_func(array($m, "isAvailable") , $merchantId, $bookingDatetime, $noOfParticipants);	
 			if(!$passed)
 				break;
 
@@ -112,10 +126,12 @@ class RestaurantBookingService implements BookingServiceInterface {
 							'create_ts' => DB::sqleval('NOW()')
 						));
 					}
+					$this->commitModules($merchantId, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);
 					$this->unlockAllModules($merchantId, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);
 					return $bookingId;
 				}
 				$this->unlockModules($merchantId, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);
+				//TODO return something?!?
 			}
 		}
 		return -1;
