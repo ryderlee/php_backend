@@ -142,12 +142,18 @@ class RestaurantTableBookingModule{
 			//for testing purpose
 
 			RestaurantTableBookingModule::$bookingStartDatetime = $bookingDatetime;			
-			$ts = strtotime($bookingDatetime);
-			RestaurantTableBookingModule::$sessionDate = date("Y-n-j H:i:s", mktime(0, 0, 0, date("n", $ts), date("j", $ts), date("Y", $ts))) ;	
-			RestaurantTableBookingModule::$sessionStartDatetime = date("Y-n-j H:i:s", mktime(18, 0, 0, date("n", $ts), date("j", $ts), date("Y", $ts))) ;	
-			RestaurantTableBookingModule::$sessionEndDatetime = date("Y-n-j H:i:s", mktime(25, 0, 0, date("n", $ts), date("j", $ts), date("Y", $ts))) ;	
-			RestaurantTableBookingModule::$bookingEndDatetime =  date("Y-n-j H:i:s", strtotime(RestaurantTableBookingModule::$bookingStartDatetime) + 60 * 120);
-
+			// $ts = strtotime($bookingDatetime);
+			// RestaurantTableBookingModule::$sessionDate = date("Y-n-j H:i:s", mktime(0, 0, 0, date("n", $ts), date("j", $ts), date("Y", $ts))) ;	
+			// RestaurantTableBookingModule::$sessionStartDatetime = date("Y-n-j H:i:s", mktime(18, 0, 0, date("n", $ts), date("j", $ts), date("Y", $ts))) ;	
+			// RestaurantTableBookingModule::$sessionEndDatetime = date("Y-n-j H:i:s", mktime(25, 0, 0, date("n", $ts), date("j", $ts), date("Y", $ts))) ;	
+			// RestaurantTableBookingModule::$bookingEndDatetime =  date("Y-n-j H:i:s", strtotime(RestaurantTableBookingModule::$bookingStartDatetime) + 60 * 120);
+			
+			
+			$openingSession = $merchantTemplate->getOpeningSession($bookingDatetime);
+			RestaurantTableBookingModule::$sessionDate = $merchantTemplate->getTemplateDate();
+			RestaurantTableBookingModule::$sessionStartDatetime = $merchantTemplate->getTemplateDate()." ".$openingSession->getStartTime();
+			RestaurantTableBookingModule::$sessionEndDatetime = date("Y-m-d H:i:s", strtotime(RestaurantTableBookingModule::$sessionStartDatetime) + 60 * $openingSession->getSessionLength());
+			RestaurantTableBookingModule::$bookingEndDatetime = date("Y-m-d H:i:s", strtotime($bookingDatetime) + 60 * $openingSession->getMealDuration());
 
 			
 			RestaurantTableBookingModule::$sessionStartTimestamp = strtotime(RestaurantTableBookingModule::$sessionStartDatetime);
