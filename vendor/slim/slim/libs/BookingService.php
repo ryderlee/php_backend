@@ -85,15 +85,16 @@ class RestaurantBookingService implements BookingServiceInterface {
 
 		$passed = true;
 		foreach($moduleArr as $m){
-			echo $m;
 			$passed = call_user_func(array($m, "isAvailable") , $merchantId, $bookingDatetime, $noOfParticipants);	
 			if(!$passed)
 				break;
-
 		}
 		return $passed;
 	}
 	public function makeBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest) {
+
+		$arr = array('tableBookingLength' => 120, 'tableBookingInterval' => 15, 'tableCoverList'=>'1,2,3,4,5,6');
+		setMerchantSettings($merchantId, $arr);
 		if($this->isAvailableModules($merchantId, $datetime, $noOfParticipants)){
 			$info = $this->getBestTable($merchantId, $datetime, $noOfParticipants);
 			
@@ -127,7 +128,7 @@ class RestaurantBookingService implements BookingServiceInterface {
 						));
 					}
 					$this->commitModules($merchantId, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);
-					$this->unlockAllModules($merchantId, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);
+					$this->unlockModules($merchantId, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);
 					return $bookingId;
 				}
 				$this->unlockModules($merchantId, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);
