@@ -17,6 +17,7 @@ require '../../predis/predis/autoload.php';
 require '../../../vendor/autoload.php';
 require_once 'libs/MerchantTemplateService.php';
 require_once 'libs/BookingService.php';
+require_once 'RetaurantTableBookingModule.php';
 \Slim\Slim::registerAutoloader();
 
 /**
@@ -567,7 +568,8 @@ $app->group('/api', function () use($app){
 		$distanceUnit = $app->request()->params('du');
 		$distance = $app->request()->params('dt');
 		$resultPerPage = $app->request()->params('rpp');
-
+		$bookingDatetime = $app->request()->params('booking_datetime');
+		$covers = $app->request()->params('no_of_participants');
 
 		if(is_null($distance))
 			$distance = 0.3;
@@ -657,9 +659,18 @@ $app->group('/api', function () use($app){
 			"http://giverny.org/tour/ravoux.jpg"
 		);
 
+		//TODO:$bookingDatetime
 		foreach ($rs as $idx => $restaurant) {
+			$availabilityArr = array();
+			$cache = RestaurantTemplateService::getCache($rs[$idx]['LICNO'], $bookingDatetime , $covers);
+			foreach($cache as $key=>$value){
+				$availabilityArr[$key] = ($value > 0);
+			}
+			$timeKey = date("Hi", $bookingDatetime);
 			$rs[$idx]['IMAGE'] = $images[array_rand($images)];
+			$rs[$idx]['timeslotAvailability'] = $availabilityArr; 
 		}
+		
 		echo json_encode($rs);
 		//echo json_encode($returnValue, JSON_PRETTY_PRINT);
 		//echo $output;
