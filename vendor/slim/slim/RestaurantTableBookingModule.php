@@ -186,7 +186,9 @@ class RestaurantTableBookingModule{
 			//echo date("Ymd His", $this->theDate);
 			$thekey = date('Hi', $tempDate);
 			//var_dump($cache);
-			$returnValue = (intval($cache[$thekey]) > 0);
+			if(isset($cache[$thekey])){
+				$returnValue = (intval($cache[$thekey]) > 0);
+			}
 			if($returnValue == false)
 				break;
 		}
