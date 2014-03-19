@@ -666,7 +666,7 @@ $app->group('/api', function () use($app){
 			foreach($cache as $key=>$value){
 				$availabilityArr[$key] = ($value > 0);
 			}
-			$timeKey = date("Hi", $bookingDatetime);
+			$timeKey = date("Hi", strtotime($bookingDatetime));
 			$rs[$idx]['IMAGE'] = $images[array_rand($images)];
 			$rs[$idx]['timeslotAvailability'] = $availabilityArr; 
 		}
