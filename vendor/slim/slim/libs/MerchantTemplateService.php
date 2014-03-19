@@ -28,6 +28,24 @@ class MerchantTemplate {
 	public function getTemplateDate() {
 		return $this->templateDate;
 	}
+	public function getOpeningSession($datetime) {
+		$datetimeParts = explode(' ', $datetime);
+		$dateStr = $datetimeParts[0];
+		$timeStr = $datetimeParts[1];
+		foreach ($this->getOpeningSessions() as $openingSession) {
+			$start = strtotime($openingSession->getStartTime());
+			$end = $start + 60 * $openingSession->getSessionLength();
+			$target = strtotime($timeStr);
+			if ($dateStr != $this->getTemplateDate()) {
+				$target += 86400;
+			}
+			if ($target >= $start && $target <= $end) {
+				return $openingSession;
+				break;
+			}
+		}
+		return null;
+	}
 }
 
 class OpeningSession {
@@ -130,16 +148,56 @@ class RestaurantTemplateService implements MerchantTemplateServiceInterface {
 		$datetimeParts = explode(' ', $datetime);
 		$dateStr = $datetimeParts[0];
 		$timeStr = $datetimeParts[1];
-		$result = DB::query('SELECT * FROM merchant_template mt JOIN merchant_template_session mts ON mt.template_id = mts.template_id JOIN merchant_opening_session mos ON mts.opening_session_id = mos.opening_session_id WHERE mt.template_id = (SELECT template_id FROM merchant_template_assignments WHERE merchant_id = %d AND (recurrence = DAYOFWEEK(%s) OR assign_date = %s) ORDER BY assign_date = %s DESC LIMIT 1)', $merchantId, $dateStr, $dateStr, $dateStr);
-		$merchantTemplate = null;
+		
+		$dayofweekBefore = date('w', strtotime($datetime));
+		$dayofweekExact = date('w', strtotime($datetime))+1;
+		$dateBefore = date('Y-m-d', strtotime($datetime)-86400);
+		$dateExact = $dateStr;
+		
+		// $result = DB::query('SELECT * FROM merchant_template mt JOIN merchant_template_session mts ON mt.template_id = mts.template_id JOIN merchant_opening_session mos ON mts.opening_session_id = mos.opening_session_id WHERE mt.template_id = (SELECT template_id FROM merchant_template_assignments WHERE merchant_id = %d AND (recurrence = DAYOFWEEK(%s) OR assign_date = %s) ORDER BY assign_date = %s DESC LIMIT 1)', $merchantId, $dateStr, $dateStr, $dateStr);
+		$result = DB::query('SELECT * FROM merchant_template mt JOIN merchant_template_session mts ON mt.template_id = mts.template_id JOIN merchant_opening_session mos ON mts.opening_session_id = mos.opening_session_id JOIN merchant_template_assignments mta ON mt.template_id = mta.template_id WHERE mt.merchant_id = %d AND (recurrence = DAYOFWEEK(%s) OR assign_date = %s OR recurrence = DAYOFWEEK(DATE_SUB(%s, INTERVAL 1 DAY)) OR assign_date = DATE_SUB(%s, INTERVAL 1 DAY)) ORDER BY mta.recurrence, mos.start_time', $merchantId, $dateStr, $dateStr, $dateStr, $dateStr);
+
+		$merchantTemplates = array();
+		$key = null;
 		foreach ($result as $row) {
-			if (empty($merchantTemplate)) {
-				$merchantTemplate = new MerchantTemplate($row['merchant_id'], $row['template_id'], $row['template_name'], $dateStr);
+			$key = $row['recurrence']==-1?$row['assign_date']:$row['recurrence'];
+			if (!isset($merchantTemplates[$key])) {
+				$merchantTemplate = new MerchantTemplate($row['merchant_id'], $row['template_id'], $row['template_name'], $row['assign_date']);
+				$merchantTemplates[$key] = $merchantTemplate;
+			} else {
+				$merchantTemplate = $merchantTemplates[$key];
 			}
 			$openingSession = new RestaurantOpeningSession($row['merchant_id'], $row['opening_session_id'], $row['opening_session_name'], $row['start_time'], $row['session_length'], $row['settings']);
 			$merchantTemplate->putOpeningSession($openingSession);
 		}
-		return $merchantTemplate;
+
+		$targetMerchantTemplate = null;
+		$openingSessionFound = false;
+		if (isset($merchantTemplates[$dateExact])) {
+			if (!is_null($merchantTemplates[$dateExact]->getOpeningSession($datetime))) {
+				$openingSessionFound = true;
+				$targetMerchantTemplate = $merchantTemplates[$dateExact];
+			}
+		} else if (isset($merchantTemplates[$dayofweekExact])) {
+			if (!is_null($merchantTemplates[$dayofweekExact]->getOpeningSession($datetime))) {
+				$openingSessionFound = true;
+				$targetMerchantTemplate = $merchantTemplates[$dayofweekExact];
+			}
+		}
+		if (!$openingSessionFound) {
+			if (isset($merchantTemplates[$dateBefore])) {
+				if (!is_null($merchantTemplates[$dateBefore]->getOpeningSession($datetime))) {
+					$openingSessionFound = true;
+					$targetMerchantTemplate = $merchantTemplates[$dateBefore];
+				}
+			} else if (isset($merchantTemplates[$dayofweekBefore])) {
+				if (!is_null($merchantTemplates[$dayofweekBefore]->getOpeningSession($datetime))) {
+					$openingSessionFound = true;
+					$targetMerchantTemplate = $merchantTemplates[$dayofweekBefore];
+				}
+			}
+		}
+		return $targetMerchantTemplate;
 	}
 	public function getTemplateList($merchantId) {
 	}
