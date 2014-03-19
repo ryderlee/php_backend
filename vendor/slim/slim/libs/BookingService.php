@@ -1,7 +1,6 @@
 <?php
 
 require_once 'MerchantTemplateService.php';
-require_once 'RestaurantTableBookingModule.php';
 
 $restaurantTemplateService = new RestaurantTemplateService();
 

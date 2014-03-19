@@ -17,7 +17,7 @@ require '../../predis/predis/autoload.php';
 require '../../../vendor/autoload.php';
 require_once 'libs/MerchantTemplateService.php';
 require_once 'libs/BookingService.php';
-require_once 'RetaurantTableBookingModule.php';
+require_once 'RestaurantTableBookingModule.php';
 \Slim\Slim::registerAutoloader();
 
 /**
