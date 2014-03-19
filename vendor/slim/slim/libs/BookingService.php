@@ -143,6 +143,60 @@ class RestaurantBookingService implements BookingServiceInterface {
 		}
 		return -1;
 	}
+	public function editBooking($userId, $bookingId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $arrayOfTables, $bookingLength) {
+
+		
+		$restaurantTable = $info['table'];
+		$bookingLength = $info['booking_length'];
+		if( $this->lockModules($merchantId, $datetime, $noOfParticipants, $arrayOfTables, $bookingLength)){
+			$values = array(
+				'first_name' => $firstName,
+				'last_name' => $lastName,
+				'phone' => $phone,
+				'booking_ts' => $datetime,
+				'booking_length' => $bookingLength,
+				'no_of_participants' => $noOfParticipants,
+				'special_request' => $specialRequest
+			);
+			DB::update('booking',$values, "booking_id=%d",  $bookingId);
+
+			/* for booking_restaurant_table */
+
+			$sql = "SELECT restaurant_table_id FROM booking_restaurant_table WHERE booking_id=%d" ;
+
+			$rs = DB::query($sql, $bookingId);
+			$arrayOfTableIds = array();
+			foreach($arrayOfTables as $t){
+				$arrayOfTableIds[] = $t->getTableId());
+			}
+			for($i =0; $i < sizeof($rs); $i++){
+				if(!in_array($rs[$i]['restaurant_table_id'], $arrayOfTableIds)){
+					DB::delete('booking_restaurant_table', "booking_id=%d AND restaurant_table_id=%d", $bookingId, $rs[$i]['restaurant_table_id']);
+
+				}else{
+					if($key = array_search($rs[$i]['restaurant_table_id'] , $arrayOfTableIds) !== false){
+						unset($arrayOfTableIds[$key]);
+					}
+				}
+			}
+			foreach($arrayOfTableIds as $value){
+				DB::insert('booking_restaurant_table', array(
+					'booking_id' => $bookingId,
+					'restaurant_table_id' => $value,
+					'create_ts' => DB::sqleval('NOW()')
+				));
+			}
+			/* end:for booking_restaurant_table */
+
+
+			$this->commitModules($merchantId, $datetime, $noOfParticipants, $arrayOfTables, $bookingLength);
+			$this->unlockModules($merchantId, $datetime, $noOfParticipants, $arrayOfTables, $bookingLength);
+			return $bookingId;
+		}
+		$this->unlockModules($merchantId, $datetime, $noOfParticipants, $arrayOfTables, $bookingLength);
+		//TODO always return true
+		return false;
+	}
 
 
 	public function makeBookingByMerchant($tableId, $merchantId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest) {
