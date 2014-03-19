@@ -662,7 +662,7 @@ $app->group('/api', function () use($app){
 		//TODO:$bookingDatetime
 		foreach ($rs as $idx => $restaurant) {
 			$availabilityArr = array();
-			$cache = RestaurantTemplateService::getCache($rs[$idx]['LICNO'], $bookingDatetime , $covers);
+			$cache = RestaurantTableBookingModule::getCache($rs[$idx]['LICNO'], $bookingDatetime , $covers);
 			foreach($cache as $key=>$value){
 				$availabilityArr[$key] = ($value > 0);
 			}
