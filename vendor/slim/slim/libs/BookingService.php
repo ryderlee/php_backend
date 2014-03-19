@@ -13,6 +13,20 @@ interface BookingServiceInterface {
 
 class RestaurantBookingService implements BookingServiceInterface {
 	private static $bookingModuleList = "RestaurantTableBookingModule";
+	public static function getTimeslotAvailability($merchantId, $bookingDatetime, $covers){
+		$moduleArr = explode(",", RestaurantBookingService::$bookingModuleList);
+		$returnValue = array();
+		foreach($moduleArr as $m){
+			$cache = call_user_func(array($m, "getCache"), $merchantId, $bookingDatetime, $covers));
+			foreach($cache as $key=>$value){
+				if(!isset($returnValue[$key]))
+					$returnValue[$key] = 1;
+				if($value ==0)
+					$returnValue[$key] = 0;
+			}
+		}
+		return $returnValue;
+	}
 	public function getBestTable($merchantId, $datetime, $noOfParticipants) {
 		$datetimeParts = explode(' ', $datetime);
 		$dateStr = $datetimeParts[0];
