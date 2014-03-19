@@ -10,6 +10,10 @@ $timestamp = mktime($hour, $minute, $second, $month, $day, $year);
 return $timestamp;
 }
 function getMerchantSettings($mid){
+	
+	$arr = array("tableBookingInterval" => 15, "tableCoverList" => "1,2,3,4,5,6");
+	setMerchantSettings($mid, $arr);
+	
 	global $redis;
 	$limit = 1000;
 	$returnValue = array();
@@ -123,6 +127,7 @@ class RestaurantTableBookingModule{
 	private static $sessionEndDatetime = null;
 	private static $sessionStartTimestamp= null;
 	private static $sessionEndTimestamp= null;
+	private static $bookingLength = null;
 
 
 	private static function setStaticVar($mid, $bookingDatetime, $covers){
@@ -160,6 +165,7 @@ class RestaurantTableBookingModule{
 			RestaurantTableBookingModule::$sessionEndTimestamp = strtotime(RestaurantTableBookingModule::$sessionEndDatetime);
 			RestaurantTableBookingModule::$bookingStartTimestamp = strtotime(RestaurantTableBookingModule::$bookingStartDatetime);
 			RestaurantTableBookingModule::$bookingEndTimestamp = strtotime(RestaurantTableBookingModule::$bookingEndDatetime);
+			RestaurantTableBookingModule::$bookingLength = $openingSession->getMealDuration();
 			
 
 			global $redis;
@@ -173,7 +179,7 @@ class RestaurantTableBookingModule{
 	public static function isAvailable($mid, $bookingDatetime, $covers){
 		RestaurantTableBookingModule::setStaticVar($mid, $bookingDatetime, $covers);
 		$setting = getMerchantSettings($mid);
-		$bookingLength = intval($setting['tableBookingLength']);
+		$bookingLength = RestaurantTableBookingModule::$bookingLength;
 		$bookingInterval = intval($setting['tableBookingInterval']);
 		$returnValue = true;
 		
@@ -222,7 +228,7 @@ class RestaurantTableBookingModule{
 		RestaurantTableBookingModule::setStaticVar($mid, $bookingDatetime, $covers);
 		$mSetting = getMerchantSettings($mid);
 
-		$bookingLength = intval($mSetting['tableBookingLength']);
+		$bookingLength = RestaurantTableBookingModule::$bookingLength;
 		$bookingInterval = intval($mSetting['tableBookingInterval']);
 		$startDatetime = RestaurantTableBookingModule::$bookingStartDatetime;
 
@@ -335,7 +341,7 @@ class RestaurantTableBookingModule{
 			}
 		}
 		*/
-		$bookingLength = intval($OSCache['tableBookingLength']);
+		$bookingLength = RestaurantTableBookingModule::$bookingLength;
 		$bookingInterval = intval($OSCache['tableBookingInterval']);
 		$bookingStartDatetime = RestaurantTableBookingModule::$bookingStartDatetime;
 		$bookingEndDatetime = RestaurantTableBookingModule::$bookingEndDatetime;
