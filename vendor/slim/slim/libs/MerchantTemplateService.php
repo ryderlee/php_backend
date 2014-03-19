@@ -162,7 +162,12 @@ class RestaurantTemplateService implements MerchantTemplateServiceInterface {
 		foreach ($result as $row) {
 			$key = $row['recurrence']==-1?$row['assign_date']:$row['recurrence'];
 			if (!isset($merchantTemplates[$key])) {
-				$merchantTemplate = new MerchantTemplate($row['merchant_id'], $row['template_id'], $row['template_name'], $row['assign_date']);
+				if ($row['recurrence'] == -1) {
+					$assign_date = $row['assign_date'];
+				} else {
+					$assign_date = $row['recurrence']==$dayofweekExact?$dateExact:$dateBefore;
+				}
+				$merchantTemplate = new MerchantTemplate($row['merchant_id'], $row['template_id'], $row['template_name'], $assign_date);
 				$merchantTemplates[$key] = $merchantTemplate;
 			} else {
 				$merchantTemplate = $merchantTemplates[$key];
