@@ -70,8 +70,8 @@ $ses = Aws\Ses\SesClient::factory(array(
 ));
 
 $redis = new Predis\Client(array(
-	//'host' => 'elasticcache.eeqrho.0001.apse1.cache.amazonaws.com',
-	'host' => '127.0.0.1',
+	'host' => 'elasticcache.eeqrho.0001.apse1.cache.amazonaws.com',
+	// 'host' => '127.0.0.1',
 	'database' => 0,
 	'port'	=> 6379
 ));
