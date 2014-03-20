@@ -659,16 +659,21 @@ $app->group('/api', function () use($app){
 			"http://giverny.org/tour/ravoux.jpg"
 		);
 
-		//TODO:$bookingDatetime
 		foreach ($rs as $idx => $restaurant) {
 			$availabilityArr = array();
-			$cache = RestaurantTableBookingModule::getCache($rs[$idx]['LICNO'], $bookingDatetime , $covers);
-			foreach($cache as $key=>$value){
-				$availabilityArr[$key] = ($value > 0);
-			}
-			$timeKey = date("Hi", strtotime($bookingDatetime));
-			$rs[$idx]['IMAGE'] = $images[array_rand($images)];
-			$rs[$idx]['timeslotAvailability'] = $availabilityArr; 
+			global $restaurantTemplateService;
+			$merchantTemplate = $restaurantTemplateService->getTemplate($rs[$idx]['LICNO'], $bookingDatetime);
+			if (!empty($merchantTemplate)) {
+				if (!empty($merchantTemplate->getOpeningSession($bookingDatetime))) {
+					$cache = RestaurantTableBookingModule::getCache($rs[$idx]['LICNO'], $bookingDatetime , $covers);
+					foreach($cache as $key=>$value){
+						$availabilityArr[$key] = ($value > 0);
+					}
+					$timeKey = date("Hi", strtotime($bookingDatetime));
+					$rs[$idx]['IMAGE'] = $images[array_rand($images)];
+					$rs[$idx]['timeslotAvailability'] = $availabilityArr;
+				}
+			} 
 		}
 		
 		echo json_encode($rs);
