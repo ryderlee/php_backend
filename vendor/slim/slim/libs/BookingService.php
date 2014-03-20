@@ -17,7 +17,7 @@ class RestaurantBookingService implements BookingServiceInterface {
 		$moduleArr = explode(",", RestaurantBookingService::$bookingModuleList);
 		$returnValue = array();
 		foreach($moduleArr as $m){
-			$cache = call_user_func(array($m, "getCache"), $merchantId, $bookingDatetime, $covers));
+			$cache = call_user_func(array($m, "getCache"), $merchantId, $bookingDatetime, $covers);
 			foreach($cache as $key=>$value){
 				if(!isset($returnValue[$key]))
 					$returnValue[$key] = 1;
@@ -97,6 +97,57 @@ class RestaurantBookingService implements BookingServiceInterface {
 		}
 		return $passed;
 	}
+	public function addBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength) {
+		if(sizeof($arrOfTables) > 0){
+			$values = array(
+				'user_id' => $userId, 
+				'merchant_id' => $merchantId,
+				'is_guest' => $isGuest,
+				'session_id' => $sessionId,
+				'first_name' => $firstName,
+				'last_name' => $lastName,
+				'phone' => $phone,
+				'booking_ts' => $datetime,
+				'booking_length' => $bookingLength,
+				'no_of_participants' => $noOfParticipants,
+				'special_request' => $specialRequest,
+				'status' => $status,
+				'attendance' => $attendance,
+				'create_ts' => DB::sqleval('NOW()')
+			);
+			DB::insert('booking', $values);
+			$bookingId = DB::insertId();
+			if ($bookingId > 0) {
+				foreach($arrOfTables as $tableObj){
+					DB::insert('booking_restaurant_table', array(
+						'booking_id' => $bookingId,
+						'restaurant_table_id' => $tableObj->getTableId(),
+						'create_ts' => DB::sqleval('NOW()')
+					));
+				}
+			}
+			return $bookingId;
+		}else{
+			return false;
+		}
+
+	}
+
+	public function makeBookingByMerchant($userId, $merchantId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength) {
+		if($this->isAvailableModules($merchantId, $datetime, $noOfParticipants)){
+			if( $this->lockModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength)){
+				if( $bookingId = $this->addBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength)){
+					$this->commitModules($merchantId, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);
+				}
+				$this->unlockModules($merchantId, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);
+				return $bookingId;
+			}
+			$this->unlockModules($merchantId, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);
+			//TODO return something?!?
+		}
+		return -1;
+			
+	}
 	public function makeBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest) {
 
 		$arr = array('tableBookingLength' => 120, 'tableBookingInterval' => 15, 'tableCoverList'=>'1,2,3,4,5,6');
@@ -107,43 +158,21 @@ class RestaurantBookingService implements BookingServiceInterface {
 			if (!empty($info)) {
 				$restaurantTable = $info['table'];
 				$bookingLength = $info['booking_length'];
-				if( $this->lockModules($merchantId, $datetime, $noOfParticipants, $restaurantTable, $bookingLength)){
-					$values = array(
-						'user_id' => $userId, 
-						'merchant_id' => $merchantId,
-						'is_guest' => $isGuest,
-						'session_id' => $sessionId,
-						'first_name' => $firstName,
-						'last_name' => $lastName,
-						'phone' => $phone,
-						'booking_ts' => $datetime,
-						'booking_length' => $bookingLength,
-						'no_of_participants' => $noOfParticipants,
-						'special_request' => $specialRequest,
-						'status' => 0,
-						'attendance' => 0,
-						'create_ts' => DB::sqleval('NOW()')
-					);
-					DB::insert('booking', $values);
-					$bookingId = DB::insertId();
-					if ($bookingId > 0) {
-						DB::insert('booking_restaurant_table', array(
-							'booking_id' => $bookingId,
-							'restaurant_table_id' => $restaurantTable->getTableId(),
-							'create_ts' => DB::sqleval('NOW()')
-						));
+				$arrOfTables = array($resturantTable);
+				if( $this->lockModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength)){
+					if( $bookingId = $this->addBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength)){
+						$this->commitModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength);
 					}
-					$this->commitModules($merchantId, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);
-					$this->unlockModules($merchantId, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);
+					$this->unlockModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength);
 					return $bookingId;
 				}
-				$this->unlockModules($merchantId, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);
+				$this->unlockModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength);
 				//TODO return something?!?
 			}
 		}
 		return -1;
 	}
-	public function editBooking($userId, $bookingId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $arrayOfTables, $bookingLength) {
+	public function editBooking($userId, $bookingId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrayOfTables, $bookingLength) {
 
 		
 		$restaurantTable = $info['table'];
@@ -156,7 +185,9 @@ class RestaurantBookingService implements BookingServiceInterface {
 				'booking_ts' => $datetime,
 				'booking_length' => $bookingLength,
 				'no_of_participants' => $noOfParticipants,
-				'special_request' => $specialRequest
+				'special_request' => $specialRequest,
+				'status' => $status,
+				'attendance' => $attendance
 			);
 			DB::update('booking',$values, "booking_id=%d",  $bookingId);
 
@@ -167,7 +198,7 @@ class RestaurantBookingService implements BookingServiceInterface {
 			$rs = DB::query($sql, $bookingId);
 			$arrayOfTableIds = array();
 			foreach($arrayOfTables as $t){
-				$arrayOfTableIds[] = $t->getTableId());
+				$arrayOfTableIds[] = $t->getTableId();
 			}
 			for($i =0; $i < sizeof($rs); $i++){
 				if(!in_array($rs[$i]['restaurant_table_id'], $arrayOfTableIds)){
@@ -196,10 +227,5 @@ class RestaurantBookingService implements BookingServiceInterface {
 		$this->unlockModules($merchantId, $datetime, $noOfParticipants, $arrayOfTables, $bookingLength);
 		//TODO always return true
 		return false;
-	}
-
-
-	public function makeBookingByMerchant($tableId, $merchantId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest) {
-		
 	}
 }
