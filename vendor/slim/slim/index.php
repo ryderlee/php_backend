@@ -17,7 +17,7 @@ require '../../predis/predis/autoload.php';
 require '../../../vendor/autoload.php';
 require_once 'libs/MerchantTemplateService.php';
 require_once 'libs/BookingService.php';
-require_once 'RetaurantTableBookingModule.php';
+require_once 'RestaurantTableBookingModule.php';
 \Slim\Slim::registerAutoloader();
 
 /**
@@ -70,8 +70,8 @@ $ses = Aws\Ses\SesClient::factory(array(
 ));
 
 $redis = new Predis\Client(array(
-	//'host' => 'elasticcache.eeqrho.0001.apse1.cache.amazonaws.com',
-	'host' => '127.0.0.1',
+	'host' => 'elasticcache.eeqrho.0001.apse1.cache.amazonaws.com',
+	// 'host' => '127.0.0.1',
 	'database' => 0,
 	'port'	=> 6379
 ));
@@ -662,11 +662,11 @@ $app->group('/api', function () use($app){
 		//TODO:$bookingDatetime
 		foreach ($rs as $idx => $restaurant) {
 			$availabilityArr = array();
-			$cache = RestaurantTemplateService::getCache($rs[$idx]['LICNO'], $bookingDatetime , $covers);
+			$cache = RestaurantTableBookingModule::getCache($rs[$idx]['LICNO'], $bookingDatetime , $covers);
 			foreach($cache as $key=>$value){
 				$availabilityArr[$key] = ($value > 0);
 			}
-			$timeKey = date("Hi", $bookingDatetime);
+			$timeKey = date("Hi", strtotime($bookingDatetime));
 			$rs[$idx]['IMAGE'] = $images[array_rand($images)];
 			$rs[$idx]['timeslotAvailability'] = $availabilityArr; 
 		}
