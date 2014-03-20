@@ -660,20 +660,16 @@ $app->group('/api', function () use($app){
 		);
 
 		foreach ($rs as $idx => $restaurant) {
-			$availabilityArr = array();
-			global $restaurantTemplateService;
+			global $restaurantTemplateService, $restaurantBookingService;
 			$merchantTemplate = $restaurantTemplateService->getTemplate($rs[$idx]['LICNO'], $bookingDatetime);
 			if (!empty($merchantTemplate)) {
 				if (!empty($merchantTemplate->getOpeningSession($bookingDatetime))) {
-					$cache = RestaurantTableBookingModule::getCache($rs[$idx]['LICNO'], $bookingDatetime , $covers);
-					foreach($cache as $key=>$value){
-						$availabilityArr[$key] = ($value > 0);
-					}
+					$availabilityArr = $restaurantBookingService->getTimeslotAvailability($rs[$idx]['LICNO'], $bookingDatetime , $covers);
 					$timeKey = date("Hi", strtotime($bookingDatetime));
-					$rs[$idx]['IMAGE'] = $images[array_rand($images)];
 					$rs[$idx]['timeslotAvailability'] = $availabilityArr;
 				}
-			} 
+			}
+			$rs[$idx]['IMAGE'] = $images[array_rand($images)]; 
 		}
 		
 		echo json_encode($rs);
