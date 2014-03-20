@@ -172,6 +172,7 @@ class RestaurantTableBookingModule{
 			RestaurantTableBookingModule::$redis = $redis;
 			RestaurantTableBookingModule::$covers = $covers;
 		}
+		return true;
 	}
 	private static function getKey($cover){
 		return ("restaurantTableCache|" . RestaurantTableBookingModule::$merchantID . '|' . date('Ymd', strtotime(RestaurantTableBookingModule::$sessionDate)) . '|' . $cover);
@@ -200,31 +201,40 @@ class RestaurantTableBookingModule{
 		}
 		return $returnValue;
 	}	
-	public static function lockDB($tableID){
-		$key = RestaurantTableBookingModule::getKey($tableID);
+	public static function lockDB($tables){
+		$keys = array();
+		foreach($tables as $t){
+			$keys[] = RestaurantTableBookingModule::getKey($t->getTableId());
+		}
+		$tempStr = "'" .  implode("', '", $keys) . "'";
 		DB::startTransaction();
 		//$sql = "UPDATE cache_restaurant_tables SET locked=1 WHERE locked=0 AND thekey='" . $key . "'";
-		DB::update('cache_restaurant_tables', array('locked'=>1), "locked=%d AND thekey=%s", 0, $key);
+		DB::update('cache_restaurant_tables', array('locked'=>1), "locked=%d AND thekey IN (" . $tempStr . ")", 0);
 		//echo "ROW:" . DB::affectedRows();
-		if(DB::affectedRows() == 0){
-			DB::rollback();
-			return false;
-		}else{
+		if(DB::affectedRows() == sizeof($tables)){
 			DB::commit();
 			return true;
+		}else{
+			DB::rollback();
+			return false;
 		}
 
 	}
-	public static function isLockReady($tableID){
-		$key = RestaurantTableBookingModule::getKey($tableID);
-
-		$sql = "select count(*) from cache_restaurant_tables where thekey='" . $key . "'";
-		if(DB::queryFirstField($sql) == 0){
-			DB::insert('cache_restaurant_tables', array('thekey'=>$key, 'locked'=>0));
+	public static function isLockReady($tables){
+		$keys = array();
+		foreach($tables as $t){
+			$keys[] = RestaurantTableBookingModule::getKey($t->getTableId());
+		}
+		$tempStr = "'" . implode("', '", $keys) . "'";
+		$sql = "select count(*) from cache_restaurant_tables where thekey IN (" . $tempStr . ")";
+		if(DB::queryFirstField($sql) <> sizeof($tables)){
+			foreach($keys as $k){
+				DB::insertIgnore('cache_restaurant_tables', array('thekey'=>$key, 'locked'=>0));
+			}
 		}
 		return true;
 	}
-	public static function lock($mid, $bookingDatetime, $covers, $table, $bookingLength){
+	public static function lock($mid, $bookingDatetime, $covers, $tables, $bookingLength){
 		RestaurantTableBookingModule::setStaticVar($mid, $bookingDatetime, $covers);
 		$mSetting = getMerchantSettings($mid);
 
@@ -233,8 +243,7 @@ class RestaurantTableBookingModule{
 		$startDatetime = RestaurantTableBookingModule::$bookingStartDatetime;
 
 		$key = RestaurantTableBookingModule::getKey($covers);
-		
-		if(RestaurantTableBookingModule::isLockReady($table->getTableId()) && RestaurantTableBookingModule::lockDB($table->getTableId())){
+		if(RestaurantTableBookingModule::isLockReady($tables) && RestaurantTableBookingModule::lockDB($tables)){
 			return true;
 		}else{
 			return false ;
@@ -242,16 +251,15 @@ class RestaurantTableBookingModule{
 		
 	}
 	
-	public static function unlock($mid, $bookingDatetime, $covers, $restaurantTable, $bookingLength){
+	public static function unlock($mid, $bookingDatetime, $covers, $restaurantTables, $bookingLength){
 		RestaurantTableBookingModule::setStaticVar($mid, $bookingDatetime, $covers);
 		$mSetting = getMerchantSettings($mid);
-		$key = RestaurantTableBookingModule::getKey($restaurantTable->getTableId());
-		$sql = "SELECT count(*) FROM cache_restaurant_tables WHERE thekey='" . $key . "'";
+		$cache = RestaurantTableBookingModule::getCache($mid, $bookingDatetime, $covers);
 		
-		if(DB::queryFirstField($sql) == 0){
+		if(sizeof($cache) == 0){
 			RestaurantTableBookingModule::resetCache($mid, $bookingDatetime, $covers);
 		}
-		if(RestaurantTableBookingModule::unlockDB($restaurantTable->getTableId())){
+		if(RestaurantTableBookingModule::unlockDB($restaurantTables)){
 			return 1;
 		}else{
 			return -1;
@@ -259,17 +267,21 @@ class RestaurantTableBookingModule{
 
 	}
 
-	public static function unlockDB($tableID){
-		$key = RestaurantTableBookingModule::getKey($tableID);
+	public static function unlockDB($tables){
+		$keys = array();
+		foreach($tables as $t){
+			$keys[] = RestaurantTableBookingModule::getKey($t->getTableId());
+		}
+		$tempStr = "'" .  implode("', '", $keys) . "'";
 		DB::startTransaction();
-		DB::update('cache_restaurant_tables', array('locked'=>0), "thekey=%s", $key);
-		if(DB::affectedRows() == 0){
+		DB::update('cache_restaurant_tables', array('locked'=>0), "thekey IN (" . $tempStr . ")" );
+		if(DB::affectedRows() == sizeof($tables)){
+			DB::commit();
+			return true;
+		}else{
 			//ERROR!!! but unlock it whatever
 			DB::commit();
 			return false;
-		}else{
-			DB::commit();
-			return true;
 		}
 	}
 

@@ -7,7 +7,8 @@ $restaurantTemplateService = new RestaurantTemplateService();
 interface BookingServiceInterface {
 	public function getBestTable($merchantId, $datetime, $noOfParticipants);
 	public function makeBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest);
-	public function makeBookingByMerchant($tableId, $merchantId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest);
+	public function makeBookingByMerchant($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength);
+
 }
 
 class RestaurantBookingService implements BookingServiceInterface {
@@ -132,19 +133,17 @@ class RestaurantBookingService implements BookingServiceInterface {
 
 	}
 
-	public function makeBookingByMerchant($userId, $merchantId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength) {
-		if($this->isAvailableModules($merchantId, $datetime, $noOfParticipants)){
-			if( $this->lockModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength)){
-				if( $bookingId = $this->addBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength)){
-					$this->commitModules($merchantId, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);
-				}
-				$this->unlockModules($merchantId, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);
-				return $bookingId;
+	public function makeBookingByMerchant($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength) {
+		if( $this->lockModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength)){
+			if( $bookingId = $this->addBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength)){
+				$this->commitModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength);
 			}
-			$this->unlockModules($merchantId, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);
-			//TODO return something?!?
+			$this->unlockModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength);
+			return $bookingId;
 		}
-		return -1;
+		$this->unlockModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength);
+		//TODO return something?!?
+		return true;
 			
 	}
 	public function makeBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest) {
@@ -157,9 +156,9 @@ class RestaurantBookingService implements BookingServiceInterface {
 			if (!empty($info)) {
 				$restaurantTable = $info['table'];
 				$bookingLength = $info['booking_length'];
-				$arrOfTables = array($resturantTable);
+				$arrOfTables = array($restaurantTable);
 				if( $this->lockModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength)){
-					if( $bookingId = $this->addBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength)){
+					if( $bookingId = $this->addBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, 0, 0, $arrOfTables, $bookingLength)){
 						$this->commitModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength);
 					}
 					$this->unlockModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength);
@@ -171,13 +170,11 @@ class RestaurantBookingService implements BookingServiceInterface {
 		}
 		return -1;
 	}
-	public function editBooking($userId, $bookingId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrayOfTables, $bookingLength) {
+	public function editBooking($bookingId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrayOfTables, $bookingLength) {
 
-		
-		$restaurantTable = $info['table'];
-		$bookingLength = $info['booking_length'];
 		if( $this->lockModules($merchantId, $datetime, $noOfParticipants, $arrayOfTables, $bookingLength)){
 			$values = array(
+				'is_guest' => $isGuest,
 				'first_name' => $firstName,
 				'last_name' => $lastName,
 				'phone' => $phone,
@@ -204,7 +201,7 @@ class RestaurantBookingService implements BookingServiceInterface {
 					DB::delete('booking_restaurant_table', "booking_id=%d AND restaurant_table_id=%d", $bookingId, $rs[$i]['restaurant_table_id']);
 
 				}else{
-					if($key = array_search($rs[$i]['restaurant_table_id'] , $arrayOfTableIds) !== false){
+					if(($key = array_search($rs[$i]['restaurant_table_id'] , $arrayOfTableIds)) !== false){
 						unset($arrayOfTableIds[$key]);
 					}
 				}
