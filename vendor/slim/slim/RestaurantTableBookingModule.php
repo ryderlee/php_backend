@@ -289,12 +289,8 @@ class RestaurantTableBookingModule{
 
 		RestaurantTableBookingModule::setStaticVar($mid, $bookingDatetime, $covers);
 		$mSetting = getMerchantSettings($mid);
-		if(RestaurantTableBookingModule::isAvailable($mid, $bookingDatetime, $covers, $restaurantTable, $bookingLength)){
-			RestaurantTableBookingModule::resetCache($mid, $bookingDatetime, $covers);
-			return true;
-		}else{
-			return false;
-		}
+		RestaurantTableBookingModule::resetCache($mid, $bookingDatetime, $covers);
+		return true;
 		/*
 		$bookingLength = intval($mSetting['tableBookingLength']);
 		$bookingInterval = intval($mSetting['tableBookingInterval']);
@@ -391,7 +387,7 @@ class RestaurantTableBookingModule{
 				if(in_array($k, $bookingCoverList)){
 					for($t = convertDatetime($rs2[$j]['booking_ts']) ; $t < convertDatetime($rs2[$j]['booking_end_ts']) ; $t = $t + 60){
 						$timeKey = date('Hi', $t);
-						if(isset($tableArr[$k]["" . $timeKey])){
+						if(isset($tableArr[$k]["" . $timeKey]) && ($tableArr[$k]["".$timeKey] > 0)){
 							$tableArr[$k]["" . $timeKey] -- ;
 
 						}
