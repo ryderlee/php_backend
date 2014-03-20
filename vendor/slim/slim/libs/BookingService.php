@@ -7,7 +7,7 @@ $restaurantTemplateService = new RestaurantTemplateService();
 interface BookingServiceInterface {
 	public function getBestTable($merchantId, $datetime, $noOfParticipants);
 	public function makeBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest);
-	public function makeBookingByMerchant($tableId, $merchantId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest);
+	public function makeBookingByMerchant($userId, $merchantId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength);
 }
 
 class RestaurantBookingService implements BookingServiceInterface {
