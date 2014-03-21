@@ -13,6 +13,7 @@ interface BookingServiceInterface {
 
 class RestaurantBookingService implements BookingServiceInterface {
 	private static $bookingModuleList = "RestaurantTableBookingModule";
+	private $merchantTemplate  = null;
 	public static function getTimeslotAvailability($merchantId, $bookingDatetime, $covers){
 		$moduleArr = explode(",", RestaurantBookingService::$bookingModuleList);
 		$returnValue = array();
@@ -34,6 +35,7 @@ class RestaurantBookingService implements BookingServiceInterface {
 		
 		global $restaurantTemplateService;
 		$merchantTemplate = $restaurantTemplateService->getTemplate($merchantId, $datetime);
+		$this->merchantTemplate = $merchantTemplate;
 		if (!empty($merchantTemplate)) {
 			$targetOpeningSession = $merchantTemplate->getOpeningSession($datetime);
 			if (!empty($targetOpeningSession)) {
@@ -133,7 +135,12 @@ class RestaurantBookingService implements BookingServiceInterface {
 
 	}
 
-	public function makeBookingByMerchant($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength) {
+	public function makeBookingByMerchant($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength, $forced = false) {
+		if(!$forced){
+			//do something
+			//return $value; 
+		}
+
 		if( $this->lockModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength)){
 			if( $bookingId = $this->addBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength)){
 				$this->commitModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength);
