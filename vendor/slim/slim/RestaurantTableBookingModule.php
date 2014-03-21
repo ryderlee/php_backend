@@ -161,16 +161,17 @@ class RestaurantTableBookingModule{
 			
 			RestaurantTableBookingModule::$openingSessions = $merchantTemplate->getOpeningSessions();
 			RestaurantTableBookingModule::$currentSessionDate = $merchantTemplate->getTemplateDate();
-			RestaurantTableBookingModule::$currentSessionStartDatetime = $merchantTemplate->getTemplateDate()." ".$openingSession->getStartTime();
-			RestaurantTableBookingModule::$currentSessionEndDatetime = date("Y-m-d H:i:s", strtotime(RestaurantTableBookingModule::$currentSessionStartDatetime) + 60 * $openingSession->getSessionLength());
-			RestaurantTableBookingModule::$bookingEndDatetime = date("Y-m-d H:i:s", strtotime($bookingDatetime) + 60 * $openingSession->getMealDuration());
-
-			
-			RestaurantTableBookingModule::$currentSessionStartTimestamp = strtotime(RestaurantTableBookingModule::$currentSessionStartDatetime);
-			RestaurantTableBookingModule::$currentSessionEndTimestamp = strtotime(RestaurantTableBookingModule::$currentSessionEndDatetime);
-			RestaurantTableBookingModule::$bookingStartTimestamp = strtotime(RestaurantTableBookingModule::$bookingStartDatetime);
-			RestaurantTableBookingModule::$bookingEndTimestamp = strtotime(RestaurantTableBookingModule::$bookingEndDatetime);
-			RestaurantTableBookingModule::$bookingLength = $openingSession->getMealDuration();
+			if (!empty($openingSession)) {
+				RestaurantTableBookingModule::$currentSessionStartDatetime = $merchantTemplate->getTemplateDate()." ".$openingSession->getStartTime();
+				RestaurantTableBookingModule::$currentSessionEndDatetime = date("Y-m-d H:i:s", strtotime(RestaurantTableBookingModule::$currentSessionStartDatetime) + 60 * $openingSession->getSessionLength());
+				RestaurantTableBookingModule::$bookingEndDatetime = date("Y-m-d H:i:s", strtotime($bookingDatetime) + 60 * $openingSession->getMealDuration());
+				
+				RestaurantTableBookingModule::$currentSessionStartTimestamp = strtotime(RestaurantTableBookingModule::$currentSessionStartDatetime);
+				RestaurantTableBookingModule::$currentSessionEndTimestamp = strtotime(RestaurantTableBookingModule::$currentSessionEndDatetime);
+				RestaurantTableBookingModule::$bookingStartTimestamp = strtotime(RestaurantTableBookingModule::$bookingStartDatetime);
+				RestaurantTableBookingModule::$bookingEndTimestamp = strtotime(RestaurantTableBookingModule::$bookingEndDatetime);
+				RestaurantTableBookingModule::$bookingLength = $openingSession->getMealDuration();
+			}
 			
 
 			global $redis;
@@ -233,7 +234,7 @@ class RestaurantTableBookingModule{
 		$tempStr = "'" . implode("', '", $keys) . "'";
 		$sql = "select count(*) from cache_restaurant_tables where thekey IN (" . $tempStr . ")";
 		if(DB::queryFirstField($sql) <> sizeof($tables)){
-			foreach($keys as $k){
+			foreach($keys as $key){
 				DB::insertIgnore('cache_restaurant_tables', array('thekey'=>$key, 'locked'=>0));
 			}
 		}
