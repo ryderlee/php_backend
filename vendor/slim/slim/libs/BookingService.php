@@ -135,6 +135,21 @@ class RestaurantBookingService implements BookingServiceInterface {
 
 	}
 
+	public function checkBookingConflict($bookingId=null, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrayOfTables, $bookingLength){
+	//do something
+	$sql = "SELECT DISTINCT b.booking_id FROM booking_restaurant_table brt LEFT JOIN booking b ON booking_id WHERE (b.booking_ts BETWEEN (%s AND %s)) OR (DATE_ADD(b.booking_ts, INTERVAL b.booking_length MINUTE) BETWEEN (%s AND %s))) AND brt.restaurant_table_id = %d";
+	$rs = DB::query($sql, $datetime, $bookingEndDatetime, $bookingStartDatetime, $bookingEndDatetime, $tableId);
+	if(sizeof($rs) > 0){	
+		$returnValue = array();
+		foreach($rs as $r){
+			$returnValue[] = $r['booking_id'];
+		}
+		return $returnValue;
+	}else{
+		return false;
+	}
+}
+
 	public function makeBookingByMerchant($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength, $forced = false) {
 		if(!$forced){
 			//do something
