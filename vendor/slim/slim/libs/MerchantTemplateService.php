@@ -202,6 +202,10 @@ class RestaurantTemplateService implements MerchantTemplateServiceInterface {
 				}
 			}
 		}
+		// Set a default template if opening session is not found
+		if (!$openingSessionFound) {
+			$targetMerchantTemplate = isset($merchantTemplates[$dateExact])?$merchantTemplates[$dateExact]:(isset($merchantTemplates[$dayofweekExact])?$merchantTemplates[$dayofweekExact]:null);
+		}
 		return $targetMerchantTemplate;
 	}
 	public function getTemplateList($merchantId) {
