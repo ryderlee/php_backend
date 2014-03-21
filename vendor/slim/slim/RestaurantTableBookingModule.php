@@ -122,12 +122,15 @@ class RestaurantTableBookingModule{
 	private static $bookingEndDatetime = null;
 	private static $bookingStartTimestamp= null;
 	private static $bookingEndTimestamp= null;
-	private static $sessionDate = null;
-	private static $sessionStartDatetime = null;
-	private static $sessionEndDatetime = null;
-	private static $sessionStartTimestamp= null;
-	private static $sessionEndTimestamp= null;
+	private static $currentSessionDate = null;
+	private static $currentSessionStartDatetime = null;
+	private static $currentSessionEndDatetime = null;
+	private static $currentSessionStartTimestamp= null;
+	private static $currentSessionEndTimestamp= null;
 	private static $bookingLength = null;
+	private static $merchantTemplate = null;
+	
+	private static $openingSessions = null;
 
 
 	private static function setStaticVar($mid, $bookingDatetime, $covers){
@@ -139,7 +142,7 @@ class RestaurantTableBookingModule{
 			RestaurantTableBookingModule::$bookingDatetime = $bookingDatetime;
 			global $restaurantTemplateService;
 			$merchantTemplate = $restaurantTemplateService->getTemplate($mid, $bookingDatetime);
-			
+			RestaurantTableBookingModule::$merchantTemplate = $merchantTemplate;
 			/*$session = $merchantTemplate->getSession($bookingDatetime);
 			RestaurantTableBookingModule::$bookingStartDatetime = $session->getStartTime();
 			RestaurantTableBookingModule::$bookingEndDatetime = $session->getStartTime() + 60 * $session->getSessionLength();
@@ -148,21 +151,23 @@ class RestaurantTableBookingModule{
 
 			RestaurantTableBookingModule::$bookingStartDatetime = $bookingDatetime;			
 			// $ts = strtotime($bookingDatetime);
-			// RestaurantTableBookingModule::$sessionDate = date("Y-n-j H:i:s", mktime(0, 0, 0, date("n", $ts), date("j", $ts), date("Y", $ts))) ;	
+			// RestaurantTableBookingModule::$currentSessionDate = date("Y-n-j H:i:s", mktime(0, 0, 0, date("n", $ts), date("j", $ts), date("Y", $ts))) ;	
 			// RestaurantTableBookingModule::$sessionStartDatetime = date("Y-n-j H:i:s", mktime(18, 0, 0, date("n", $ts), date("j", $ts), date("Y", $ts))) ;	
 			// RestaurantTableBookingModule::$sessionEndDatetime = date("Y-n-j H:i:s", mktime(25, 0, 0, date("n", $ts), date("j", $ts), date("Y", $ts))) ;	
 			// RestaurantTableBookingModule::$bookingEndDatetime =  date("Y-n-j H:i:s", strtotime(RestaurantTableBookingModule::$bookingStartDatetime) + 60 * 120);
 			
 			
 			$openingSession = $merchantTemplate->getOpeningSession($bookingDatetime);
-			RestaurantTableBookingModule::$sessionDate = $merchantTemplate->getTemplateDate();
-			RestaurantTableBookingModule::$sessionStartDatetime = $merchantTemplate->getTemplateDate()." ".$openingSession->getStartTime();
-			RestaurantTableBookingModule::$sessionEndDatetime = date("Y-m-d H:i:s", strtotime(RestaurantTableBookingModule::$sessionStartDatetime) + 60 * $openingSession->getSessionLength());
+			
+			RestaurantTableBookingModule::$openingSessions = $merchantTemplate->getOpeningSessions();
+			RestaurantTableBookingModule::$currentSessionDate = $merchantTemplate->getTemplateDate();
+			RestaurantTableBookingModule::$currentSessionStartDatetime = $merchantTemplate->getTemplateDate()." ".$openingSession->getStartTime();
+			RestaurantTableBookingModule::$currentSessionEndDatetime = date("Y-m-d H:i:s", strtotime(RestaurantTableBookingModule::$currentSessionStartDatetime) + 60 * $openingSession->getSessionLength());
 			RestaurantTableBookingModule::$bookingEndDatetime = date("Y-m-d H:i:s", strtotime($bookingDatetime) + 60 * $openingSession->getMealDuration());
 
 			
-			RestaurantTableBookingModule::$sessionStartTimestamp = strtotime(RestaurantTableBookingModule::$sessionStartDatetime);
-			RestaurantTableBookingModule::$sessionEndTimestamp = strtotime(RestaurantTableBookingModule::$sessionEndDatetime);
+			RestaurantTableBookingModule::$currentSessionStartTimestamp = strtotime(RestaurantTableBookingModule::$currentSessionStartDatetime);
+			RestaurantTableBookingModule::$currentSessionEndTimestamp = strtotime(RestaurantTableBookingModule::$currentSessionEndDatetime);
 			RestaurantTableBookingModule::$bookingStartTimestamp = strtotime(RestaurantTableBookingModule::$bookingStartDatetime);
 			RestaurantTableBookingModule::$bookingEndTimestamp = strtotime(RestaurantTableBookingModule::$bookingEndDatetime);
 			RestaurantTableBookingModule::$bookingLength = $openingSession->getMealDuration();
@@ -175,7 +180,7 @@ class RestaurantTableBookingModule{
 		return true;
 	}
 	private static function getKey($cover){
-		return ("restaurantTableCache|" . RestaurantTableBookingModule::$merchantID . '|' . date('Ymd', strtotime(RestaurantTableBookingModule::$sessionDate)) . '|' . $cover);
+		return ("restaurantTableCache|" . RestaurantTableBookingModule::$merchantID . '|' . date('Ymd', strtotime(RestaurantTableBookingModule::$currentSessionDate)) . '|' . $cover);
 	}
 	public static function isAvailable($mid, $bookingDatetime, $covers){
 		RestaurantTableBookingModule::setStaticVar($mid, $bookingDatetime, $covers);
@@ -349,67 +354,78 @@ class RestaurantTableBookingModule{
 			}
 		}
 		*/
+		
+		
 		$bookingLength = RestaurantTableBookingModule::$bookingLength;
 		$bookingInterval = intval($OSCache['tableBookingInterval']);
 		$bookingStartDatetime = RestaurantTableBookingModule::$bookingStartDatetime;
 		$bookingEndDatetime = RestaurantTableBookingModule::$bookingEndDatetime;
 		$bookingStartTimestamp= RestaurantTableBookingModule::$bookingStartTimestamp;
 		$bookingEndTimestamp= RestaurantTableBookingModule::$bookingEndTimestamp;
-		$sessionStartTimestamp= RestaurantTableBookingModule::$sessionStartTimestamp;
-		$sessionEndTimestamp= RestaurantTableBookingModule::$sessionEndTimestamp;
-		//$bookingStartDatetime = mktime(intval(substr($bookingStart, 0, 2)), intval(substr($bookingStart, 2, 2)),   0,  date("n", $this->theDate), date("j", $this->theDate), date("Y", $this->theDate));
-		//$bookingEndDatetime = mktime(intval(substr($bookingStart, 0, 2)), intval(substr($bookingStart, 2, 2)) + intval($OSCache['tableBookingEnd']),   0,  date("n", $bookingStartDatetime), date("j", $bookingStartDatetime), date("Y", $bookingStartDatetime));
 		
 		$bookingCoverList = explode(',', $OSCache['tableCoverList']);
-
-		$maxBookingCover = max($bookingCoverList);
-		$minBookingCover = min($bookingCoverList);
-		$sql = "SELECT * FROM restaurant_table WHERE merchant_id = %d AND max_cover <= %d AND min_cover >= %d";
-		$rs = DB::query($sql, $mid, $maxBookingCover, $minBookingCover);
-		$tableArr = array();
-		foreach($bookingCoverList as $cover){
-			for($i = 0; $i < sizeof($rs) ; $i++){
-				if(intval($rs[$i]['min_cover']) <= $cover && intval($rs[$i]['max_cover']) >= $cover){
-					for($j = $sessionStartTimestamp; $j <= $sessionEndTimestamp; $j = $j + ($bookingInterval * 60) ){
-						$timeKey = date('Hi', $j);
-						if(!isset($tableArr[$cover]["" . $timeKey]))
-							$tableArr[$cover]["" . $timeKey] = 0;
-						$tableArr[$cover]["" . $timeKey] ++;
-					}
-				}
-			}
-		}
-		$sql = "SELECT *, (DATE_ADD(b.booking_ts, INTERVAL b.booking_length MINUTE)) AS booking_end_ts FROM booking_restaurant_table brt LEFT JOIN restaurant_table rt ON brt.restaurant_table_id = rt.restaurant_table_id LEFT JOIN booking b ON brt.booking_id = b.booking_id WHERE rt.merchant_id = %d AND (b.booking_ts BETWEEN %s AND %s)";
-		$rs2 = DB::query($sql , $mid, date("Y-m-d H:i:s", $sessionStartTimestamp), date("Y-m-d H:i:s", $sessionEndTimestamp));
 		
-		for($j = 0; $j < sizeof($rs2); $j++){
-			for($k = intval($rs2[$j]['min_cover']) ; $k <= intval($rs2[$j]['max_cover']) ; $k++){
-				if(in_array($k, $bookingCoverList)){
-					for($t = convertDatetime($rs2[$j]['booking_ts']) ; $t < convertDatetime($rs2[$j]['booking_end_ts']) ; $t = $t + 60){
-						$timeKey = date('Hi', $t);
-						if(isset($tableArr[$k]["" . $timeKey]) && ($tableArr[$k]["".$timeKey] > 0)){
-							$tableArr[$k]["" . $timeKey] -- ;
-
+		foreach($bookingCoverList as $cover){
+			$key = RestaurantTableBookingModule::getKey($cover);	
+			RestaurantTableBookingModule::$redis->del($key);
+		}
+		
+		foreach(RestaurantTableBookingModule::$openingSessions as $os){
+			$currentSessionStartTimestamp= strtotime(RestaurantTableBookingModule::$merchantTemplate->getTemplateDate() . " " .   $os->getStartTime());
+			$currentSessionEndTimestamp= $currentSessionStartTimestamp + 60 * $os->getSessionLength();
+			//$bookingStartDatetime = mktime(intval(substr($bookingStart, 0, 2)), intval(substr($bookingStart, 2, 2)),   0,  date("n", $this->theDate), date("j", $this->theDate), date("Y", $this->theDate));
+			//$bookingEndDatetime = mktime(intval(substr($bookingStart, 0, 2)), intval(substr($bookingStart, 2, 2)) + intval($OSCache['tableBookingEnd']),   0,  date("n", $bookingStartDatetime), date("j", $bookingStartDatetime), date("Y", $bookingStartDatetime));
+			
+			
+	
+			$maxBookingCover = max($bookingCoverList);
+			$minBookingCover = min($bookingCoverList);
+			$sql = "SELECT * FROM restaurant_table WHERE merchant_id = %d AND max_cover <= %d AND min_cover >= %d";
+			$rs = DB::query($sql, $mid, $maxBookingCover, $minBookingCover);
+			$tableArr = array();
+			foreach($bookingCoverList as $cover){
+				for($i = 0; $i < sizeof($rs) ; $i++){
+					if(intval($rs[$i]['min_cover']) <= $cover && intval($rs[$i]['max_cover']) >= $cover){
+						for($j = $currentSessionStartTimestamp; $j <= $currentSessionEndTimestamp; $j = $j + ($bookingInterval * 60) ){
+							$timeKey = date('Hi', $j);
+							if(!isset($tableArr[$cover]["" . $timeKey]))
+								$tableArr[$cover]["" . $timeKey] = 0;
+							$tableArr[$cover]["" . $timeKey] ++;
 						}
 					}
 				}
 			}
-		}
-		
-		foreach($bookingCoverList as $cover){
-			$key = RestaurantTableBookingModule::getKey($cover);
-			RestaurantTableBookingModule::$redis->del($key);
-			RestaurantTableBookingModule::$redis->multi();
-			for($i = $sessionStartTimestamp; $i <= $sessionEndTimestamp; $i = $i + ($bookingInterval * 60)){
-				if(isset($tableArr[$cover])){
-					$timeKey = date('Hi', $i);
-					//echo $tableArr[$cover]["" . $timeKey];
-					RestaurantTableBookingModule::$redis->hmset($key, $timeKey, $tableArr[$cover]["" . $timeKey]);		
+			$sql = "SELECT *, (DATE_ADD(b.booking_ts, INTERVAL b.booking_length MINUTE)) AS booking_end_ts FROM booking_restaurant_table brt LEFT JOIN restaurant_table rt ON brt.restaurant_table_id = rt.restaurant_table_id LEFT JOIN booking b ON brt.booking_id = b.booking_id WHERE rt.merchant_id = %d AND (b.booking_ts BETWEEN %s AND %s)";
+			$rs2 = DB::query($sql , $mid, date("Y-m-d H:i:s", $currentSessionStartTimestamp), date("Y-m-d H:i:s", $currentSessionEndTimestamp));
+			
+			for($j = 0; $j < sizeof($rs2); $j++){
+				for($k = intval($rs2[$j]['min_cover']) ; $k <= intval($rs2[$j]['max_cover']) ; $k++){
+					if(in_array($k, $bookingCoverList)){
+						for($t = convertDatetime($rs2[$j]['booking_ts']) ; $t < convertDatetime($rs2[$j]['booking_end_ts']) ; $t = $t + 60){
+							$timeKey = date('Hi', $t);
+							if(isset($tableArr[$k]["" . $timeKey]) && ($tableArr[$k]["".$timeKey] > 0)){
+								$tableArr[$k]["" . $timeKey] -- ;
+	
+							}
+						}
+					}
 				}
 			}
-			RestaurantTableBookingModule::$redis->exec();
+			
+			foreach($bookingCoverList as $cover){
+				$key = RestaurantTableBookingModule::getKey($cover);
+				
+				RestaurantTableBookingModule::$redis->multi();
+				for($i = $currentSessionStartTimestamp; $i <= $currentSessionEndTimestamp; $i = $i + ($bookingInterval * 60)){
+					if(isset($tableArr[$cover])){
+						$timeKey = date('Hi', $i);
+						//echo $tableArr[$cover]["" . $timeKey];
+						RestaurantTableBookingModule::$redis->hmset($key, $timeKey, $tableArr[$cover]["" . $timeKey]);		
+					}
+				}
+				RestaurantTableBookingModule::$redis->exec();
+			}
 		}
-		
 
 	}
 
@@ -422,7 +438,7 @@ class RestaurantTableBookingModule{
 		$tempArr = RestaurantTableBookingModule::$redis->hgetall($key);
 		$generated = false;
 		$safeCount = 3;
-		while($safeCount > 0 && (!$generated) && sizeof($tempArr) == 0 ){
+		while($safeCount > 0 && (!$generated) && sizeof($tempArr) == 0 && !isset($tempArr[date("Hi", strtotime($bookingDatetime))]) ){
 			$generated = true;
 			$safeCount -- ;
 			RestaurantTableBookingModule::resetCache($mid, $bookingDatetime, $covers);
