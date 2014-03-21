@@ -13,7 +13,6 @@ interface BookingServiceInterface {
 
 class RestaurantBookingService implements BookingServiceInterface {
 	private static $bookingModuleList = "RestaurantTableBookingModule";
-	private $merchantTemplate  = null;
 	public static function getTimeslotAvailability($merchantId, $bookingDatetime, $covers){
 		$moduleArr = explode(",", RestaurantBookingService::$bookingModuleList);
 		$returnValue = array();
@@ -35,7 +34,6 @@ class RestaurantBookingService implements BookingServiceInterface {
 		
 		global $restaurantTemplateService;
 		$merchantTemplate = $restaurantTemplateService->getTemplate($merchantId, $datetime);
-		$this->merchantTemplate = $merchantTemplate;
 		if (!empty($merchantTemplate)) {
 			$targetOpeningSession = $merchantTemplate->getOpeningSession($datetime);
 			if (!empty($targetOpeningSession)) {
@@ -130,15 +128,34 @@ class RestaurantBookingService implements BookingServiceInterface {
 			}
 			return $bookingId;
 		}else{
+			return true;
+		}
+	}
+
+
+
+	public function checkOutOfSessionConflict($bookingId=null, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrayOfTables, $bookingLength){
+		global $restaurantTemplateService;
+		$merchantTemplate = $restaurantTemplateService->getTemplate($merchantId, $datetime);
+		$arr = $merchantTemplate->getOpeningSession($datetime);
+		if(empty($arr)){
+			return true;
+		}else{
+			//no session
 			return false;
 		}
-
 	}
 
 	public function checkBookingConflict($bookingId=null, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrayOfTables, $bookingLength){
-	//do something
-	$sql = "SELECT DISTINCT b.booking_id FROM booking_restaurant_table brt LEFT JOIN booking b ON booking_id WHERE (b.booking_ts BETWEEN (%s AND %s)) OR (DATE_ADD(b.booking_ts, INTERVAL b.booking_length MINUTE) BETWEEN (%s AND %s))) AND brt.restaurant_table_id = %d";
-	$rs = DB::query($sql, $datetime, $bookingEndDatetime, $bookingStartDatetime, $bookingEndDatetime, $tableId);
+	$tableIDs = array();
+	foreach($arrayOfTables as $t)
+		$tableIDs[] = $t->getTableId();
+	$tableStr = "('" . implode("','", $tableIDs) . "')";
+	$bookingEndDatetime = date("Y-m-d H:i:s", strtotime($datetime) + $bookingLength * 60);
+	$sql = "SELECT DISTINCT b.booking_id FROM booking_restaurant_table brt LEFT JOIN booking b ON b.booking_id=brt.booking_id WHERE ((b.booking_ts BETWEEN %s AND %s) OR (DATE_ADD(b.booking_ts, INTERVAL b.booking_length MINUTE) BETWEEN %s AND %s)) AND brt.restaurant_table_id IN " . $tableStr;
+	if(!is_null($bookingId)) 
+		$sql = $sql . " AND b.booking_id != " . $bookingId;
+	$rs = DB::query($sql, $datetime, $bookingEndDatetime, $datetime, $bookingEndDatetime);
 	if(sizeof($rs) > 0){	
 		$returnValue = array();
 		foreach($rs as $r){
@@ -152,8 +169,23 @@ class RestaurantBookingService implements BookingServiceInterface {
 
 	public function makeBookingByMerchant($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength, $forced = false) {
 		if(!$forced){
-			//do something
-			//return $value; 
+			$returnValue = array();
+			
+			if(!(($arr = $this->checkBookingConflict(null, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength)) === false)){
+				
+				$conflict['name'] = 'checkBookingConflict';
+				$conflict['data'] = $arr;
+				$conflict['description'] = "Conflicts with other booking";
+				$returnValue[] = $conflict;
+			}
+			if(!(($arr = $this->checkOutOfSessionConflict(null, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength))=== false)){
+				$conflict['name'] = 'checkOutOfSessionConflict';
+				$conflict['data'] = $arr;
+				$conflict['description'] = "Not in any opening session";
+				$returnValue[] = $conflict;
+			}
+			if(sizeof($returnValue) > 0)
+				return $returnValue;
 		}
 
 		if( $this->lockModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength)){
