@@ -663,11 +663,9 @@ $app->group('/api', function () use($app){
 			global $restaurantTemplateService, $restaurantBookingService;
 			$merchantTemplate = $restaurantTemplateService->getTemplate($rs[$idx]['LICNO'], $bookingDatetime);
 			if (!empty($merchantTemplate)) {
-				if (!empty($merchantTemplate->getOpeningSession($bookingDatetime))) {
-					$availabilityArr = $restaurantBookingService->getTimeslotAvailability($rs[$idx]['LICNO'], $bookingDatetime , $covers);
-					$timeKey = date("Hi", strtotime($bookingDatetime));
-					$rs[$idx]['timeslotAvailability'] = $availabilityArr;
-				}
+				$availabilityArr = $restaurantBookingService->getTimeslotAvailability($rs[$idx]['LICNO'], $bookingDatetime , $covers);
+				$timeKey = date("Hi", strtotime($bookingDatetime));
+				$rs[$idx]['timeslotAvailability'] = $availabilityArr;
 			}
 			$rs[$idx]['IMAGE'] = $images[array_rand($images)]; 
 		}
