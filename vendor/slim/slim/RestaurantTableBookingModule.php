@@ -396,7 +396,7 @@ class RestaurantTableBookingModule{
 					}
 				}
 			}
-			$sql = "SELECT *, (DATE_ADD(b.booking_ts, INTERVAL b.booking_length MINUTE)) AS booking_end_ts FROM booking_restaurant_table brt LEFT JOIN restaurant_table rt ON brt.restaurant_table_id = rt.restaurant_table_id LEFT JOIN booking b ON brt.booking_id = b.booking_id WHERE rt.merchant_id = %d AND (b.booking_ts BETWEEN %s AND %s)";
+			$sql = "SELECT *, (DATE_ADD(b.booking_ts, INTERVAL b.booking_length MINUTE)) AS booking_end_ts FROM booking_restaurant_table brt LEFT JOIN restaurant_table rt ON brt.restaurant_table_id = rt.restaurant_table_id LEFT JOIN booking b ON brt.booking_id = b.booking_id WHERE rt.merchant_id = %d AND (b.booking_ts BETWEEN %s AND %s) AND b.status>=0";
 			$rs2 = DB::query($sql , $mid, date("Y-m-d H:i:s", $currentSessionStartTimestamp), date("Y-m-d H:i:s", $currentSessionEndTimestamp));
 			
 			for($j = 0; $j < sizeof($rs2); $j++){
