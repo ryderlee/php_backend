@@ -147,25 +147,26 @@ class RestaurantBookingService implements BookingServiceInterface {
 	}
 
 	public function checkBookingConflict($bookingId=null, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrayOfTables, $bookingLength){
-	$tableIDs = array();
-	foreach($arrayOfTables as $t)
-		$tableIDs[] = $t->getTableId();
-	$tableStr = "('" . implode("','", $tableIDs) . "')";
-	$bookingEndDatetime = date("Y-m-d H:i:s", strtotime($datetime) + $bookingLength * 60);
-	$sql = "SELECT DISTINCT b.booking_id FROM booking_restaurant_table brt LEFT JOIN booking b ON b.booking_id=brt.booking_id WHERE ((b.booking_ts BETWEEN %s AND %s) OR (DATE_ADD(b.booking_ts, INTERVAL b.booking_length MINUTE) BETWEEN %s AND %s)) AND brt.restaurant_table_id IN " . $tableStr;
-	if(!is_null($bookingId)) 
-		$sql = $sql . " AND b.booking_id != " . $bookingId;
-	$rs = DB::query($sql, $datetime, $bookingEndDatetime, $datetime, $bookingEndDatetime);
-	if(sizeof($rs) > 0){	
-		$returnValue = array();
-		foreach($rs as $r){
-			$returnValue[] = $r['booking_id'];
+		$tableIDs = array();
+		foreach($arrayOfTables as $t)
+			$tableIDs[] = $t->getTableId();
+		$tableStr = "('" . implode("','", $tableIDs) . "')";
+		$bookingEndDatetime = date("Y-m-d H:i:s", strtotime($datetime) + $bookingLength * 60);
+		$sql = "SELECT DISTINCT b.booking_id FROM booking_restaurant_table brt LEFT JOIN booking b ON b.booking_id=brt.booking_id WHERE ((b.booking_ts BETWEEN %s AND %s) OR (DATE_ADD(b.booking_ts, INTERVAL b.booking_length MINUTE) BETWEEN %s AND %s)) AND status>=0 AND  brt.restaurant_table_id IN " . $tableStr;
+		if(!is_null($bookingId)) 
+			$sql = $sql . " AND b.booking_id != " . $bookingId;
+		$rs = DB::query($sql, $datetime, $bookingEndDatetime, $datetime, $bookingEndDatetime);
+		if(sizeof($rs) > 0){	
+			$returnValue = array();
+			foreach($rs as $r){
+				$returnValue[] = $r['booking_id'];
+			}
+			return $returnValue;
+		}else{
+			return false;
 		}
-		return $returnValue;
-	}else{
-		return false;
 	}
-}
+
 
 	public function makeBookingByMerchant($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength, $forced = false) {
 		if(!$forced){
