@@ -718,7 +718,7 @@ $app->group('/api', function () use($app){
 	});
 	$app->get('/mms/history/:merchantID/:userID', function($merchantID, $userID) use ($app) {
 		$returnValue = array();
-		if ($merchantId != null && $userId != null) {
+		if ($merchantID != null && $userID != null) {
 			$returnValue = DB::query("SELECT * FROM booking WHERE merchant_id = %d AND user_id = %d", $merchantID, $userID);
 		}
 		echo json_encode($returnValue);
@@ -737,7 +737,7 @@ function sendEmailNotification($name, $numberOfParticipant, $ts, $bookingId) {
 	$result = $ses->sendEmail(array(
 		'Source' => 'mms_no_reply@ikky.com',
 		'Destination' => array(
-			'ToAddresses' => array('marvin@ikky.com'),
+			'ToAddresses' => array('marvin@ikky.com', 'justin@ikky.com'),
 		),
 		'Message' => array(
 			'Subject' => array(
