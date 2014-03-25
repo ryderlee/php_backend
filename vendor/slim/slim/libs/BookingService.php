@@ -139,7 +139,7 @@ class RestaurantBookingService implements BookingServiceInterface {
 		$merchantTemplate = $restaurantTemplateService->getTemplate($merchantId, $datetime);
 		$arr = $merchantTemplate->getOpeningSession($datetime);
 		if(empty($arr)){
-			return true;
+			return $arr;
 		}else{
 			//no session
 			return false;
@@ -167,6 +167,37 @@ class RestaurantBookingService implements BookingServiceInterface {
 		}
 	}
 
+	public function markAllBookingConflictByTemplate($template){
+		$openSessions = $template->getOpeningSessions();
+
+		$sessionStartTime = $openSessions[0]->getStartTime();
+		$sessionEndTime = date("Y-m-d H:i:s", strtotime($openSessions[0]->getStartTime()) + $openSessions[0]->getSessionLength() * 60);
+		
+		$sessionStartTimestamp = strtotime($sessionStartTime);
+		$sessionEndTimestamp = strtotime($sessionEndTime);
+
+		if(sizeof($openSessions) > 1){
+			for($i = 1; $i< sizeof($openSessions); $i++){
+				if($sessionStartTimestamp > strtotime($openSessions[$i]->getStartTime())){
+					$sessionStartTimestamp = strtotime($openSessions[$i]->getStartTime());
+				}
+
+				if($sessionEndTimestamp < (strtotime($openSessions[$i]->getStartTime()) + $openSessions[0]->getSessionLength() * 60)){
+					$sessionEndTimestamp = strtotime($openSessions[$i]->getStartTime()) + ($openSessions[0]->getSessionLength() * 60);
+				}
+			}
+		}
+		
+		$sql = "UPDATE booking SET conflict_code=0 WHERE booking.booking_ts BETWEEN %s AND %s";
+		$rs = DB::query("SELECT DISTINCT b1.booking_id FROM booking_restaurant_table brt1 LEFT JOIN booking b1 on brt1.booking_id = b1.booking_id, booking_restaurant_table brt2 LEFT JOIN booking b2 ON brt2.booking_id = b2.booking_id WHERE ABS(TIMESTAMPDIFF(MINUTE , b1.booking_ts , b2.booking_ts)) <b1.booking_length AND brt1.restaurant_table_id = brt2.restaurant_table_id AND b1.booking_id <> b2.booking_id AND b1.booking_ts BETWEEN %s AND %s", $sessionStartTime, $sessionEndTime);
+
+		$arrOfIds = array();
+		for($i = 0; $i < sizeof($rs) ; $i++){
+			$arrOfIds[] = $rs[$i]['booking_id'];
+		}
+
+		DB::query("UPDATE booking SET conflict_code=1 WHERE booking_id IN (" . implode(",", $arrOfIds) . ")");
+	}
 
 	public function makeBookingByMerchant($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength, $forced = false) {
 		if(!$forced){
@@ -193,9 +224,17 @@ class RestaurantBookingService implements BookingServiceInterface {
 			if( $bookingId = $this->addBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength)){
 				$this->commitModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength);
 			}
+			$templateObj = RestaurantTemplateService::geTemplate($merchantId, $datetime);
+			$this->markAllBookingConflictByTemplate($templateObj);
+			if(!(($arr = $this->checkOutOfSessionConflict($bookingId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength))=== false)){
+				DB::update('booking', array('conflict_code'=>'3'), 'booking_id=%d', $bookingId);
+			
+			}
 			$this->unlockModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength);
 			return $bookingId;
 		}
+
+
 		$this->unlockModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength);
 		//TODO return something?!?
 		return true;
@@ -224,6 +263,39 @@ class RestaurantBookingService implements BookingServiceInterface {
 			}
 		}
 		return -1;
+	}
+	public function editBookingByMerchant($bookingId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrayOfTables, $bookingLength, $forced = false) {
+		if(!$forced){
+
+			$returnValue = array();
+
+			if(!(($arr = $this->checkBookingConflict(null, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength)) === false)){
+				
+				$conflict['name'] = 'checkBookingConflict';
+				$conflict['data'] = $arr;
+				$conflict['description'] = "Conflicts with other booking";
+				$returnValue[] = $conflict;
+			}
+			if(!(($arr = $this->checkOutOfSessionConflict(null, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength))=== false)){
+				$conflict['name'] = 'checkOutOfSessionConflict';
+				$conflict['data'] = $arr;
+				$conflict['description'] = "Not in any opening session";
+				$returnValue[] = $conflict;
+			}
+			if(sizeof($returnValue) > 0)
+				return $returnValue;
+
+		}
+		if( $this->editBooking($bookingId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrayOfTables, $bookingLength)){
+			$templateObj = RestaurantTemplateService::geTemplate($merchantId, $datetime);
+
+			$this->markAllBookingConflictByTemplate($templateObj);
+			if(!(($arr = $this->checkOutOfSessionConflict($bookingId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength))=== false)){
+				DB::update('booking', array('conflict_code'=>'3'), 'booking_id=%d', $bookingId);
+			
+			}
+		}
+
 	}
 	public function editBooking($bookingId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrayOfTables, $bookingLength) {
 

@@ -98,6 +98,10 @@ $tables[] = new RestaurantTable($merchantId, 6, "123", 4, 3, 5);
 
 $bookingLength = 90;
 
-$restaurantBookingService->editBooking($bookingId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $tables, $bookingLength);
+
+$templateObj = RestaurantTemplateService::getTemplate($merchantId, $datetime);
+$restaurantBookingService->markAllBookingConflictByTemplate($templateObj);
+
+//$restaurantBookingService->editBooking($bookingId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $tables, $bookingLength);
 
 //$restaurantBookingService->makeBookingByMerchant($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $tables, $bookingLength); 
