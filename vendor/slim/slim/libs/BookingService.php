@@ -326,30 +326,31 @@ class RestaurantBookingService implements BookingServiceInterface {
 			DB::update('booking',$values, "booking_id=%d",  $bookingId);
 
 			/* for booking_restaurant_table */
-
-			$sql = "SELECT restaurant_table_id FROM booking_restaurant_table WHERE booking_id=%d" ;
-
-			$rs = DB::query($sql, $bookingId);
-			$arrayOfTableIds = array();
-			foreach($arrayOfTables as $t){
-				$arrayOfTableIds[] = $t->getTableId();
-			}
-			for($i =0; $i < sizeof($rs); $i++){
-				if(!in_array($rs[$i]['restaurant_table_id'], $arrayOfTableIds)){
-					DB::delete('booking_restaurant_table', "booking_id=%d AND restaurant_table_id=%d", $bookingId, $rs[$i]['restaurant_table_id']);
-
-				}else{
-					if(($key = array_search($rs[$i]['restaurant_table_id'] , $arrayOfTableIds)) !== false){
-						unset($arrayOfTableIds[$key]);
+			if (!empty($arrayOfTables)) {
+				$sql = "SELECT restaurant_table_id FROM booking_restaurant_table WHERE booking_id=%d" ;
+	
+				$rs = DB::query($sql, $bookingId);
+				$arrayOfTableIds = array();
+				foreach($arrayOfTables as $t){
+					$arrayOfTableIds[] = $t->getTableId();
+				}
+				for($i =0; $i < sizeof($rs); $i++){
+					if(!in_array($rs[$i]['restaurant_table_id'], $arrayOfTableIds)){
+						DB::delete('booking_restaurant_table', "booking_id=%d AND restaurant_table_id=%d", $bookingId, $rs[$i]['restaurant_table_id']);
+	
+					}else{
+						if(($key = array_search($rs[$i]['restaurant_table_id'] , $arrayOfTableIds)) !== false){
+							unset($arrayOfTableIds[$key]);
+						}
 					}
 				}
-			}
-			foreach($arrayOfTableIds as $value){
-				DB::insert('booking_restaurant_table', array(
-					'booking_id' => $bookingId,
-					'restaurant_table_id' => $value,
-					'create_ts' => DB::sqleval('NOW()')
-				));
+				foreach($arrayOfTableIds as $value){
+					DB::insert('booking_restaurant_table', array(
+						'booking_id' => $bookingId,
+						'restaurant_table_id' => $value,
+						'create_ts' => DB::sqleval('NOW()')
+					));
+				}
 			}
 			/* end:for booking_restaurant_table */
 

@@ -401,46 +401,54 @@ $app->group('/api', function () use($app){
 
 
 	$app->put('/reservations/:bookingID', function($bookingID) use ($app){
-		$returnValue = array();
-		$values = array();
-		$returnValue['result'] = false;
+		global $restaurantBookingService;
 		
-		if($app->request()->params('status') <> null)
-			$values['status'] = $app->request()->params('status');
-		if($app->request()->params('special_request') <> null)
-			$values['special_request'] = $app->request()->params('special_request');
-		if($app->request()->params('numberOfParticipant') <> null)
-			$values['no_of_participants'] = $app->request()->params('numberOfParticipant');
-		
-		if($app->request()->params('datetime') <> null){
-			$datetime = $app->request()->params('datetime');
-			$timeArr = strptime($datetime, '%Y-%m-%d %H:%M:%S');
-			$ts = mktime(intval($timeArr['tm_hour']), intval($timeArr['tm_min']), intval($timeArr['tm_sec']), intval($timeArr['tm_mon']) + 1 , intval($timeArr['tm_mday']) , intval($timeArr['tm_year'] + 1900));
-			$values['booking_ts'] = date('Y-m-d H:i:s', $ts);
-		}
-		if(sizeof($values) > 0){
-			DB::update('booking', $values, 'booking_id=%d', $bookingID);
-			if (!isset($ts)) {
-				$datetime = DB::queryFirstField('SELECT booking_ts FROM booking WHERE booking_id = %d', $bookingID);
-				$timeArr = strptime($datetime, '%Y-%m-%d %H:%M:%S');
-				$ts = mktime(intval($timeArr['tm_hour']), intval($timeArr['tm_min']), intval($timeArr['tm_sec']), intval($timeArr['tm_mon']) + 1 , intval($timeArr['tm_mday']) , intval($timeArr['tm_year'] + 1900));
+		$booking = DB::queryFirstRow('SELECT * FROM booking WHERE booking_id = %d', $bookingID);
+		$keysForUpdate = array(
+			'first_name',
+			'last_name',
+			'phone',
+			'booking_ts',
+			'booking_length',
+			'no_of_participants',
+			'special_request',
+			'status',
+			'attendance',
+			'updated_by'
+		);
+		foreach ($keysForUpdate as $key) {
+			if (!empty($app->request()->params($key))) {
+				$booking[$key] = $app->request()->params($key);
 			}
-			$returnValue['result'] = true;
-			$returnValue['values'] = $values;
-			
-			// Publish new message (Amazon SNS)
-			global $sns;
-			$message = array(
-				'topic'=>'1001',
-				'bookingId'=>$bookingID,
-				'bookingDate'=>date('Y-m-d H:i:s' , $ts),
-				'action'=>'update'
-			);
-			$sns->publish(array(
-				'Message' => json_encode($message),
-				'TopicArn' => 'arn:aws:sns:ap-southeast-1:442675153455:merchant-1001'
-			));
 		}
+		
+		$tableArray = array();
+		if (!empty($app->request()->params('table_ids'))) {
+			$tableIds = $app->request()->params('table_ids');
+			$tables = DB::query('SELECT * FROM restaurant_table WHERE restaurant_table_id IN %li', $tableIds);
+			foreach ($tables as $table) {
+				$tableObj = new RestaurantTable($table['merchant_id'], $table['restaurant_table_id'], $table['restaurant_table_name'], $table['actual_cover'], $table['min_cover'], $table['max_cover']);
+				array_push($tableArray, $tableObj);
+			}
+		}
+		
+		$restaurantBookingService->editBooking($bookingID, $booking['merchant_id'], $booking['is_guest'], $booking['session_id'], $booking['first_name'], $booking['last_name'], $booking['phone'], $booking['booking_ts'], $booking['no_of_participants'], $booking['special_request'], $booking['status'], $booking['attendance'], $tableArray, $booking['booking_length']);
+		
+		// Publish new message (Amazon SNS)
+		global $sns;
+		$message = array(
+			'topic'=>'1001',
+			'bookingId'=>$bookingID,
+			'bookingDate'=>$booking['booking_ts'],
+			'action'=>'update'
+		);
+		$sns->publish(array(
+			'Message' => json_encode($message),
+			'TopicArn' => 'arn:aws:sns:ap-southeast-1:442675153455:merchant-1001'
+		));
+		
+		//TODO: Send notification to user if it cancellation of booking
+		$returnValue = array('result'=>true);
 		echo json_encode($returnValue);
 	});
 

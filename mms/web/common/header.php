@@ -17,6 +17,7 @@ $merchantInfo = json_decode(HttpService::get($resourceUri));
 		<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
 		<script src="http://code.jquery.com/ui/1.9.2/jquery-ui.js"></script>
 		<script src="http://autobahn.s3.amazonaws.com/js/autobahn.min.js"></script>
+		<script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
 		<script src="js/jquery.mousewheel.js"></script>
 		<script src="js/jquery.kinetic.js"></script>
 		<script src="js/app.js"></script>
@@ -24,8 +25,12 @@ $merchantInfo = json_decode(HttpService::get($resourceUri));
 		<script src="js/services.js"></script>
 		<script src="js/filters.js"></script>
 		<script src="js/animations.js"></script>
-		<link rel="stylesheet" type="text/css" href="css/style.css">
+		<script src="js/moment.min.js"></script>
+		<script src="js/datetimepicker.js"></script>
 		<link rel="stylesheet" href="http://code.jquery.com/ui/1.9.2/themes/smoothness/jquery-ui.css">
+		<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+		<link rel="stylesheet" type="text/css" href="css/datetimepicker.css">
+		<link rel="stylesheet" type="text/css" href="css/style.css">
 		<meta charset="UTF-8">
 		<meta name="viewport" content="user-scalable=no, minimal-ui, target-densitydpi=device-dpi" />
 	</head>

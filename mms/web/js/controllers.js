@@ -440,12 +440,12 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 		});
 		$scope.show = false;
 		
-		$scope.attend = function(booking) {
-			Booking.attendBooking({bookingId:booking.booking_id});
+		$scope.attend = function() {
+			Booking.attendBooking({bookingId:$scope.booking.booking_id});
 		};
 		
-		$scope.cancel = function(booking) {
-			Booking.cancelBooking({bookingId:booking.booking_id});
+		$scope.cancel = function() {
+			Booking.cancelBooking({bookingId:$scope.booking.booking_id});
 		};
 		
 		$rootScope.$on('updateBookingDetail', function(event, booking) {
@@ -453,6 +453,19 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 				$scope.booking = booking;
 			}
 		});
+		
+		$scope.edit = function() {
+			$scope.newBooking = $scope.booking;
+			$scope.editing = true;
+		};
+		
+		$scope.save = function() {
+			$scope.editing = false;
+		};
+		
+		$scope.discard = function() {
+			$scope.editing = false;
+		};
 	}
 ]);
 

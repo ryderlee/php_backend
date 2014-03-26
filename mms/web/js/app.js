@@ -2,7 +2,8 @@ var mmsApp = angular.module('mmsApp', [
   'mmsControllers',
   'mmsServices',
   'mmsFilters',
-  'mmsAnimations'
+  'mmsAnimations',
+  'ui.bootstrap.datetimepicker'
 ])
 .run(['$rootScope', '$location',
 	function($rootScope, $location) {
