@@ -241,12 +241,13 @@ class RestaurantBookingService implements BookingServiceInterface {
 			
 	}
 	public function makeBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest) {
-
 		$arr = array('tableBookingLength' => 120, 'tableBookingInterval' => 15, 'tableCoverList'=>'1,2,3,4,5,6');
 		setMerchantSettings($merchantId, $arr);
 		if($this->isAvailableModules($merchantId, $datetime, $noOfParticipants)){
 			$info = $this->getBestTable($merchantId, $datetime, $noOfParticipants);
 			
+			if($this->isBookingOverlap($userId, $datetime, $info['tableBookingLength'], 0))
+				return -1;
 			if (!empty($info)) {
 				$restaurantTable = $info['table'];
 				$bookingLength = $info['booking_length'];
@@ -307,6 +308,16 @@ class RestaurantBookingService implements BookingServiceInterface {
 		}
 		return true;
 
+	}
+	public function isBookingOverlap($userId, $newBookingDatetime, $newBookingLength, $timeGap){
+		$startQueryDatetime = date("Y-m-d H:i:s", strtotime($newBookingDatetime) - $timeGap * 60);
+		$endQueryDatetime = date("Y-m-d H:i:s", strtotime($newBookingDatetime) + ($newBookingLength + $timeGap) * 60);
+		$sql = "SELECT booking_id FROM booking WHERE user_id=%d AND ((%s BETWEEN booking_ts AND DATE_ADD(booking_ts, INTERVAL booking_length MINUTE)) OR (%s BETWEEN booking_ts AND DATE_ADD(booking_ts, INTERVAL booking_length MINUTE))) AND status > -1";
+		if(sizeof($rs = DB::query($sql, $userId, $startQueryDatetime, $endQueryDatetime)) > 0){
+			return $rs;
+		}else{
+			return false;
+		}
 	}
 	public function editBooking($bookingId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrayOfTables, $bookingLength) {
 
