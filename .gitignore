@@ -10,3 +10,5 @@ Thumbs.db
 .project
 
 *.swo
+
+vendor/slim/slim/init.php
