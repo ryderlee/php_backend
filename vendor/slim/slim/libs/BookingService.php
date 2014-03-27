@@ -27,19 +27,21 @@ class RestaurantBookingService implements BookingServiceInterface {
 		}
 		return $returnValue;
 	}
-	public function getUnavailableTables($merchantId, $datetime, $noOfParticipants, $targetOpeningSession) {
+	public function getUnavailableTables($merchantId, $datetime, $noOfParticipants, $targetOpeningSession, $excludeBookingId=-1) {
 		$datetimeParts = explode(' ', $datetime);
 		$dateStr = $datetimeParts[0];
 		$timeStr = $datetimeParts[1];
-		
+		$restaurantTables= array();
 		if (!empty($targetOpeningSession)) {
 			$floorPlanId = $targetOpeningSession->getFloorPlanId();
-			
-			$tables = DB::queryFirstRow('SELECT * FROM restaurant_table WHERE merchant_id = %d AND floor_plan_id = %d AND restaurant_table_id IN (SELECT restaurant_table_id FROM booking b JOIN booking_restaurant_table bt ON b.booking_id = bt.booking_id WHERE b.merchant_id = %d AND (%s >= booking_ts AND %s < DATE_ADD(booking_ts, INTERVAL booking_length MINUTE)) AND status>-1) AND (%d BETWEEN min_cover AND max_cover) ORDER BY max_cover ASC, min_cover ASC LIMIT 1;', $merchantId, $floorPlanId, $merchantId, $datetime, $datetime, $noOfParticipants);
-			if (!empty($tables) && sizeof($tables) > 0) {
-				$restaurantTables = new RestaurantTable($bestTable['merchant_id'], $bestTable['restaurant_table_id'], $bestTable['restaurant_table_name'], $bestTable['actual_cover'], $bestTable['min_cover'], $bestTable['max_cover']);
-				return $restaurantTables;
+			$tables = DB::query('SELECT * FROM restaurant_table WHERE merchant_id = %d AND floor_plan_id = %d AND restaurant_table_id IN (SELECT restaurant_table_id FROM booking b JOIN booking_restaurant_table bt ON b.booking_id = bt.booking_id WHERE b.merchant_id = %d AND (%s BETWEEN booking_ts AND DATE_ADD(booking_ts, INTERVAL booking_length MINUTE)) AND b.booking_id <> %d AND status>-1) AND (%d BETWEEN min_cover AND max_cover) ORDER BY max_cover ASC, min_cover ASC', $merchantId, $floorPlanId, $merchantId, $datetime, $excludeBookingId, $noOfParticipants);
+			echo sizeof($tables);
+			for($i = 0; $i < sizeof($tables); $i++){
+				$bestTable = $tables[$i];
+				$restaurantTables[] = new RestaurantTable($bestTable['merchant_id'], $bestTable['restaurant_table_id'], $bestTable['restaurant_table_name'], $bestTable['actual_cover'], $bestTable['min_cover'], $bestTable['max_cover']);
 			}
+			if(sizeof($restaurantTables) > 0)
+				return $restaurantTables;
 		}
 		return null;
 	}
@@ -51,19 +53,17 @@ class RestaurantBookingService implements BookingServiceInterface {
 		else
 			return null;
 	}
-	public function getAvailableTables($merchantId, $datetime, $noOfParticipants, $targetOpeningSession) {
+	public function getAvailableTables($merchantId, $datetime, $noOfParticipants, $targetOpeningSession, $excludeBookingId=-1) {
 		$datetimeParts = explode(' ', $datetime);
 		$dateStr = $datetimeParts[0];
 		$timeStr = $datetimeParts[1];
 		$restaurantTables = array();
 		if (!empty($targetOpeningSession)) {
 			$floorPlanId = $targetOpeningSession->getFloorPlanId();
-			
-			$tables = DB::query('SELECT * FROM restaurant_table WHERE merchant_id = %d AND floor_plan_id = %d AND restaurant_table_id NOT IN (SELECT restaurant_table_id FROM booking b JOIN booking_restaurant_table bt ON b.booking_id = bt.booking_id WHERE b.merchant_id = %d AND (%s >= booking_ts AND %s < DATE_ADD(booking_ts, INTERVAL booking_length MINUTE)) AND status>-1) AND (%d BETWEEN min_cover AND max_cover) ORDER BY max_cover ASC, min_cover ASC', $merchantId, $floorPlanId, $merchantId, $datetime, $datetime, $noOfParticipants);
-			
+			$tables = DB::query('SELECT * FROM restaurant_table WHERE merchant_id = %d AND floor_plan_id = %d AND restaurant_table_id NOT IN (SELECT restaurant_table_id FROM booking b JOIN booking_restaurant_table bt ON b.booking_id = bt.booking_id WHERE b.merchant_id = %d AND (%s BETWEEN booking_ts AND DATE_ADD(booking_ts, INTERVAL booking_length MINUTE)) AND b.booking_id<> %d AND status>-1) AND (%d BETWEEN min_cover AND max_cover) ORDER BY max_cover ASC, min_cover ASC', $merchantId, $floorPlanId, $merchantId, $datetime, $excludeBookingId, $noOfParticipants);
 			for($i = 0; $i < sizeof($tables); $i++){
 				$bestTable = $tables[$i];
-				$restaurantTables = new RestaurantTable($bestTable['merchant_id'], $bestTable['restaurant_table_id'], $bestTable['restaurant_table_name'], $bestTable['actual_cover'], $bestTable['min_cover'], $bestTable['max_cover']);
+				$restaurantTables[] = new RestaurantTable($bestTable['merchant_id'], $bestTable['restaurant_table_id'], $bestTable['restaurant_table_name'], $bestTable['actual_cover'], $bestTable['min_cover'], $bestTable['max_cover']);
 			}
 			if(sizeof($restaurantTables) > 0)
 				return $restaurantTables;
