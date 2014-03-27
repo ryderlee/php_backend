@@ -68,6 +68,7 @@ include dirname(__FILE__) . '/common/header.php';
 					<th class="status"><a href="" ng-click="predicate='status'; reverse=!reverse">Status</a></th> -->
 					<th class="time">Time</th>
 					<th class="name">Name</th>
+					<th class="table">Table</th>
 					<th class="part">#</th>
 					<th class="status">Status</th>
 				</tr>
@@ -79,6 +80,7 @@ include dirname(__FILE__) . '/common/header.php';
 				<tr ng-repeat="booking in bookings | orderBy:predicate:reverse" class="bookingRow" booking-row ng-class="{'past':booking.past||booking.status==2}" ng-click="showDetail(booking)">
 					<td class="time">{{booking.booking_ts | bookingDatetime}}</td>
 					<td class="customer"><div class="picture"><img ng-if="booking.pictureSmall != null" ng-src="{{booking.pictureSmall}}"></div><div class="name">{{booking.name}}</div></td>
+					<td class="table"></th>
 					<td class="part">{{booking.no_of_participants}}<span ng-if="booking.special_request">&nbsp;*</span></td>
 					<td class="status" ng-class="{'-1':'red', '0':'blue', '1':'green', '2':'lightgreen'}[booking.status]">{{booking.status | bookingStatus}}</td>
 				</tr>
@@ -109,7 +111,7 @@ include dirname(__FILE__) . '/common/header.php';
 							<div class="bookingdetail-edit-details">
 								<div>
 									reserved a table for 
-									<select>
+									<select ng-model="newBooking.no_of_participants">
 										<option value="1" ng-selected="booking.no_of_participants==1">1</option>
 										<option value="2" ng-selected="booking.no_of_participants==2">2</option>
 										<option value="3" ng-selected="booking.no_of_participants==3">3</option>
