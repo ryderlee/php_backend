@@ -184,7 +184,7 @@ EOT;
     echo $template;
 });
 
-$app->group('/api', function () use($app){
+$app->group('/api', function () use($app, $restaurantBookingService, $restaurantTemplateService){
 
 	$app->get('/phpinfo', function(){
 		phpinfo();
@@ -566,18 +566,20 @@ $app->group('/api', function () use($app){
 
 	$app->get('/restaurant/:merchantID/tables', function ($merchantID) use ($app, $restaurantBookingService, $restaurantTemplateService){
                 $datetime = $app->request()->params('datetime');
-                $covers = $app->request()->params('no_of_paraticipants');
+                $covers = $app->request()->params('no_of_participants');
+                $bookingId = $app->request()->params('booking_id');
 		$merchantTemplate = $restaurantTemplateService->getTemplate($merchantID, $datetime);
+		$availableTables = array();
+		$unavailableTables = array();
                 if(!empty($merchantTemplate)){
 			$targetOpeningSession = $merchantTemplate->getOpeningSession($datetime);
 			if(!empty($targetOpeningSession)){
-				$availableTables = $this->getAvailableTables($merchantID, $datetime, $covers, $targetOpeningSession);
-				$unavailableTables = $this->getUnavailableTables($merchantID, $datetime, $covers, $targetOpeningSession);
+				$availableTables = $restaurantBookingService->getAvailableTables($merchantID, $datetime, $covers, $targetOpeningSession, $bookingId);
+				$unavailableTables = $restaurantBookingService->getUnavailableTables($merchantID, $datetime, $covers, $targetOpeningSession, $bookingId);
 			}
                 }
                 $returnValue = array("available"=>$availableTables, "unavailable"=>$unavailableTables);
                 echo json_encode($returnValue);
-
         });
 	$app->get('/restaurant', function() use ($app){
 		$actions = array();
