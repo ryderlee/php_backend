@@ -7,6 +7,7 @@ mmsServices.factory('Booking', ['$resource',
 		attendBooking: {method:'GET', params:{'action':'update', 'status':'2'}},
 		cancelBooking: {method:'GET', params:{'action':'update', 'status':'-1'}},
 		getOccupancyRate: {method:'GET', params:{'action':'getOccupancyRate'}, isArray:true},
-		getHistory: {method:'GET', params:{'action':'getHistory'}, isArray:true}
+		getHistory: {method:'GET', params:{'action':'getHistory'}, isArray:true},
+		editBooking: {method:'GET', params:{'action':'edit', 'bookingTs':':bookingTs', 'noOfParticipants':':noOfParticipants'}}
 	});
 }]);

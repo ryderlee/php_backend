@@ -41,16 +41,5 @@ $merchantInfo = json_decode(HttpService::get($resourceUri));
 	    		<div class="name"><?php echo $merchantInfo->RESTAURANT_NAME ?></div>
 				<div class="address"><?php echo ucwords(strtolower($merchantInfo->RESTAURANT_ADDRESS)) ?></div>
 				<div class="notification" ng-controller="NotificationCtrl"><a>{{notification.message}}</a></div>
-<?php
-	$pathParts = pathinfo($_SERVER['REQUEST_URI']);
-	$curPage = $pathParts['basename'];
-	$path = 'settings.php';
-	$text = 'Settings';
-	if ($curPage == 'settings.php') {
-		$path = 'calendar.php';
-		$text = 'Calendar';
-	}
-				echo '<div class="button settings"><a href="'.$path.'">'.$text.'</a></div>';
-?>
 				<div class="button logout"><a href="logout.php">Log Out</a></div>
 	    	</div>

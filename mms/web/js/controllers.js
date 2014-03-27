@@ -8,6 +8,15 @@ Date.prototype.yyyymmdd = function() {
 	var dd  = this.getDate().toString();
 	return yyyy + (mm[1]?mm:"0"+mm[0]) + (dd[1]?dd:"0"+dd[0]); // padding
 };
+Date.prototype.fulldatetime = function() {
+	var yyyy = this.getFullYear().toString();
+	var mm = (this.getMonth()+1).toString(); // getMonth() is zero-based
+	var dd  = this.getDate().toString();
+	var hour = this.getHours().toString();
+	var minute = this.getMinutes().toString();
+	var second = this.getSeconds().toString();
+	return yyyy + '-' + (mm[1]?mm:"0"+mm[0]) + '-' + (dd[1]?dd:"0"+dd[0]) + ' ' + (hour[1]?hour:"0"+hour[0]) + ':' + (minute[1]?minute:"0"+minute[0]) + ':' + (second[1]?second:"0"+second[0]); // padding
+};
 
 mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope', '$sce', '$location',
 	function($scope, Booking, $rootScope, $sce, $location) {
@@ -407,8 +416,8 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 		});
 	}
 ])
-.controller('BookingDetailCtrl', ['$scope', '$rootScope', 'Booking',
-	function($scope, $rootScope, Booking) {
+.controller('BookingDetailCtrl', ['$scope', '$rootScope', 'Booking', '$location',
+	function($scope, $rootScope, Booking, $location) {
 		$scope.predicate = 'booking_ts';
 		$scope.reverse = true;
 		
@@ -424,6 +433,7 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 			if (!$scope.booking || $scope.booking.user_id != booking.user_id) {
 				$scope.histories = null;
 				$scope.loading = true;
+				$scope.editing = false;
 				$scope.histories = Booking.getHistory({userId:booking.user_id});
 				$scope.histories.$promise.then(function(histories) {
 					$scope.loading = false;
@@ -441,31 +451,46 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 		$scope.show = false;
 		
 		$scope.attend = function() {
+			$scope.updating = true;
 			Booking.attendBooking({bookingId:$scope.booking.booking_id});
 		};
 		
 		$scope.cancel = function() {
+			$scope.updating = true;
 			Booking.cancelBooking({bookingId:$scope.booking.booking_id});
 		};
 		
-		$rootScope.$on('updateBookingDetail', function(event, booking) {
-			if (booking.booking_id == $scope.booking.booking_id) {
-				$scope.booking = booking;
-			}
-		});
-		
 		$scope.edit = function() {
-			$scope.newBooking = $scope.booking;
+			$scope.newBooking = angular.copy($scope.booking);
+			$scope.pickerDate = $scope.newBooking.booking_ts;
 			$scope.editing = true;
 		};
 		
 		$scope.save = function() {
-			$scope.editing = false;
+			$scope.updating = true;
+			Booking.editBooking({bookingId:$scope.newBooking.booking_id, bookingTs:$scope.newBooking.booking_ts, noOfParticipants:$scope.newBooking.no_of_participants}).$promise.then(function() {
+				$scope.editing = false;
+				var datetimeArr = $scope.newBooking.booking_ts.split(' ');
+				var dateStr = datetimeArr[0].replace(/-/g, '');
+				$location.path('/'+dateStr+'/'+$scope.newBooking.booking_id);
+			});
 		};
 		
 		$scope.discard = function() {
 			$scope.editing = false;
 		};
+		
+		$scope.onTimeSet = function(newDate, oldDate) {
+			$scope.newBooking.booking_ts = newDate.fulldatetime();
+		};
+		
+		$rootScope.$on('updateBookingDetail', function(event, booking) {
+			if (booking.booking_id == $scope.booking.booking_id) {
+				$scope.booking = booking;
+				$scope.updating = false;
+			}
+		});
+		
 	}
 ]);
 

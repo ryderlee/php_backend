@@ -27,6 +27,12 @@ if (isset($_GET['action'])) {
 			$resourceUri = '/mms/history/' . $merchantService->getMerchantId() . '/' . $_GET['userId'];
 			echo HttpService::get($resourceUri);
 		}
+	} else if ($_GET['action'] == 'edit') {
+		if (isset($_GET['bookingId']) && $_GET['bookingId'] > 0) {
+			$resourceUri = '/reservations/' . $_GET['bookingId'];
+			$paraMap = array('booking_ts'=>$_GET['bookingTs'], 'no_of_participants'=>$_GET['noOfParticipants']);
+			echo HttpService::put($resourceUri, $paraMap);
+		}
 	}
 }
 

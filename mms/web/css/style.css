@@ -137,9 +137,9 @@ div.dhtmlx_window_active, div.dhx_modal_cover_dv { position: fixed !important; }
 .bookingdetail-edit-details { float: left; margin-right: 10px; }
 
 .bookingdetail-edit-details div { float: left; }
-.bookingdetail-edit-details .dropdown { width: 200px; margin-left: 10px; }
+.bookingdetail-edit-details .dropdown { width: 240px; margin-left: 10px; }
 
-.bookingdetail-edit-details .input-group input { height: 26px; }
+.bookingdetail-edit-details .input-group span { height: 26px; padding-top: 2px; padding-bottom: 2px; }
 .bookingdetail-edit-details .input-group-addon { padding-top: 4px; padding-bottom: 4px; }
 
 
