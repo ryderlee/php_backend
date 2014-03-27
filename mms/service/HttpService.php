@@ -2,11 +2,15 @@
 
 class HttpService {
 
-	static public function get($resourceUri) {
+	static public function get($resourceUri, $paraMap=null) {
 		$ch = curl_init(CONFIG__API_URL . $resourceUri);
 		
 		curl_setopt($ch, CURLOPT_HEADER, false);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		if (!empty($paraMap)) {
+			curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($paraMap));
+			curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
+		}
 		
 		$result = curl_exec($ch);
 		curl_close($ch);

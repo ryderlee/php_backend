@@ -423,9 +423,9 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		}
 		
 		$tableArray = array();
-		if (!empty($app->request()->params('table_ids'))) {
-			$tableIds = $app->request()->params('table_ids');
-			$tables = DB::query('SELECT * FROM restaurant_table WHERE restaurant_table_id IN %li', $tableIds);
+		if (!empty($app->request()->params('table_id'))) {
+			$tableId = $app->request()->params('table_id');
+			$tables = DB::query('SELECT * FROM restaurant_table WHERE restaurant_table_id = %d', $tableId);
 			foreach ($tables as $table) {
 				$tableObj = new RestaurantTable($table['merchant_id'], $table['restaurant_table_id'], $table['restaurant_table_name'], $table['actual_cover'], $table['min_cover'], $table['max_cover']);
 				array_push($tableArray, $tableObj);

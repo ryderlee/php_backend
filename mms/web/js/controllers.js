@@ -421,6 +421,8 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 		$scope.predicate = 'booking_ts';
 		$scope.reverse = true;
 		
+		$scope.refreshing = false;
+		
 		$rootScope.$on('showDayView', function(event, date, empty) {
 			$scope.show = true;
 			$scope.booking = null;
@@ -459,16 +461,54 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 			$scope.updating = true;
 			Booking.cancelBooking({bookingId:$scope.booking.booking_id});
 		};
-		
+
+		$scope.$watch('newBooking.booking_ts', function(val1, val2) {
+			if (!$scope.refreshing && val1 != val2) {
+				$scope.refreshTables();
+			}
+		});
+		$scope.$watch('newBooking.no_of_participants', function(val1, val2) {
+			if (!$scope.refreshing && val1 != val2) {
+				$scope.refreshTables();
+			}
+		});		
 		$scope.edit = function() {
 			$scope.newBooking = angular.copy($scope.booking);
 			$scope.pickerDate = $scope.newBooking.booking_ts;
 			$scope.editing = true;
+			$scope.refreshTables();
+		};
+		
+		$scope.refreshTables = function() {
+			$scope.tables = [];
+			$scope.refreshing = true;
+			Booking.getTables({bookingTs:$scope.newBooking.booking_ts, noOfParticipants:$scope.newBooking.no_of_participants}).$promise.then(function(tables) {
+				var idx = 0;
+				angular.forEach(tables.available, function(table, key) {
+					var tableOption = {'name':table.restaurantTableName+(table.restaurantTableId==$scope.newBooking.table_ids?' (Current)':(idx==0?' (Best)':' (Available)')), 'id':table.restaurantTableId};
+					$scope.tables.push(tableOption);
+					if (idx == 0) {
+						$scope.table = $scope.tables[idx];
+					} else if (table.restaurantTableId == $scope.newBooking.table_ids) {
+						$scope.table = $scope.tables[idx];
+					}
+					idx++;
+				});
+				angular.forEach(tables.unavailable, function(table, key) {
+					var tableOption = {'name':table.restaurantTableName+(table.restaurantTableId==$scope.newBooking.table_ids?' (Current)':' (Unavailable)'), 'id':table.restaurantTableId};
+					$scope.tables.push(tableOption);
+					if (table.restaurantTableId == $scope.newBooking.table_ids) {
+						$scope.table = $scope.tables[idx];
+					}
+					idx++;
+				});
+				$scope.refreshing = false;
+			});
 		};
 		
 		$scope.save = function() {
 			$scope.updating = true;
-			Booking.editBooking({bookingId:$scope.newBooking.booking_id, bookingTs:$scope.newBooking.booking_ts, noOfParticipants:$scope.newBooking.no_of_participants}).$promise.then(function() {
+			Booking.editBooking({bookingId:$scope.newBooking.booking_id, bookingTs:$scope.newBooking.booking_ts, noOfParticipants:$scope.newBooking.no_of_participants, tableId:$scope.table.id}).$promise.then(function() {
 				$scope.editing = false;
 				var datetimeArr = $scope.newBooking.booking_ts.split(' ');
 				var dateStr = datetimeArr[0].replace(/-/g, '');
@@ -491,11 +531,7 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 			}
 		});
 		
-		$scope.tables = [
-			{name:'No.1', value:'1'},
-			{name:'No.2', value:'2'}
-		];
-		
+		$scope.tables = [];
 	}
 ]);
 

@@ -172,7 +172,7 @@ include dirname(__FILE__) . '/common/header.php';
 							<tr><td>Phone:</td><td>{{booking.phone}}</td></tr>
 							<tr><td>Status:</td><td ng-class="{'-1':'red', '0':'blue', '1':'green', '2':'lightgreen'}[booking.status]">{{booking.status | bookingStatus}}</td></tr>
 							<tr ng-hide="editing"><td>Table:</td><td>{{booking.table_names}}</td></tr>
-							<tr ng-show="editing"><td>Table:</td><td><select ng-model="newBooking.table_ids[1]" ng-options="table.name for table in tables"></select></td></tr>
+							<tr ng-show="editing"><td>Table:</td><td><select ng-model="table" ng-options="t.name for t in tables"></select></td></tr>
 						</table>
 					</div>
 					<div class="bookingdetail-col2">
