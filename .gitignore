@@ -11,4 +11,6 @@ Thumbs.db
 
 *.swo
 
-vendor/slim/slim/init.php
+vendor/slim/slim/ryder.php
+
+*.bak
