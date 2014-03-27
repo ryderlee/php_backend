@@ -265,7 +265,9 @@ class RestaurantBookingService implements BookingServiceInterface {
 	public function makeBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest) {
 		$arr = array('tableBookingLength' => 120, 'tableBookingInterval' => 15, 'tableCoverList'=>'1,2,3,4,5,6');
 		setMerchantSettings($merchantId, $arr);
+		global $restaurantTemplateService;
 		if($this->isAvailableModules($merchantId, $datetime, $noOfParticipants)){
+		
 			$merchantTemplate = $restaurantTemplateService->getTemplate($merchantId, $datetime);
 			if(!empty($merchantTemplate)){
 				$targetOpeningSession = $merchantTemplate->getOpeningSession($datetime);
