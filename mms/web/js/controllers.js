@@ -491,6 +491,11 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 			}
 		});
 		
+		$scope.tables = [
+			{name:'No.1', value:'1'},
+			{name:'No.2', value:'2'}
+		];
+		
 	}
 ]);
 

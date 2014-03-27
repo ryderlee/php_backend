@@ -80,7 +80,7 @@ include dirname(__FILE__) . '/common/header.php';
 				<tr ng-repeat="booking in bookings | orderBy:predicate:reverse" class="bookingRow" booking-row ng-class="{'past':booking.past||booking.status==2}" ng-click="showDetail(booking)">
 					<td class="time">{{booking.booking_ts | bookingDatetime}}</td>
 					<td class="customer"><div class="picture"><img ng-if="booking.pictureSmall != null" ng-src="{{booking.pictureSmall}}"></div><div class="name">{{booking.name}}</div></td>
-					<td class="table"></th>
+					<td class="table">{{booking.table_names}}</th>
 					<td class="part">{{booking.no_of_participants}}<span ng-if="booking.special_request">&nbsp;*</span></td>
 					<td class="status" ng-class="{'-1':'red', '0':'blue', '1':'green', '2':'lightgreen'}[booking.status]">{{booking.status | bookingStatus}}</td>
 				</tr>
@@ -171,6 +171,8 @@ include dirname(__FILE__) . '/common/header.php';
 						<table class="bookingdetail-table">
 							<tr><td>Phone:</td><td>{{booking.phone}}</td></tr>
 							<tr><td>Status:</td><td ng-class="{'-1':'red', '0':'blue', '1':'green', '2':'lightgreen'}[booking.status]">{{booking.status | bookingStatus}}</td></tr>
+							<tr ng-hide="editing"><td>Table:</td><td>{{booking.table_names}}</td></tr>
+							<tr ng-show="editing"><td>Table:</td><td><select ng-model="newBooking.table_ids[1]" ng-options="table.name for table in tables"></select></td></tr>
 						</table>
 					</div>
 					<div class="bookingdetail-col2">
