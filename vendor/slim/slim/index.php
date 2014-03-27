@@ -564,7 +564,21 @@ $app->group('/api', function () use($app){
 		echo json_encode($result);
 	});
 
+	$app->get('/restaurant/:merchantID/tables', function ($merchantID) use ($app, $restaurantBookingService, $restaurantTemplateService){
+                $datetime = $app->request()->params('datetime');
+                $covers = $app->request()->params('no_of_paraticipants');
+		$merchantTemplate = $restaurantTemplateService->getTemplate($merchantID, $datetime);
+                if(!empty($merchantTemplate)){
+			$targetOpeningSession = $merchantTemplate->getOpeningSession($datetime);
+			if(!empty($targetOpeningSession)){
+				$availableTables = $this->getAvailableTables($merchantID, $datetime, $covers, $targetOpeningSession);
+				$unavailableTables = $this->getUnavailableTables($merchantID, $datetime, $covers, $targetOpeningSession);
+			}
+                }
+                $returnValue = array("available"=>$availableTables, "unavailable"=>$unavailableTables);
+                echo json_encode($returnValue);
 
+        });
 	$app->get('/restaurant', function() use ($app){
 		$actions = array();
 		$action = $app->request()->params('action');
