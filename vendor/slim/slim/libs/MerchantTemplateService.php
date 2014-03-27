@@ -107,7 +107,7 @@ class RestaurantOpeningSession extends OpeningSession {
 }
 
 class RestaurantTable {
-	private $merchantId, $restaurantTableId, $restaurantTableName, $actualCover, $minCover, $maxCover;
+	public $merchantId, $restaurantTableId, $restaurantTableName, $actualCover, $minCover, $maxCover;
 	public function __construct($merchantId, $restaurantTableId, $restaurantTableName, $actualCover, $minCover, $maxCover) {
 		$this->merchantId = $merchantId;
 		$this->restaurantTableId = $restaurantTableId;
