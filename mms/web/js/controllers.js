@@ -488,9 +488,9 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 					var tableOption = {'name':table.restaurantTableName+(table.restaurantTableId==$scope.newBooking.table_ids?' (Current)':(idx==0?' (Best)':' (Available)')), 'id':table.restaurantTableId};
 					$scope.tables.push(tableOption);
 					if (idx == 0) {
-						$scope.table = $scope.tables[idx];
+						$scope.table = {choice: $scope.tables[idx]};
 					} else if (table.restaurantTableId == $scope.newBooking.table_ids) {
-						$scope.table = $scope.tables[idx];
+						$scope.table = {choice: $scope.tables[idx]};
 					}
 					idx++;
 				});
@@ -498,7 +498,7 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 					var tableOption = {'name':table.restaurantTableName+(table.restaurantTableId==$scope.newBooking.table_ids?' (Current)':' (Unavailable)'), 'id':table.restaurantTableId};
 					$scope.tables.push(tableOption);
 					if (table.restaurantTableId == $scope.newBooking.table_ids) {
-						$scope.table = $scope.tables[idx];
+						$scope.table = {choice: $scope.tables[idx]};
 					}
 					idx++;
 				});
@@ -508,7 +508,7 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 		
 		$scope.save = function() {
 			$scope.updating = true;
-			Booking.editBooking({bookingId:$scope.newBooking.booking_id, bookingTs:$scope.newBooking.booking_ts, noOfParticipants:$scope.newBooking.no_of_participants, tableId:$scope.table.id}).$promise.then(function() {
+			Booking.editBooking({bookingId:$scope.newBooking.booking_id, bookingTs:$scope.newBooking.booking_ts, noOfParticipants:$scope.newBooking.no_of_participants, tableId:$scope.table.choice.id}).$promise.then(function() {
 				$scope.editing = false;
 				var datetimeArr = $scope.newBooking.booking_ts.split(' ');
 				var dateStr = datetimeArr[0].replace(/-/g, '');
@@ -530,8 +530,6 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 				$scope.updating = false;
 			}
 		});
-		
-		$scope.tables = [];
 	}
 ]);
 
