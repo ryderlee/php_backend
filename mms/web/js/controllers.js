@@ -425,6 +425,21 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 		$scope.predicate = 'booking_ts';
 		$scope.reverse = true;
 		
+		$scope.lengthOptions = [
+			{label:'0:15', value:15},
+			{label:'0:30', value:30},
+			{label:'0:45', value:45},
+			{label:'1:00', value:60},
+			{label:'1:15', value:75},
+			{label:'1:30', value:90},
+			{label:'1:45', value:105},
+			{label:'2:00', value:120},
+			{label:'2:15', value:135},
+			{label:'2:30', value:150},
+			{label:'2:45', value:165},
+			{label:'3:00', value:180}
+		];
+		
 		$scope.refreshing = false;
 		
 		$rootScope.$on('showDayView', function(event, date, empty) {
@@ -453,6 +468,11 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 				});
 			}
 			$scope.booking = booking;
+			angular.forEach($scope.lengthOptions, function(lengthOption, key) {
+				if (lengthOption.value == booking.booking_length) {
+					$scope.table = {booking_length:$scope.lengthOptions[key]};
+				}
+			});
 		});
 		$scope.show = false;
 		
@@ -475,7 +495,12 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 			if (!$scope.refreshing && val1 != val2) {
 				$scope.refreshTables();
 			}
-		});		
+		});
+		$scope.$watch('table.booking_length.value', function(val1, val2) {
+			if (!$scope.refreshing && val1 != val2) {
+				$scope.refreshTables();
+			}
+		});
 		$scope.edit = function() {
 			$scope.newBooking = angular.copy($scope.booking);
 			$scope.pickerDate = $scope.newBooking.booking_ts;
@@ -486,15 +511,15 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 		$scope.refreshTables = function() {
 			$scope.tables = [];
 			$scope.refreshing = true;
-			Booking.getTables({bookingTs:$scope.newBooking.booking_ts, noOfParticipants:$scope.newBooking.no_of_participants}).$promise.then(function(tables) {
+			Booking.getTables({bookingTs:$scope.newBooking.booking_ts, noOfParticipants:$scope.newBooking.no_of_participants, bookingLength:$scope.table.booking_length.value}).$promise.then(function(tables) {
 				var idx = 0;
 				angular.forEach(tables.available, function(table, key) {
 					var tableOption = {'name':table.restaurantTableName+(table.restaurantTableId==$scope.newBooking.table_ids?' (Current)':(idx==0?' (Best)':' (Available)')), 'id':table.restaurantTableId};
 					$scope.tables.push(tableOption);
 					if (idx == 0) {
-						$scope.table = {choice: $scope.tables[idx]};
+						$scope.table.choice = $scope.tables[idx];
 					} else if (table.restaurantTableId == $scope.newBooking.table_ids) {
-						$scope.table = {choice: $scope.tables[idx]};
+						$scope.table.choice = $scope.tables[idx];
 					}
 					idx++;
 				});
@@ -502,7 +527,7 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 					var tableOption = {'name':table.restaurantTableName+(table.restaurantTableId==$scope.newBooking.table_ids?' (Current)':' (Unavailable)'), 'id':table.restaurantTableId};
 					$scope.tables.push(tableOption);
 					if (table.restaurantTableId == $scope.newBooking.table_ids) {
-						$scope.table = {choice: $scope.tables[idx]};
+						$scope.table.choice = $scope.tables[idx];
 					}
 					idx++;
 				});
@@ -512,7 +537,7 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 		
 		$scope.save = function() {
 			$scope.updating = true;
-			Booking.editBooking({bookingId:$scope.newBooking.booking_id, bookingTs:$scope.newBooking.booking_ts, noOfParticipants:$scope.newBooking.no_of_participants, tableId:$scope.table.choice.id}).$promise.then(function() {
+			Booking.editBooking({bookingId:$scope.newBooking.booking_id, bookingTs:$scope.newBooking.booking_ts, noOfParticipants:$scope.newBooking.no_of_participants, tableId:$scope.table.choice.id, bookingLength:$scope.table.booking_length.value}).$promise.then(function() {
 				$scope.editing = false;
 				var datetimeArr = $scope.newBooking.booking_ts.split(' ');
 				var dateStr = datetimeArr[0].replace(/-/g, '');

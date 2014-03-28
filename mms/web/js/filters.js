@@ -41,4 +41,8 @@ angular.module('mmsFilters', []).filter('bookingStatus', function() {
 	return function (input) {
 		return input.replace(/\n/g, '<br />');
 	};
+}).filter('minToHour', function($filter) {
+	return function (input) {
+		return Math.floor(input/60)+':'+Math.floor(input%60);
+	};
 });

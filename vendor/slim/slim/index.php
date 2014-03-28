@@ -571,14 +571,15 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
                 $datetime = $app->request()->params('datetime');
                 $covers = $app->request()->params('no_of_participants');
                 $bookingId = $app->request()->params('booking_id');
+				$bookingLength = $app->request()->params('booking_length');
 		$merchantTemplate = $restaurantTemplateService->getTemplate($merchantID, $datetime);
 		$availableTables = array();
 		$unavailableTables = array();
                 if(!empty($merchantTemplate)){
 			$targetOpeningSession = $merchantTemplate->getOpeningSession($datetime);
 			if(!empty($targetOpeningSession)){
-				$availableTables = $restaurantBookingService->getAvailableTables($merchantID, $datetime, $covers, $targetOpeningSession, $bookingId);
-				$unavailableTables = $restaurantBookingService->getUnavailableTables($merchantID, $datetime, $covers, $targetOpeningSession, $bookingId);
+				$availableTables = $restaurantBookingService->getAvailableTables($merchantID, $datetime, $bookingLength, $covers, $targetOpeningSession, $bookingId);
+				$unavailableTables = $restaurantBookingService->getUnavailableTables($merchantID, $datetime, $bookingLength, $covers, $targetOpeningSession, $bookingId);
 			}
                 }
                 $returnValue = array("available"=>$availableTables, "unavailable"=>$unavailableTables);
@@ -718,21 +719,21 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 	$app->get('/mms/bookings/:merchantID/:bookingDate', function($merchantID, $bookingDate) use ($app){
 		$returnValue = array();
 		if ($merchantID != null) {
-			$returnValue = DB::query("SELECT u.user_id, IF(b.is_guest=0, CONCAT(u.first_name, ' ', u.last_name), CONCAT(b.first_name, ' ', b.last_name)) name, u.phone, b.is_guest, b.booking_id, b.booking_ts, b.no_of_participants, b.special_request, b.status, usn.social_network_user_id, GROUP_CONCAT(rt.restaurant_table_id) table_ids, GROUP_CONCAT(rt.restaurant_table_name) table_names FROM booking b JOIN user u ON b.user_id = u.user_id JOIN booking_restaurant_table brt ON b.booking_id = brt.booking_id JOIN restaurant_table rt ON brt.restaurant_table_id = rt.restaurant_table_id LEFT JOIN user_social_network usn ON u.user_id = usn.user_id WHERE b.merchant_id = %d AND date(booking_ts) = %s GROUP BY b.booking_id", $merchantID, $bookingDate);
+			$returnValue = DB::query("SELECT u.user_id, IF(b.is_guest=0, CONCAT(u.first_name, ' ', u.last_name), CONCAT(b.first_name, ' ', b.last_name)) name, u.phone, b.is_guest, b.booking_id, b.booking_ts, b.booking_length, b.no_of_participants, b.special_request, b.status, usn.social_network_user_id, GROUP_CONCAT(rt.restaurant_table_id) table_ids, GROUP_CONCAT(rt.restaurant_table_name) table_names FROM booking b JOIN user u ON b.user_id = u.user_id JOIN booking_restaurant_table brt ON b.booking_id = brt.booking_id JOIN restaurant_table rt ON brt.restaurant_table_id = rt.restaurant_table_id LEFT JOIN user_social_network usn ON u.user_id = usn.user_id WHERE b.merchant_id = %d AND date(booking_ts) = %s GROUP BY b.booking_id", $merchantID, $bookingDate);
 		}
 		echo json_encode($returnValue);
 	});
 	$app->get('/mms/bookings/:merchantID/:bookingDate/:lastResponseTs', function($merchantID, $bookingDate, $lastResponseTs) use ($app){
 		$returnValue = array();
 		if ($merchantID != null) {
-			$returnValue = DB::query("SELECT u.user_id, IF(b.is_guest=0, CONCAT(u.first_name, ' ', u.last_name), CONCAT(b.first_name, ' ', b.last_name)) name, u.phone, b.is_guest, b.booking_id, b.booking_ts, b.no_of_participants, b.special_request, b.status, usn.social_network_user_id, GROUP_CONCAT(rt.restaurant_table_id) table_ids, GROUP_CONCAT(rt.restaurant_table_name) table_names FROM booking b JOIN user u ON b.user_id = u.user_id JOIN booking_restaurant_table brt ON b.booking_id = brt.booking_id JOIN restaurant_table rt ON brt.restaurant_table_id = rt.restaurant_table_id LEFT JOIN user_social_network usn ON u.user_id = usn.user_id WHERE b.merchant_id = %d AND date(booking_ts) = %s AND UNIX_TIMESTAMP(b.last_modified) >= %d GROUP BY b.booking_id", $merchantID, $bookingDate, $lastResponseTs);
+			$returnValue = DB::query("SELECT u.user_id, IF(b.is_guest=0, CONCAT(u.first_name, ' ', u.last_name), CONCAT(b.first_name, ' ', b.last_name)) name, u.phone, b.is_guest, b.booking_id, b.booking_ts, b.booking_length, b.no_of_participants, b.special_request, b.status, usn.social_network_user_id, GROUP_CONCAT(rt.restaurant_table_id) table_ids, GROUP_CONCAT(rt.restaurant_table_name) table_names FROM booking b JOIN user u ON b.user_id = u.user_id JOIN booking_restaurant_table brt ON b.booking_id = brt.booking_id JOIN restaurant_table rt ON brt.restaurant_table_id = rt.restaurant_table_id LEFT JOIN user_social_network usn ON u.user_id = usn.user_id WHERE b.merchant_id = %d AND date(booking_ts) = %s AND UNIX_TIMESTAMP(b.last_modified) >= %d GROUP BY b.booking_id", $merchantID, $bookingDate, $lastResponseTs);
 		}
 		echo json_encode($returnValue);
 	});
 	$app->get('/mms/bookings/:bookingID', function($bookingID) use ($app){
 		$returnValue = array();
 		if ($bookingID != null) {
-			$returnValue = DB::query("SELECT u.user_id, IF(b.is_guest=0, CONCAT(u.first_name, ' ', u.last_name), CONCAT(b.first_name, ' ', b.last_name)) name, u.phone, b.is_guest, b.booking_id, b.booking_ts, b.no_of_participants, b.special_request, b.status, usn.social_network_user_id, GROUP_CONCAT(rt.restaurant_table_id) table_ids, GROUP_CONCAT(rt.restaurant_table_name) table_names FROM booking b JOIN user u ON b.user_id = u.user_id JOIN booking_restaurant_table brt ON b.booking_id = brt.booking_id JOIN restaurant_table rt ON brt.restaurant_table_id = rt.restaurant_table_id LEFT JOIN user_social_network usn ON u.user_id = usn.user_id WHERE b.booking_id = %d GROUP BY b.booking_id", $bookingID);
+			$returnValue = DB::query("SELECT u.user_id, IF(b.is_guest=0, CONCAT(u.first_name, ' ', u.last_name), CONCAT(b.first_name, ' ', b.last_name)) name, u.phone, b.is_guest, b.booking_id, b.booking_ts, b.booking_length, b.no_of_participants, b.special_request, b.status, usn.social_network_user_id, GROUP_CONCAT(rt.restaurant_table_id) table_ids, GROUP_CONCAT(rt.restaurant_table_name) table_names FROM booking b JOIN user u ON b.user_id = u.user_id JOIN booking_restaurant_table brt ON b.booking_id = brt.booking_id JOIN restaurant_table rt ON brt.restaurant_table_id = rt.restaurant_table_id LEFT JOIN user_social_network usn ON u.user_id = usn.user_id WHERE b.booking_id = %d GROUP BY b.booking_id", $bookingID);
 		}
 		echo json_encode($returnValue);
 	});

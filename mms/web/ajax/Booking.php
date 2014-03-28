@@ -30,12 +30,12 @@ if (isset($_GET['action'])) {
 	} else if ($_GET['action'] == 'edit') {
 		if (isset($_GET['bookingId']) && $_GET['bookingId'] > 0) {
 			$resourceUri = '/reservations/' . $_GET['bookingId'];
-			$paraMap = array('booking_ts'=>$_GET['bookingTs'], 'no_of_participants'=>$_GET['noOfParticipants'], 'table_id'=>$_GET['tableId']);
+			$paraMap = array('booking_ts'=>$_GET['bookingTs'], 'no_of_participants'=>$_GET['noOfParticipants'], 'table_id'=>$_GET['tableId'], 'booking_length'=>$_GET['bookingLength']);
 			echo HttpService::put($resourceUri, $paraMap);
 		}
 	} else if ($_GET['action'] == 'getTables') {
 		$resourceUri = '/restaurant/'.$merchantService->getMerchantId().'/tables';
-		$paraMap = array('datetime'=>$_GET['bookingTs'], 'no_of_participants'=>$_GET['noOfParticipants']);
+		$paraMap = array('datetime'=>$_GET['bookingTs'], 'no_of_participants'=>$_GET['noOfParticipants'], 'booking_length'=>$_GET['bookingLength']);
 		echo HttpService::get($resourceUri, $paraMap);
 	}
 }
