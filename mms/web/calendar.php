@@ -51,6 +51,9 @@ include dirname(__FILE__) . '/common/header.php';
 			<div ng-click="back()" class="lightbutton">
 				<a>&#x25C0&nbsp;&nbsp;Back</a>
 			</div>
+			<div ng-click="newBooking()" class="lightbutton">
+				<a>&#43;&nbsp;New Booking</a>
+			</div>
 		</div>
 		<div class="current-date">
 			<span>{{current.day}}</span>

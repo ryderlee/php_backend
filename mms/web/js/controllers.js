@@ -158,6 +158,10 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 			$location.path('/');
 		};
 		
+		$scope.newBooking = function() {
+			$location.path('/'+$scope.current.date.yyyymmdd()+'/new');
+		};
+		
 		$rootScope.$on('showCalendar', function() {
 			$scope.show = false;
 		});
