@@ -43,6 +43,6 @@ angular.module('mmsFilters', []).filter('bookingStatus', function() {
 	};
 }).filter('minToHour', function($filter) {
 	return function (input) {
-		return Math.floor(input/60)+':'+Math.floor(input%60);
+		return Math.floor(input/60)+':'+(Math.floor(input%60)<10?'0'+Math.floor(input%60):Math.floor(input%60));
 	};
 });
