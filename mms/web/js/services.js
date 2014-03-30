@@ -8,7 +8,7 @@ mmsServices.factory('Booking', ['$resource',
 		cancelBooking: {method:'GET', params:{'action':'update', 'status':'-1'}},
 		getOccupancyRate: {method:'GET', params:{'action':'getOccupancyRate'}, isArray:true},
 		getHistory: {method:'GET', params:{'action':'getHistory'}, isArray:true},
-		editBooking: {method:'GET', params:{'action':'edit', 'bookingTs':':bookingTs', 'noOfParticipants':':noOfParticipants', 'tableId':':tableId', 'bookingLength':':bookingLength'}},
+		editBooking: {method:'GET', params:{'action':'edit', 'bookingTs':':bookingTs', 'noOfParticipants':':noOfParticipants', 'tableId':':tableId', 'bookingLength':':bookingLength', 'forced':':forced'}},
 		getTables: {method:'GET', params:{'action':'getTables', 'bookingTs':':bookingTs', 'noOfParticipants':':noOfParticipants', 'bookingLength':':bookingLength'}}
 	});
 }]);

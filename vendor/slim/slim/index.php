@@ -434,9 +434,9 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		
 		$forced = !empty($app->request()->params('forced'))?$app->request()->params('forced'):false;
 		
-		$returnValue = $restaurantBookingService->editBookingByMerchant($bookingID, $booking['merchant_id'], $booking['is_guest'], $booking['session_id'], $booking['first_name'], $booking['last_name'], $booking['phone'], $booking['booking_ts'], $booking['no_of_participants'], $booking['special_request'], $booking['status'], $booking['attendance'], $tableArray, $booking['booking_length'], $forced);
+		$result = $restaurantBookingService->editBookingByMerchant($bookingID, $booking['merchant_id'], $booking['is_guest'], $booking['session_id'], $booking['first_name'], $booking['last_name'], $booking['phone'], $booking['booking_ts'], $booking['no_of_participants'], $booking['special_request'], $booking['status'], $booking['attendance'], $tableArray, $booking['booking_length'], $forced);
 		
-		if ($returnValue===true) {
+		if ($result===true) {
 			// Publish new message (Amazon SNS)
 			global $sns;
 			$message = array(
@@ -452,6 +452,13 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		}
 		
 		//TODO: Send notification to user if it cancellation of booking
+		$returnValue = array();
+		if ($result===true) {
+			$returnValue['result'] = true;
+		} else {
+			$returnValue['result'] = false;
+			$returnValue['detail'] = $result;
+		}
 		echo json_encode($returnValue);
 	});
 

@@ -30,7 +30,7 @@ if (isset($_GET['action'])) {
 	} else if ($_GET['action'] == 'edit') {
 		if (isset($_GET['bookingId']) && $_GET['bookingId'] > 0) {
 			$resourceUri = '/reservations/' . $_GET['bookingId'];
-			$paraMap = array('booking_ts'=>$_GET['bookingTs'], 'no_of_participants'=>$_GET['noOfParticipants'], 'table_id'=>$_GET['tableId'], 'booking_length'=>$_GET['bookingLength']);
+			$paraMap = array('booking_ts'=>$_GET['bookingTs'], 'no_of_participants'=>$_GET['noOfParticipants'], 'table_id'=>$_GET['tableId'], 'booking_length'=>$_GET['bookingLength'], 'forced'=>$_GET['forced']=='true'?true:false);
 			echo HttpService::put($resourceUri, $paraMap);
 		}
 	} else if ($_GET['action'] == 'getTables') {

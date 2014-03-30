@@ -157,7 +157,7 @@ include dirname(__FILE__) . '/common/header.php';
 							<div class="lightbutton" ng-hide="(booking.status!='1'&&booking.status!='0')||editing" ng-click="cancel()" ng-disabled="updating">
 								<a>&#10008;&nbsp;Cancel</a>
 							</div>
-							<div class="lightbutton" ng-hide="!editing" ng-click="save()" ng-disabled="updating">
+							<div class="lightbutton" ng-hide="!editing" ng-click="save(false)" ng-disabled="updating">
 								<a>&#8629;&nbsp;Save</a>
 							</div>
 							<div class="lightbutton" ng-hide="!editing" ng-click="discard()" ng-disabled="updating">

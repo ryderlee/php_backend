@@ -440,7 +440,7 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 			{label:'3:00', value:180}
 		];
 		
-		$scope.refreshing = false;
+		$scope.refreshing = true;
 		
 		$rootScope.$on('showDayView', function(event, date, empty) {
 			$scope.show = true;
@@ -535,13 +535,23 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 			});
 		};
 		
-		$scope.save = function() {
+		$scope.save = function(forced) {
 			$scope.updating = true;
-			Booking.editBooking({bookingId:$scope.newBooking.booking_id, bookingTs:$scope.newBooking.booking_ts, noOfParticipants:$scope.newBooking.no_of_participants, tableId:$scope.table.choice.id, bookingLength:$scope.table.booking_length.value}).$promise.then(function() {
-				$scope.editing = false;
-				var datetimeArr = $scope.newBooking.booking_ts.split(' ');
-				var dateStr = datetimeArr[0].replace(/-/g, '');
-				$location.path('/'+dateStr+'/'+$scope.newBooking.booking_id);
+			console.log(forced);
+			Booking.editBooking({bookingId:$scope.newBooking.booking_id, bookingTs:$scope.newBooking.booking_ts, noOfParticipants:$scope.newBooking.no_of_participants, tableId:$scope.table.choice.id, bookingLength:$scope.table.booking_length.value, forced:forced}).$promise.then(function(response) {
+				if (response.result) {
+					$scope.editing = false;
+					var datetimeArr = $scope.newBooking.booking_ts.split(' ');
+					var dateStr = datetimeArr[0].replace(/-/g, '');
+					$location.path('/'+dateStr+'/'+$scope.newBooking.booking_id);
+				} else {
+					var result = confirm('WARNING: '+response.detail[0].description+'\nDo you still want to continue?');
+					if (result) {
+						$scope.save(true);
+					} else {
+						$scope.editing = false;
+					}
+				}
 			});
 		};
 		
