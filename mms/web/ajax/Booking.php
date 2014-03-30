@@ -37,7 +37,13 @@ if (isset($_GET['action'])) {
 		$resourceUri = '/restaurant/'.$merchantService->getMerchantId().'/tables';
 		$paraMap = array('datetime'=>$_GET['bookingTs'], 'no_of_participants'=>$_GET['noOfParticipants'], 'booking_length'=>$_GET['bookingLength']);
 		echo HttpService::get($resourceUri, $paraMap);
-	}
+	}else if ($_GET['action'] == 'addBooking') {
+		if (isset($_GET['email'])) {
+			$resourceUri = '/reservation/'.$merchantService->getMerchantId().'/'.$_GET['email'];
+			$paraMap = array('first_name'=>$_GET['firstName'], 'last_name'=>$_GET['lastName'], 'phone'=>$_GET['phone'], 'booking_ts'=>$_GET['bookingTs'], 'no_of_participants'=>$_GET['noOfParticipants'], 'special_request'=>$_GET['specialRequest'], 'table_id'=>$_GET['tableId'], 'booking_length'=>$_GET['bookingLength'], 'forced'=>$_GET['forced']=='true'?true:false);
+			echo HttpService::put($resourceUri, $paraMap);
+		}
+	} 
 }
 
 ?>

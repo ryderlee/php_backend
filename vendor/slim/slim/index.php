@@ -762,6 +762,79 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		global $restaurantTemplateService;
 		print_r($restaurantTemplateService->getTemplate(1, '2014-03-10 18:00:00'));
 	});
+	
+	$app->put('/reservation/:merchantID/:email', function($merchantID, $email) use ($app){
+		global $restaurantBookingService;
+		
+		$row = DB::queryFirstRow("SELECT * FROM user WHERE email = %s", $email);
+
+		$firstName = $app->request()->params('first_name');
+		$lastName = $app->request()->params('last_name');
+		$phone = $app->request()->params('phone');
+		$datetime = $app->request()->params('booking_ts');
+		$noOfParticipants = $app->request()->params('no_of_participants');
+		$specialRequest = $app->request()->params('special_request');
+		$bookingLength = $app->request()->params('booking_length');
+		
+		$forced = !empty($app->request()->params('forced'))?$app->request()->params('forced'):false;
+		
+		if ($row) {
+			$userId = $row['user_id'];
+			$isGuest = $row['is_guest'];
+		} else {
+			$isGuest = 1;
+			DB::insert('user', $values = array(
+				'is_guest' => $isGuest,
+				'email' => $email,
+				'first_name' => $firstName, 
+				'last_name' => $lastName,
+				'phone' => $phone,
+				'create_ts' => DB::sqleval('NOW()')
+			));
+			$userId = DB::insertId();
+		}
+		
+		
+		$tableArray = array();
+		if (!empty($app->request()->params('table_id'))) {
+			$tableId = $app->request()->params('table_id');
+			$tables = DB::query('SELECT * FROM restaurant_table WHERE restaurant_table_id = %d', $tableId);
+			foreach ($tables as $table) {
+				$tableObj = new RestaurantTable($table['merchant_id'], $table['restaurant_table_id'], $table['restaurant_table_name'], $table['actual_cover'], $table['min_cover'], $table['max_cover']);
+				array_push($tableArray, $tableObj);
+			}
+		}
+		
+		$forced = !empty($app->request()->params('forced'))?$app->request()->params('forced'):false;
+		
+		$result = $restaurantBookingService->makeBookingByMerchant($userId, $merchantID, $isGuest, '', $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, 0, 0, $tableArray, $bookingLength, $forced);
+		
+		if (is_int($result)) {
+			// Publish new message (Amazon SNS)
+			global $sns;
+			$message = array(
+				'topic'=>'1001',
+				'bookingId'=>$result,
+				'bookingDate'=>$datetime,
+				'action'=>'new'
+			);
+			$sns->publish(array(
+				'Message' => json_encode($message),
+				'TopicArn' => 'arn:aws:sns:ap-southeast-1:442675153455:merchant-1001'
+			));
+		}
+		
+		//TODO: Send notification to user if it cancellation of booking
+		$returnValue = array();
+		if (is_int($result)) {
+			$returnValue['result'] = true;
+			$returnValue['booking_id'] = $result;
+		} else {
+			$returnValue['result'] = false;
+			$returnValue['detail'] = $result;
+		}
+		echo json_encode($returnValue);
+	});
 
 	//var_dump($rs);
 });

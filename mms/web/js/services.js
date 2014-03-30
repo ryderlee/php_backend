@@ -9,6 +9,7 @@ mmsServices.factory('Booking', ['$resource',
 		getOccupancyRate: {method:'GET', params:{'action':'getOccupancyRate'}, isArray:true},
 		getHistory: {method:'GET', params:{'action':'getHistory'}, isArray:true},
 		editBooking: {method:'GET', params:{'action':'edit', 'bookingTs':':bookingTs', 'noOfParticipants':':noOfParticipants', 'tableId':':tableId', 'bookingLength':':bookingLength', 'forced':':forced'}},
-		getTables: {method:'GET', params:{'action':'getTables', 'bookingTs':':bookingTs', 'noOfParticipants':':noOfParticipants', 'bookingLength':':bookingLength'}}
+		getTables: {method:'GET', params:{'action':'getTables', 'bookingTs':':bookingTs', 'noOfParticipants':':noOfParticipants', 'bookingLength':':bookingLength'}},
+		addBooking: {method:'GET', params:{'action':'addBooking', 'firstName':':firstName', 'lastName':':lastName', 'phone':':phone', 'bookingTs':':bookingTs', 'noOfParticipants':':noOfParticipants', 'specialRequest':':specialRequest', 'tableId':':tableId', 'bookingLength':':bookingLength', 'forced':':forced', 'email':':email'}}
 	});
 }]);

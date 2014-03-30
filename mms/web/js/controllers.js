@@ -336,6 +336,9 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 		$rootScope.$on("showDayView", function() {
 			$scope.show = false;
 		});
+		$rootScope.$on('addBooking', function() {
+			$scope.show = false;
+		});
 		
 		$scope.dateClick = function(caldate) {
 			$location.path('/'+caldate.date.yyyymmdd());
@@ -474,6 +477,10 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 				}
 			});
 		});
+		$rootScope.$on('addBooking', function() {
+			$scope.show = false;
+			$scope.booking = null;
+		});
 		$scope.show = false;
 		
 		$scope.attend = function() {
@@ -537,7 +544,6 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 		
 		$scope.save = function(forced) {
 			$scope.updating = true;
-			console.log(forced);
 			Booking.editBooking({bookingId:$scope.newBooking.booking_id, bookingTs:$scope.newBooking.booking_ts, noOfParticipants:$scope.newBooking.no_of_participants, tableId:$scope.table.choice.id, bookingLength:$scope.table.booking_length.value, forced:forced}).$promise.then(function(response) {
 				if (response.result) {
 					$scope.editing = false;
@@ -550,6 +556,7 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 						$scope.save(true);
 					} else {
 						$scope.editing = false;
+						$scope.updating = false;
 					}
 				}
 			});
@@ -569,6 +576,119 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 				$scope.updating = false;
 			}
 		});
+	}
+])
+.controller('AddBookingCtrl', ['$scope', '$rootScope', 'Booking', '$location',
+	function($scope, $rootScope, Booking, $location) {
+		$scope.lengthOptions = [
+			{label:'0:15', value:15},
+			{label:'0:30', value:30},
+			{label:'0:45', value:45},
+			{label:'1:00', value:60},
+			{label:'1:15', value:75},
+			{label:'1:30', value:90},
+			{label:'1:45', value:105},
+			{label:'2:00', value:120},
+			{label:'2:15', value:135},
+			{label:'2:30', value:150},
+			{label:'2:45', value:165},
+			{label:'3:00', value:180}
+		];
+		
+		$scope.refreshing = true;
+		
+		$rootScope.$on('showDayView', function(event, date, empty) {
+			$scope.show = false;
+		});
+		$rootScope.$on('showCalendar', function() {
+			$scope.show = false;
+		});
+		$rootScope.$on('displayDetail', function(event, booking) {
+			$scope.show = false;
+		});
+		$rootScope.$on('addBooking', function() {
+			$scope.show = true;
+			var bookingDate = new Date();
+			bookingDate.setHours(18);
+			bookingDate.setMinutes(0);
+			bookingDate.setSeconds(0);
+			$scope.newBooking = {
+				booking_ts: bookingDate.fulldatetime(),
+				no_of_participants: 2,
+				special_request: ''
+			};
+			$scope.table = {
+				booking_length:$scope.lengthOptions[3]
+			};
+			$scope.pickerDate = $scope.newBooking.booking_ts;
+			$scope.refreshTables();
+		});
+		$scope.show = false;
+
+		$scope.$watch('newBooking.booking_ts', function(val1, val2) {
+			if (!$scope.refreshing && val1 != val2) {
+				$scope.refreshTables();
+			}
+		});
+		$scope.$watch('newBooking.no_of_participants', function(val1, val2) {
+			if (!$scope.refreshing && val1 != val2) {
+				$scope.refreshTables();
+			}
+		});
+		$scope.$watch('table.booking_length.value', function(val1, val2) {
+			if (!$scope.refreshing && val1 != val2) {
+				$scope.refreshTables();
+			}
+		});
+		
+		$scope.refreshTables = function() {
+			$scope.tables = [];
+			$scope.refreshing = true;
+			Booking.getTables({bookingTs:$scope.newBooking.booking_ts, noOfParticipants:$scope.newBooking.no_of_participants, bookingLength:$scope.table.booking_length.value}).$promise.then(function(tables) {
+				var idx = 0;
+				angular.forEach(tables.available, function(table, key) {
+					var tableOption = {'name':table.restaurantTableName+(table.restaurantTableId==$scope.newBooking.table_ids?' (Current)':(idx==0?' (Best)':' (Available)')), 'id':table.restaurantTableId};
+					$scope.tables.push(tableOption);
+					if (idx == 0) {
+						$scope.table.choice = $scope.tables[idx];
+					} else if (table.restaurantTableId == $scope.newBooking.table_ids) {
+						$scope.table.choice = $scope.tables[idx];
+					}
+					idx++;
+				});
+				angular.forEach(tables.unavailable, function(table, key) {
+					var tableOption = {'name':table.restaurantTableName+(table.restaurantTableId==$scope.newBooking.table_ids?' (Current)':' (Unavailable)'), 'id':table.restaurantTableId};
+					$scope.tables.push(tableOption);
+					if (table.restaurantTableId == $scope.newBooking.table_ids) {
+						$scope.table.choice = $scope.tables[idx];
+					}
+					idx++;
+				});
+				$scope.refreshing = false;
+			});
+		};
+		
+		$scope.save = function(forced) {
+			$scope.updating = true;
+			Booking.addBooking({firstName:$scope.newBooking.first_name, lastName:$scope.newBooking.last_name, phone:$scope.newBooking.phone, email:$scope.newBooking.email, bookingTs:$scope.newBooking.booking_ts, noOfParticipants:$scope.newBooking.no_of_participants, specialRequest:$scope.newBooking.special_request, tableId:$scope.table.choice.id, bookingLength:$scope.table.booking_length.value, forced:forced}).$promise.then(function(response) {
+				if (response.result) {
+					var datetimeArr = $scope.newBooking.booking_ts.split(' ');
+					var dateStr = datetimeArr[0].replace(/-/g, '');
+					$location.path('/'+dateStr+'/'+response.booking_id);
+				} else {
+					var result = confirm('WARNING: '+response.detail[0].description+'\nDo you still want to continue?');
+					if (result) {
+						$scope.save(true);
+					} else {
+						$scope.updating = false;
+					}
+				}
+			});
+		};
+		
+		$scope.onTimeSet = function(newDate, oldDate) {
+			$scope.newBooking.booking_ts = newDate.fulldatetime();
+		};
 	}
 ]);
 

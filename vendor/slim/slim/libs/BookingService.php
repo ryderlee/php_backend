@@ -223,6 +223,7 @@ class RestaurantBookingService implements BookingServiceInterface {
 	}
 
 	public function makeBookingByMerchant($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength, $forced = false) {
+		global $restaurantTemplateService;
 		if(!$forced){
 			$returnValue = array();
 			
@@ -247,7 +248,7 @@ class RestaurantBookingService implements BookingServiceInterface {
 			if( $bookingId = $this->addBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength)){
 				$this->commitModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength);
 			}
-			$templateObj = RestaurantTemplateService::geTemplate($merchantId, $datetime);
+			$templateObj = $restaurantTemplateService->getTemplate($merchantId, $datetime);
 			$this->markAllBookingConflictByTemplate($templateObj);
 			if(!(($arr = $this->checkOutOfSessionConflict($bookingId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength))=== false)){
 				DB::update('booking', array('conflict_code'=>'3'), 'booking_id=%d', $bookingId);
