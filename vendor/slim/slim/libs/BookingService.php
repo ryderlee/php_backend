@@ -347,7 +347,7 @@ class RestaurantBookingService implements BookingServiceInterface {
 	public function isBookingOverlap($userId, $newBookingDatetime, $newBookingLength, $timeGap){
 		$startQueryDatetime = date("Y-m-d H:i:s", strtotime($newBookingDatetime) - $timeGap * 60);
 		$endQueryDatetime = date("Y-m-d H:i:s", strtotime($newBookingDatetime) + ($newBookingLength + $timeGap) * 60);
-		$sql = "SELECT booking_id FROM booking WHERE user_id=%d AND ((%s BETWEEN booking_ts AND DATE_ADD(booking_ts, INTERVAL booking_length MINUTE)) OR (%s BETWEEN booking_ts AND DATE_ADD(booking_ts, INTERVAL booking_length MINUTE))) AND status > -1";
+		$sql = "SELECT booking_id FROM booking WHERE user_id=%d AND (NOT ((DATE_ADD(booking_ts, INTERVAL booking_length MINUTE) >= %s) OR (%s >= booking_ts))) AND status > -1";
 		if(sizeof($rs = DB::query($sql, $userId, $startQueryDatetime, $endQueryDatetime)) > 0){
 			return $rs;
 		}else{
