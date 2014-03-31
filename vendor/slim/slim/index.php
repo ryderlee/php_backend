@@ -469,8 +469,11 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		$rs = DB::queryFirstRow("SELECT * FROM restaurants_hongkong_csv WHERE LICNO = %s" , $merchantID);
 		//var_dump($rs);
 		
-		global $restaurantBookingService;
-		$availabilityArr = $restaurantBookingService->getTimeslotAvailability($merchantID, $bookingDatetime, $covers);
+		$availabilityArr = array();
+		if (!empty($bookingDatetime) && !empty($covers)) {
+			global $restaurantBookingService;
+			$availabilityArr = $restaurantBookingService->getTimeslotAvailability($merchantID, $bookingDatetime, $covers);
+		}
 		
 		$returnValue = array(
 			"RESTAURANT_ID"=>$rs['LICNO'],

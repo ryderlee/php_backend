@@ -527,7 +527,7 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 			Booking.getTables({bookingTs:$scope.newBooking.booking_ts, noOfParticipants:$scope.newBooking.no_of_participants, bookingLength:$scope.table.booking_length.value}).$promise.then(function(tables) {
 				var idx = 0;
 				angular.forEach(tables.available, function(table, key) {
-					var tableOption = {'name':table.restaurantTableName+(table.restaurantTableId==$scope.newBooking.table_ids?' (Current)':(idx==0?' (Best)':' (Available)')), 'id':table.restaurantTableId};
+					var tableOption = {'name':table.restaurantTableName+(table.restaurantTableId==$scope.newBooking.table_ids?' (Current)':(idx==0?' (Suggested)':' (Available)')), 'id':table.restaurantTableId};
 					$scope.tables.push(tableOption);
 					if (idx == 0) {
 						$scope.table.choice = $scope.tables[idx];
@@ -651,7 +651,7 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 			Booking.getTables({bookingTs:$scope.newBooking.booking_ts, noOfParticipants:$scope.newBooking.no_of_participants, bookingLength:$scope.table.booking_length.value}).$promise.then(function(tables) {
 				var idx = 0;
 				angular.forEach(tables.available, function(table, key) {
-					var tableOption = {'name':table.restaurantTableName+(table.restaurantTableId==$scope.newBooking.table_ids?' (Current)':(idx==0?' (Best)':' (Available)')), 'id':table.restaurantTableId};
+					var tableOption = {'name':table.restaurantTableName+(table.restaurantTableId==$scope.newBooking.table_ids?' (Current)':(idx==0?' (Suggested)':' (Available)')), 'id':table.restaurantTableId};
 					$scope.tables.push(tableOption);
 					if (idx == 0) {
 						$scope.table.choice = $scope.tables[idx];
