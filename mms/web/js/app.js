@@ -72,7 +72,6 @@ var mmsApp = angular.module('mmsApp', [
     		$rootScope.$emit('showDayView', date, false);
     		if (paths.length >= 2) {
     			if (paths[1] == 'new') {
-    				console.log('new booking');
     				$rootScope.$emit('addBooking', date);
     			} else {
     				console.log('show detail');

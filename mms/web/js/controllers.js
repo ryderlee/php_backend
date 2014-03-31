@@ -89,15 +89,13 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 		};
 		
 		$rootScope.$on("showDetail", function(event, booking_id) {
-			if ($scope.loading) {
 				$scope.pendingDetailBookingId = booking_id;
-			} else {
 				angular.forEach($scope.bookings, function(booking, key) {
 					if (booking.booking_id == booking_id) {
+						$scope.pendingDetailBookingId = null;
 						$rootScope.$emit('displayDetail', booking);
 					}
 				});
-			}
 		});
 		
 		$rootScope.$on('newBooking', function(event, json) {
@@ -110,8 +108,16 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 					angular.forEach(newBookings, function(value, key) {
 						value.flash = true;
 					});
-					console.log(newBookings);
 					$scope.bookings = $scope.bookings.concat(newBookings);
+					
+					if ($scope.pendingDetailBookingId) {
+						angular.forEach(newBookings, function(booking, key) {
+							if (booking.booking_id == $scope.pendingDetailBookingId) {
+								$rootScope.$emit('displayDetail', booking);
+							}
+						});
+						$scope.pendingDetailBookingId = null;
+					}
 	            });
            }
 		});
@@ -606,8 +612,9 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 		$rootScope.$on('displayDetail', function(event, booking) {
 			$scope.show = false;
 		});
-		$rootScope.$on('addBooking', function(event, bookingDate) {
+		$rootScope.$on('addBooking', function(event, date) {
 			$scope.show = true;
+			var bookingDate = new Date(date.getTime());
 			bookingDate.setHours(18);
 			$scope.newBooking = {
 				booking_ts: bookingDate.fulldatetime(),
