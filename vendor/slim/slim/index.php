@@ -581,7 +581,7 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
                 $datetime = $app->request()->params('datetime');
                 $covers = $app->request()->params('no_of_participants');
                 $bookingId = $app->request()->params('booking_id');
-				$bookingLength = $app->request()->params('booking_length');
+		$bookingLength = $app->request()->params('booking_length');
 		$merchantTemplate = $restaurantTemplateService->getTemplate($merchantID, $datetime);
 		$availableTables = array();
 		$unavailableTables = array();
