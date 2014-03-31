@@ -606,12 +606,9 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 		$rootScope.$on('displayDetail', function(event, booking) {
 			$scope.show = false;
 		});
-		$rootScope.$on('addBooking', function() {
+		$rootScope.$on('addBooking', function(event, bookingDate) {
 			$scope.show = true;
-			var bookingDate = new Date();
 			bookingDate.setHours(18);
-			bookingDate.setMinutes(0);
-			bookingDate.setSeconds(0);
 			$scope.newBooking = {
 				booking_ts: bookingDate.fulldatetime(),
 				no_of_participants: 2,
