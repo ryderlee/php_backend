@@ -210,7 +210,7 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 .controller('CalendarCtrl', ['$scope', 'Booking', '$rootScope', '$location', 
 	function($scope, Booking, $rootScope, $location) {
 		var offScreenRow = isMobile?5:20;
-		var rowHeight = 130;
+		var rowHeight = 128;
 		var today = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate(), 0, 0, 0);
 		var rendered = false;
 		var lastTouchY;
