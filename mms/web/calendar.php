@@ -80,7 +80,7 @@ include dirname(__FILE__) . '/common/header.php';
 				<tr ng-show="!loading && bookings.length==0">
 					<td class="center" colspan="4">No booking found</td>
 				</tr>
-				<tr ng-repeat="booking in bookings | orderBy:predicate:reverse" class="bookingRow" booking-row ng-class="{'past':booking.past||booking.status==2}" ng-click="showDetail(booking)">
+				<tr ng-repeat="booking in bookings | orderBy:predicate:reverse" class="bookingRow" booking-row ng-class="{'past':booking.past||booking.status==2, 'conflict':booking.conflict_code!=0}" ng-click="showDetail(booking)">
 					<td class="time">{{booking.booking_ts | bookingDatetime}}</td>
 					<td class="customer"><div class="picture"><img ng-if="booking.pictureSmall != null" ng-src="{{booking.pictureSmall}}"></div><div class="name">{{booking.name}}</div></td>
 					<td class="table">{{booking.table_names}}</th>
