@@ -1,6 +1,6 @@
 var mmsAnimations = angular.module('mmsAnimations', ['ngAnimate']);
 
-mmsAnimations.animation('.bookingRow', function() {
+/*mmsAnimations.animation('.bookingRow', function() {
 	return {
 		enter: function(element, done) {
 			jQuery(element).css('opacity', 0);
@@ -38,8 +38,8 @@ mmsAnimations.animation('.bookingRow', function() {
 			};
 		}
 	};
-})
-.animation('.calendar-wrapper', function() {
+})*/
+mmsAnimations.animation('.calendar-wrapper', function() {
 	return {
 		removeClass: function(element, done) {
 			jQuery(element).css('opacity', 0);

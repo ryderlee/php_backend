@@ -206,34 +206,53 @@ class RestaurantBookingService implements BookingServiceInterface {
 	public function markAllBookingConflictByTemplate($template){
 		$openSessions = $template->getOpeningSessions();
 
-		$sessionStartTime = $openSessions[0]->getStartTime();
+		$sessionStartTime = $template->getTemplateDate()." ".$openSessions[0]->getStartTime();
 		$sessionEndTime = date("Y-m-d H:i:s", strtotime($openSessions[0]->getStartTime()) + $openSessions[0]->getSessionLength() * 60);
-		
+
+		for($i = 1 ; $i < sizeof($openSessions) ; $i++){
+			if($sessionStartTime > ($template->getTemplateDate() . " " . $openSessions[$i]->getStartTime())) {
+				$sessionStartTime = $template->getTemplateDate()." ".$openSessions[$i]->getStartTime();
+			}
+			if($sessionEndTime < (date("Y-m-d H:i:s", strtotime($openSessions[$i]->getStartTime()) + $openSessions[$i]->getSessionLength() * 60))) {
+				$sessionEndTime = date("Y-m-d H:i:s", strtotime($openSessions[$i]->getStartTime()) + $openSessions[$i]->getSessionLength() * 60);
+			}
+		}
+
 		$sessionStartTimestamp = strtotime($sessionStartTime);
 		$sessionEndTimestamp = strtotime($sessionEndTime);
 
-		if(sizeof($openSessions) > 1){
-			for($i = 1; $i< sizeof($openSessions); $i++){
-				if($sessionStartTimestamp > strtotime($openSessions[$i]->getStartTime())){
-					$sessionStartTimestamp = strtotime($openSessions[$i]->getStartTime());
-				}
+		$sql = "SELECT * FROM booking WHERE booking.booking_ts BETWEEN %s AND %s";
+		$beforeBookingArr = DB::query($sql, $sessionStartTime, $sessionEndTime);
 
-				if($sessionEndTimestamp < (strtotime($openSessions[$i]->getStartTime()) + $openSessions[0]->getSessionLength() * 60)){
-					$sessionEndTimestamp = strtotime($openSessions[$i]->getStartTime()) + ($openSessions[0]->getSessionLength() * 60);
-				}
-			}
-		}
-		
 		$sql = "UPDATE booking SET conflict_code=0 WHERE booking.booking_ts BETWEEN %s AND %s";
 		DB::query($sql, $sessionStartTime, $sessionEndTime);
+		$bookingIdArr = array();
 		$rs = DB::query("SELECT DISTINCT b1.booking_id FROM booking_restaurant_table brt1 LEFT JOIN booking b1 on brt1.booking_id = b1.booking_id, booking_restaurant_table brt2 LEFT JOIN booking b2 ON brt2.booking_id = b2.booking_id WHERE ABS(TIMESTAMPDIFF(MINUTE , b1.booking_ts , b2.booking_ts)) <b1.booking_length AND brt1.restaurant_table_id = brt2.restaurant_table_id AND b1.booking_id <> b2.booking_id AND b1.booking_ts BETWEEN %s AND %s", $sessionStartTime, $sessionEndTime);
-
-		$arrOfIds = array();
-		for($i = 0; $i < sizeof($rs) ; $i++){
-			$arrOfIds[] = $rs[$i]['booking_id'];
+		foreach ($rs as $row) {
+			$bookingIdArr[] = $row['booking_id'];
 		}
+		if(sizeof($bookingIdArr) > 0)
+			DB::query("UPDATE booking SET conflict_code=1 WHERE booking_id IN (" . implode(",", $bookingIdArr) . ")");
+		
+		$sql = "SELECT * FROM booking WHERE booking.booking_ts BETWEEN %s AND %s";
+		$afterBookingArr = DB::query($sql, $sessionStartTime, $sessionEndTime);
 
-		DB::query("UPDATE booking SET conflict_code=1 WHERE booking_id IN (" . implode(",", $arrOfIds) . ")");
+		global $sns;		
+		for ($i=0; $i<sizeof($beforeBookingArr); $i++) {
+			if ($beforeBookingArr[$i]['conflict_code'] != $afterBookingArr[$i]['conflict_code']) {
+				// Publish new message (Amazon SNS)
+				$message = array(
+					'topic'=>'1001',
+					'bookingId'=>$beforeBookingArr[$i]['booking_id'],
+					'bookingDate'=>$beforeBookingArr[$i]['booking_ts'],
+					'action'=>'update'
+				);
+				$sns->publish(array(
+					'Message' => json_encode($message),
+					'TopicArn' => 'arn:aws:sns:ap-southeast-1:442675153455:merchant-1001'
+				));
+			}
+		}
 	}
 
 	public function makeBookingByMerchant($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength, $forced = false) {
@@ -351,7 +370,8 @@ class RestaurantBookingService implements BookingServiceInterface {
 			$this->markAllBookingConflictByTemplate($templateObj2);
 			if(!(($arr = $this->checkOutOfSessionConflict($bookingId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrayOfTables, $bookingLength))=== false)){
 				DB::update('booking', array('conflict_code'=>'3'), 'booking_id=%d', $bookingId);
-			
+			} else {
+				DB::update('booking', array('conflict_code'=>'0'), 'booking_id=%d AND conflict_code=%d', $bookingId, 3);
 			}
 		}
 		return true;
