@@ -473,6 +473,12 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		if (!empty($bookingDatetime) && !empty($covers)) {
 			global $restaurantBookingService;
 			$availabilityArr = $restaurantBookingService->getTimeslotAvailability($merchantID, $bookingDatetime, $covers);
+			$timeslotsArr = array();
+			foreach($availabilityArr as $key => $availability) {
+				if ($availability == 1) {
+					$timeslotsArr[] = $key;
+				}
+			}
 		}
 		
 		$returnValue = array(
@@ -491,7 +497,7 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 			"RESTAURANT_REVIEW_SERVICE" => 4,
 			"RESTAURANT_REVIEW_AMBIANCE" => 4,
 			"RESTAURANT_REVIEWS" => array("good","bad", "good", "bad"),
-			"RESTAURANT_BOOKING_SLOTS" => $availabilityArr,
+			"RESTAURANT_BOOKING_SLOTS" => $timeslotsArr,
 			"RESTAURANT_LAT" => $rs['lat'],
 			"RESTAURANT_LONG" => $rs['long']
 		);
@@ -711,7 +717,13 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 			$merchantTemplate = $restaurantTemplateService->getTemplate($rs[$idx]['LICNO'], $bookingDatetime);
 			if (!empty($merchantTemplate)) {
 				$availabilityArr = $restaurantBookingService->getTimeslotAvailability($rs[$idx]['LICNO'], $bookingDatetime , $covers);
-				$rs[$idx]['timeslotAvailability'] = $availabilityArr;
+				$timeslotsArr = array();
+				foreach($availabilityArr as $key => $availability) {
+					if ($availability == 1) {
+						$timeslotsArr[] = $key;
+					}
+				}
+				$rs[$idx]['timeslotAvailability'] = $timeslotsArr;
 			}
 			$rs[$idx]['IMAGE'] = $images[array_rand($images)]; 
 		}
