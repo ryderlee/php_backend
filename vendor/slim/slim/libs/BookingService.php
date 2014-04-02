@@ -71,6 +71,19 @@ class RestaurantBookingService implements BookingServiceInterface {
 		}
 		return null;
 	}
+
+	public function getAllTables($merchantId) {
+		$tables = DB::query('SELECT * FROM restaurant_table WHERE merchant_id = %d ORDER BY max_cover ASC, min_cover ASC', $merchantId);
+		if (!empty($tables)) {
+			for($i = 0; $i < sizeof($tables); $i++) {
+				$bestTable = $tables[$i];
+				$restaurantTables[] = new RestaurantTable($bestTable['merchant_id'], $bestTable['restaurant_table_id'], $bestTable['restaurant_table_name'], $bestTable['actual_cover'], $bestTable['min_cover'], $bestTable['max_cover']);
+			}
+			return $restaurantTables;
+		}
+		return null;
+	}
+
 	private function lockModules($merchantID, $datetime, $noOfParticipants, $restaurantTable, $bookingLength){
 		$moduleArr = explode(",", RestaurantBookingService::$bookingModuleList);
 

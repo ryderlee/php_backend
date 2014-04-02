@@ -157,20 +157,23 @@ class RestaurantTableBookingModule{
 			// RestaurantTableBookingModule::$bookingEndDatetime =  date("Y-n-j H:i:s", strtotime(RestaurantTableBookingModule::$bookingStartDatetime) + 60 * 120);
 			
 			
-			$openingSession = $merchantTemplate->getOpeningSession($bookingDatetime);
-			
-			RestaurantTableBookingModule::$openingSessions = $merchantTemplate->getOpeningSessions();
-			RestaurantTableBookingModule::$currentSessionDate = $merchantTemplate->getTemplateDate();
-			if (!empty($openingSession)) {
-				RestaurantTableBookingModule::$currentSessionStartDatetime = $merchantTemplate->getTemplateDate()." ".$openingSession->getStartTime();
-				RestaurantTableBookingModule::$currentSessionEndDatetime = date("Y-m-d H:i:s", strtotime(RestaurantTableBookingModule::$currentSessionStartDatetime) + 60 * $openingSession->getSessionLength());
-				RestaurantTableBookingModule::$bookingEndDatetime = date("Y-m-d H:i:s", strtotime($bookingDatetime) + 60 * $openingSession->getMealDuration());
+			RestaurantTableBookingModule::$openingSessions = array();
+			if (!empty($merchantTemplate)) {
+				$openingSession = $merchantTemplate->getOpeningSession($bookingDatetime);
 				
-				RestaurantTableBookingModule::$currentSessionStartTimestamp = strtotime(RestaurantTableBookingModule::$currentSessionStartDatetime);
-				RestaurantTableBookingModule::$currentSessionEndTimestamp = strtotime(RestaurantTableBookingModule::$currentSessionEndDatetime);
-				RestaurantTableBookingModule::$bookingStartTimestamp = strtotime(RestaurantTableBookingModule::$bookingStartDatetime);
-				RestaurantTableBookingModule::$bookingEndTimestamp = strtotime(RestaurantTableBookingModule::$bookingEndDatetime);
-				RestaurantTableBookingModule::$bookingLength = $openingSession->getMealDuration();
+				RestaurantTableBookingModule::$openingSessions = $merchantTemplate->getOpeningSessions();
+				RestaurantTableBookingModule::$currentSessionDate = $merchantTemplate->getTemplateDate();
+				if (!empty($openingSession)) {
+					RestaurantTableBookingModule::$currentSessionStartDatetime = $merchantTemplate->getTemplateDate()." ".$openingSession->getStartTime();
+					RestaurantTableBookingModule::$currentSessionEndDatetime = date("Y-m-d H:i:s", strtotime(RestaurantTableBookingModule::$currentSessionStartDatetime) + 60 * $openingSession->getSessionLength());
+					RestaurantTableBookingModule::$bookingEndDatetime = date("Y-m-d H:i:s", strtotime($bookingDatetime) + 60 * $openingSession->getMealDuration());
+					
+					RestaurantTableBookingModule::$currentSessionStartTimestamp = strtotime(RestaurantTableBookingModule::$currentSessionStartDatetime);
+					RestaurantTableBookingModule::$currentSessionEndTimestamp = strtotime(RestaurantTableBookingModule::$currentSessionEndDatetime);
+					RestaurantTableBookingModule::$bookingStartTimestamp = strtotime(RestaurantTableBookingModule::$bookingStartDatetime);
+					RestaurantTableBookingModule::$bookingEndTimestamp = strtotime(RestaurantTableBookingModule::$bookingEndDatetime);
+					RestaurantTableBookingModule::$bookingLength = $openingSession->getMealDuration();
+				}
 			}
 			
 
