@@ -305,7 +305,9 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 				var occupancyRate = $rootScope.occupancyRates[start.getTime()];
 				var caldate = {
 					date:new Date(start.getTime()),
-					displayDate:start.getDate()==1?start.getDate()+' '+monthNames[start.getMonth()]:start.getDate(),
+					displayDay:start.getDate(),
+					displayMonth:start.getDate()==1?' '+monthNames[start.getMonth()]:'',
+					displayYear:start.getDate()==1&&start.getMonth()==0?' '+start.getFullYear():'',
 					bgColor:$scope.getBgColor(occupancyRate)
 				};
 				if (start.getTime()==today.getTime()) {

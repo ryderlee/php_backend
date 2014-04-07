@@ -42,6 +42,9 @@ html, body { font-family: Georgia; margin: 0px; padding: 0px; overflow: hidden; 
 .calendar .calendar-cell { text-align: right; height: 128px; border-top: 1px solid #bbb; border-bottom: 1px solid #fff; margin-left: 4px; margin-right: 4px; padding-left: 4px; padding-right: 4px; font-size: 1.2em; }
 .calendar .today { border: 1px solid #E41A1E; color: #E41A1E; font-weight: bold; }
 
+.calendar-month { font-weight: bold; font-size: 1.3em; }
+.calendar-year { font-size: 1.3em; }
+
 
 
 /* Main Page - Day View */
@@ -66,7 +69,7 @@ html, body { font-family: Georgia; margin: 0px; padding: 0px; overflow: hidden; 
 .daylist-header div { border: none; } 
 .daylist-picture { width: 40px; padding-left: 2px; }
 .daylist-picture img { width: 36px; height: 36px; }
-.daylist-time { display: table-caption; font-weight: bold; font-size: 1.1em; padding-left: 4px; }
+.daylist-time { display: table-caption; font-weight: bold; font-size: 1.1em; padding-left: 4px; background-color: #EBF5FA; }
 
 
 

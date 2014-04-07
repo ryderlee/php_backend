@@ -36,7 +36,7 @@ include dirname(__FILE__) . '/common/header.php';
 	<div class="calendar" calendar-view>
 		<ul>
       		<li ng-repeat="caldate in caldates" id="{{caldate.id}}" calendar-cell>
-      			<div class="calendar-cell {{caldate.className}}" ng-click="dateClick(caldate)" ng-style="caldate.bgColor">{{caldate.displayDate}}</div></a>
+      			<div class="calendar-cell {{caldate.className}}" ng-click="dateClick(caldate)" ng-style="caldate.bgColor"><span>{{caldate.displayDay}}</span><span class="calendar-month">{{caldate.displayMonth}}</span><span class="calendar-year">{{caldate.displayYear}}</span></div></a>
       		</li>
 		</ul>
 	</div>
