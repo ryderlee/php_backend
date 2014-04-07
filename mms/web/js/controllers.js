@@ -73,7 +73,7 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 				}
 				if (value.social_network_user_id) {
 					value.picture = "http://graph.facebook.com/"+value.social_network_user_id+"/picture?type=large&width=150&height=150";
-					value.pictureSmall = "http://graph.facebook.com/"+value.social_network_user_id+"/picture?type=square&width=32&height=32";
+					value.pictureSmall = "http://graph.facebook.com/"+value.social_network_user_id+"/picture?type=square&width=36&height=36";
 				} else {
 					value.picture = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 					value.pictureSmall = "http://static.ak.fbcdn.net/rsrc.php/v2/yo/r/UlIqmHJn-SK.gif";
@@ -171,6 +171,12 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 		$rootScope.$on('showCalendar', function() {
 			$scope.show = false;
 		});
+		
+		$scope.shouldShowTime = function(bookingTs) {
+			var shouldShow = bookingTs!=$scope.showBookingTs;
+			$scope.showBookingTs = bookingTs;
+			return shouldShow;
+		};
 	}
 ])
 .controller('LoginCtrl', ['$scope',
@@ -389,7 +395,7 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 						jQuery(target).data('cancel', false);
 						setTimeout(function() {
 							jQuery(target).data('cancel', true);
-						}, 150);
+						}, 250);
 					} else if (e.type == 'touchend') {
 						if (!jQuery(target).data('cancel')) {
 							jQuery(target).click();

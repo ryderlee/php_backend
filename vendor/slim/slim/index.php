@@ -470,6 +470,7 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		//var_dump($rs);
 		
 		$availabilityArr = array();
+		$timeslotsArr = array();
 		if (!empty($bookingDatetime) && !empty($covers)) {
 			global $restaurantBookingService;
 			$availabilityArr = $restaurantBookingService->getTimeslotAvailability($merchantID, $bookingDatetime, $covers);
