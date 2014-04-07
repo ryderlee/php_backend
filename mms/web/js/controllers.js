@@ -171,12 +171,6 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 		$rootScope.$on('showCalendar', function() {
 			$scope.show = false;
 		});
-		
-		$scope.shouldShowTime = function(bookingTs) {
-			var shouldShow = bookingTs!=$scope.showBookingTs;
-			$scope.showBookingTs = bookingTs;
-			return shouldShow;
-		};
 	}
 ])
 .controller('LoginCtrl', ['$scope',

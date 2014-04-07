@@ -72,8 +72,8 @@ include dirname(__FILE__) . '/common/header.php';
 					<div class="daylist-status">Status</div>
 				</div>
 			</li>
-			<li ng-repeat="booking in bookings | orderBy:predicate:reverse" booking-row ng-class="{'past':booking.past||booking.status==2, 'conflict':booking.conflict_code!=0}">
-				<div class="daylist-time" ng-show="shouldShowTime(booking.booking_ts)">
+			<li ng-repeat="booking in bookings | orderBy:predicate:reverse | groupBy:'booking_ts'" booking-row ng-class="{'past':booking.past||booking.status==2, 'conflict':booking.conflict_code!=0}">
+				<div class="daylist-time" ng-show="booking.booking_ts_CHANGED">
 					{{booking.booking_ts | bookingDatetime}}
 				</div>
 				<div class="daylist-row" ng-click="showDetail(booking)">
