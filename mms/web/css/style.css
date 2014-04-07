@@ -71,7 +71,7 @@ html, body { font-family: Georgia; margin: 0px; padding: 0px; overflow: hidden; 
 .daylist-picture img { width: 36px; height: 36px; }
 .daylist-time { display: table-caption; font-weight: bold; font-size: 1.1em; padding-left: 4px; background-color: #EBF5FA; }
 
-
+.daylist-empty { text-align: center; }
 
 
 

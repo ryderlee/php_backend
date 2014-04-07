@@ -128,17 +128,22 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 			if ($scope.current && d.getTime() == $scope.current.date.getTime()) {
 				Booking.getBookings({bookingId:json.bookingId}).$promise.then(function(newBookings) {
 					/** To be replaced: Server Timestamp **/
+					var bookingFound = false;
 					$rootScope.lastResponseTs = Math.floor(new Date().getTime()/1000);
 					$scope.processBooking(newBookings);
 					angular.forEach($scope.bookings, function(oBooking, key) {
 						angular.forEach(newBookings, function(nBooking, key2) {
 							$rootScope.$emit("updateBookingDetail", nBooking);
 							if (oBooking.booking_id == nBooking.booking_id) {
+								bookingFound = true;
 								nBooking.flash = true;
 								$scope.bookings[key] = nBooking;
 							}
 						});
 					});
+					if (!bookingFound) {
+						$scope.bookings = $scope.bookings.concat(newBookings);
+					}
 				});
 			}
 		});

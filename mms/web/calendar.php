@@ -46,6 +46,9 @@ include dirname(__FILE__) . '/common/header.php';
 	<div class="dayview-message-table" ng-show="loading">
 		<div class="dayview-message-cell">Loading...</div>
 	</div>
+	<div class="dayview-message-table" ng-show="bookings.length==0">
+		<div class="dayview-message-cell">No booking found</div>
+	</div>
 	<div class="dayview-header">
 		<div class="buttons-panel">
 			<div ng-click="back()" class="lightbutton">
@@ -61,7 +64,7 @@ include dirname(__FILE__) . '/common/header.php';
 			<span>{{current.year}}</span>
 		</div>
 	</div>
-	<div class="daylist" ng-hide="loading">
+	<div class="daylist" ng-hide="loading||bookings.length==0">
 		<ul class="daylist-table">
 			<li>
 				<div class="daylist-row daylist-header">
