@@ -135,13 +135,15 @@ div.dhtmlx_window_active, div.dhx_modal_cover_dv { position: fixed !important; }
 .bookingdetail-basic .highlight { font-weight: bold; font-size: 1.5em; }
 .bookingdetail-cover { position: relative; }
 .bookingdetail-name { font-size: 1.9em; font-weight: bold; }
+.bookingdetail-name input { width: 200px; }
 .bookingdetail-profile-pic { float: left; }
 .bookingdetail-profile-pic img { border: 2px solid #ccc; width:150px; height: 150px; background:url("http://static.ak.fbcdn.net/rsrc.php/v2/yL/r/HsTZSDw4avx.gif"); background-size: cover; background-position: 50% 50%; }
 
 .bookingdetail-current { position: absolute; bottom: 6px; right: 0px; width: calc(100% - 164px); width: -webkit-calc(100% - 164px); width: -moz-calc(100% - 164px); }
 .bookingdetail-col1 { float: left; margin-right: 15px; }
 .bookingdetail-col2 { float: left; }
-.bookingdetail-table { font-size: 1.1em; width: 100%; }
+.bookingdetail-table { font-size: 1.1em; width: 100%; margin-top: 10px; }
+.bookingdetail-table tr { height: 30px; }
 .bookingdetail-table tr td:first-child { font-weight: bold; padding-right: 8px; }
 
 .bookingdetail-rating table tr td:first-child { width: 116px; } 
@@ -161,10 +163,10 @@ div.dhtmlx_window_active, div.dhx_modal_cover_dv { position: fixed !important; }
 .bookingdetail-history .datagrid { border-bottom: none; }
 
 .bookingdetail-details { float: left; margin-right: 10px; font-size: 1.2em; }
-.bookingdetail-edit-details { float: left; margin-right: 10px; }
+.bookingdetail-edit-details { float: left; margin-right: 10px; font-size: 1.2em; }
 
-.bookingdetail-edit-details div { float: left; }
-.bookingdetail-edit-details .dropdown { width: 240px; margin-left: 10px; }
+/*.bookingdetail-edit-details div { float: left; }*/
+.bookingdetail-edit-details .dropdown { width: 240px; margin-top: 10px; margin-bottom: 10px; }
 
 .bookingdetail-edit-details .input-group span { height: 26px; padding-top: 2px; padding-bottom: 2px; }
 .bookingdetail-edit-details .input-group-addon { padding-top: 4px; padding-bottom: 4px; }

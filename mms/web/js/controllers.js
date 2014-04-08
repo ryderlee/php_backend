@@ -274,6 +274,9 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 		$rootScope.$on('newBooking', function() {
 			$scope.refreshOccupancyRate();
 		});
+		$rootScope.$on('updateBooking', function() {
+			$scope.refreshOccupancyRate();
+		});
 		$rootScope.$on('wake', function() {
 			$scope.refreshOccupancyRate();
 		});
@@ -367,6 +370,7 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 			return {"background-color":bgColor};
 		};
 		$scope.refreshOccupancyRate = function() {
+			$rootScope.occupancyRates = new Array();
 			Booking.getOccupancyRate().$promise.then(function(occupancy) {
 				/** To be replaced: Server Timestamp **/
 				$rootScope.lastResponseTs = Math.floor(new Date().getTime()/1000);
