@@ -46,8 +46,8 @@ class RestaurantBookingService implements BookingServiceInterface {
 		return null;
 	}
 
-	public function getBestTable($merchantId, $datetime, $noOfParticipants, $targetOpeningSession) {
-		$tables = $this->getAvailableTables($merchantId, $datetime, $noOfParticipants, $targetOpeningSession);
+	public function getBestTable($merchantId, $datetime, $tableBookingLength, $noOfParticipants, $targetOpeningSession) {
+		$tables = $this->getAvailableTables($merchantId, $datetime, $tableBookingLength, $noOfParticipants, $targetOpeningSession);
 		if(sizeof($tables) > 0)
 			return $tables[0];
 		else
@@ -307,8 +307,8 @@ class RestaurantBookingService implements BookingServiceInterface {
 			if(!empty($merchantTemplate)){
 				$targetOpeningSession = $merchantTemplate->getOpeningSession($datetime);
 				if(!empty($targetOpeningSession)){
-					$table = $this->getBestTable($merchantId, $datetime, $noOfParticipants, $targetOpeningSession);
 					$tableBookingLength = $targetOpeningSession->getMealDuration();
+					$table = $this->getBestTable($merchantId, $datetime, $tableBookingLength, $noOfParticipants, $targetOpeningSession);
 					if($this->isBookingOverlap($userId, $datetime, $tableBookingLength, 0))
 						return -1;
 					if (!empty($table)) {
