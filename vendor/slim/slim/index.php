@@ -500,7 +500,15 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 			"RESTAURANT_REVIEWS" => array("good","bad", "good", "bad"),
 			"RESTAURANT_BOOKING_SLOTS" => $timeslotsArr,
 			"RESTAURANT_LAT" => $rs['lat'],
-			"RESTAURANT_LONG" => $rs['long']
+			"RESTAURANT_LONG" => $rs['long'],
+			"RESTAURANT_PHONE" => $rs['phone'],
+			"RESTAURANT_CUISINE" => $rs['cuisine'],
+			"RESTAURANT_PRICE_LOW" => $rs['price_low'],
+			"RESTAURANT_PRICE_HIGH" => $rs['price_high'],
+			"RESTAURANT_OPENING_TIME" => $rs['opening_time'],
+			"RESTAURANT_CLOSING_TIME" => $rs['closing_time'],
+			"RESTAURANT_PARKING" => $rs['parking'],
+			"RESTAURANT_DESCRIPTION" => $rs['description'],
 		);
 		echo json_encode($returnValue);
 	});
