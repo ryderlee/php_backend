@@ -691,7 +691,15 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		//var_dump($rs);
 		*/
 		$images = array(
-			"http://giverny.org/hotels/corniche/piscine2.jpg",
+			"http://ikky-phpapp-env.elasticbeanstalk.com/images/thumbnails/01.png",
+			"http://ikky-phpapp-env.elasticbeanstalk.com/images/thumbnails/02.png",
+			"http://ikky-phpapp-env.elasticbeanstalk.com/images/thumbnails/03.png",
+			"http://ikky-phpapp-env.elasticbeanstalk.com/images/thumbnails/04.png",
+			"http://ikky-phpapp-env.elasticbeanstalk.com/images/thumbnails/05.png",
+			"http://ikky-phpapp-env.elasticbeanstalk.com/images/thumbnails/06.png",
+			"http://ikky-phpapp-env.elasticbeanstalk.com/images/thumbnails/07.png"
+			
+			/*"http://giverny.org/hotels/corniche/piscine2.jpg",
 			"http://giverny.org/hotels/corniche/terrasse-resto.jpg",
 			"http://giverny.org/hotels/corniche/restaurant-room.jpg",
 			"http://giverny.org/hotels/corniche/standard-bedroom.jpg",
@@ -710,7 +718,7 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 			"http://giverny.org/hotels/corniche/cuisine3.jpg",
 			"http://giverny.org/hotels/corniche/cuisine1.jpg",
 			"http://giverny.org/tour/versailles.jpg",
-			"http://giverny.org/tour/ravoux.jpg"
+			"http://giverny.org/tour/ravoux.jpg"*/
 		);
 
 		foreach ($rs as $idx => $restaurant) {
