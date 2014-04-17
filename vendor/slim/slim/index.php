@@ -781,6 +781,7 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		}
 		echo json_encode($returnValue);
 	});
+	
 	$app->get('/restaurant/:merchantID/:date/:noOfParticipants', function($merchantID, $date, $noOfParticipants) use ($app) {
 		global $restaurantTemplateService;
 		print_r($restaurantTemplateService->getTemplate(1, '2014-03-10 18:00:00'));
@@ -857,6 +858,29 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 			$returnValue['detail'] = $result;
 		}
 		echo json_encode($returnValue);
+	});
+	
+	$app->put('/mms/updateProfile/:merchantID', function($merchantID) use ($app) {
+		$toUpdate = array();
+		$keysForUpdate = array(
+			'SS',
+			'ADR',
+			'phone',
+			'cuisine',
+			'price_low',
+			'price_high',
+			'opening_time',
+			'closing_time',
+			'parking',
+			'description'
+		);
+		foreach ($keysForUpdate as $key) {
+			if (!empty($app->request()->params($key))) {
+				$toUpdate[$key] = $app->request()->params($key);
+			}
+		}
+		
+		DB::update('restaurants_hongkong_csv', $toUpdate, 'LICNO=%d', $merchantID);
 	});
 
 	//var_dump($rs);
