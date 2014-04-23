@@ -640,7 +640,7 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 			$sql = "SELECT * FROM restaurants_hongkong_csv ";
 		else{	
 			$unit = ($distanceUnit =="km"?6371:3959);
-			$sql = "SELECT *,  (" . $unit . "* acos( cos( radians(" . $lat . "))* cos( radians( lat_dec ))* cos( radians( lng_dec )- radians( " . $lng . "))+ sin( radians(" . $lat . "))* sin( radians( lat)))) AS distance FROM restaurants_hongkong_csv ";
+			$sql = "SELECT *,  (" . $unit . "* acos( cos( radians(" . $lat . "))* cos( radians( lat_dec ))* cos( radians( lng_dec )- radians( " . $lng . "))+ sin( radians(" . $lat . "))* sin( radians( lat)))) AS distance FROM restaurants_hongkong_csv LEFT JOIN merchant_photos mp ON LICNO = mp.merchant_id AND mp.status = 1 AND mp.type = 2";
 		}
 
 		if(sizeof($actions) > 0){
@@ -686,6 +686,7 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		//echo "test";
 		//var_dump($rs);
 		*/
+		
 		$images = array(
 			"http://ikky-phpapp-env.elasticbeanstalk.com/images/thumbnails/01.png",
 			"http://ikky-phpapp-env.elasticbeanstalk.com/images/thumbnails/02.png",
@@ -730,7 +731,11 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 				}
 				$rs[$idx]['timeslotAvailability'] = $timeslotsArr;
 			}
-			$rs[$idx]['IMAGE'] = $images[array_rand($images)]; 
+			if (empty($rs[$idx]['filename'])) {
+				$rs[$idx]['IMAGE'] = $images[array_rand($images)];
+			} else {
+				$rs[$idx]['IMAGE'] = 'http://ikky-phpapp-env.elasticbeanstalk.com/upload/'.$rs[$idx]['filename'];
+			}
 		}
 		
 		echo json_encode($rs);
@@ -882,6 +887,25 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		
 		DB::update('restaurants_hongkong_csv', $toUpdate, 'LICNO=%d', $merchantID);
 	});
+	
+	$app->post('/mms/photo/:merchantID/upload', function($merchantID) use ($app) {
+		$filename = randomStr().".".pathinfo($_FILES['photo']['name'], PATHINFO_EXTENSION);
+		$dest = dirname(__FILE__).'/upload/'. $filename;
+		$type = $app->request()->params('type');
+		if (move_uploaded_file($_FILES['photo']['tmp_name'], $dest)) {
+			if ($type==2) {
+				DB::update('merchant_photos', array(
+					'status' => 2
+				), 'type=%d', 2);
+			}
+			DB::insert('merchant_photos', array(
+				'merchant_id' => $merchantID,
+				'filename' => $filename,
+				'type' => $app->request()->params('type'),
+				'create_ts' => DB::sqleval('NOW()')
+			));
+		}
+	});
 
 	//var_dump($rs);
 });
@@ -913,6 +937,15 @@ function sendEmailNotification($name, $numberOfParticipant, $ts, $bookingId) {
 		'ReplyToAddresses' => array('mms_no_reply@ikky.com'),
 		'ReturnPath' => 'mms_no_reply@ikky.com'
 	));
+}
+
+function randomStr($length = 16) {
+    $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    $randomString = '';
+    for ($i = 0; $i < $length; $i++) {
+        $randomString .= $characters[rand(0, strlen($characters) - 1)];
+    }
+    return $randomString;
 }
 
 
