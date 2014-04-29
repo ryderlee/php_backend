@@ -311,6 +311,16 @@ class RestaurantBookingService implements BookingServiceInterface {
 		return true;
 			
 	}
+
+	public function getVIPType($userId, $merchantId){
+		$sql = "SELECT * FROM user_merchant_vip WHERE user_id = %d AND LICNO=%s";
+		$result = DB::query($sql, $userId, $merchantId);
+		if(sizeof($result) > 0){
+			return $result[0]['type'];
+		}else{
+			return 0;
+		}
+	}
 	public function makeBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest) {
 		$arr = array('tableBookingLength' => 120, 'tableBookingInterval' => 15, 'tableCoverList'=>'1,2,3,4,5,6');
 		setMerchantSettings($merchantId, $arr);
@@ -321,12 +331,7 @@ class RestaurantBookingService implements BookingServiceInterface {
 			if(!empty($merchantTemplate)){
 				$targetOpeningSession = $merchantTemplate->getOpeningSession($datetime);
 				if(!empty($targetOpeningSession)){
-					$sql = "SELECT * FROM user_merchant_vip WHERE user_id = %d AND LICNO=%s";
-
-					if(sizeof($result = DB::query($sql)) > 0){
-						$type = $result[0]['type'];
-					else
-						$type = 0;
+					$type = $this->getVIPType($userId, $merchantId);
 					$table = $this->getBestTable($merchantId, $datetime, $noOfParticipants, $targetOpeningSession, $type);
 					$tableBookingLength = $targetOpeningSession->getMealDuration();
 					if($this->isBookingOverlap($userId, $datetime, $tableBookingLength, 0))
