@@ -593,6 +593,7 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		$unavailableTables = array();
 		if(!empty($merchantTemplate)){
 			$targetOpeningSession = $merchantTemplate->getOpeningSession($datetime);
+			$VIPTables = $restaurantBookingService->getVIPTables($merchantID, $datetime);
 			if(!empty($targetOpeningSession)){
 				$availableTables = $restaurantBookingService->getAvailableTables($merchantID, $datetime, $bookingLength, $covers, $targetOpeningSession, $bookingId);
 				$unavailableTables = $restaurantBookingService->getUnavailableTables($merchantID, $datetime, $bookingLength, $covers, $targetOpeningSession, $bookingId);
@@ -600,7 +601,7 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 				$unavailableTables = $restaurantBookingService->getAllTables($merchantID);
 			}
 		}
-		$returnValue = array("available"=>$availableTables, "unavailable"=>$unavailableTables);
+		$returnValue = array("available"=>$availableTables, "unavailable"=>$unavailableTables, "vip"=>$VIPTables);
 		echo json_encode($returnValue);
 	});
 	
