@@ -466,7 +466,8 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		$action = $app->request()->params('action');
 		$bookingDatetime = $app->request()->params('booking_datetime');
 		$covers = $app->request()->params('no_of_participants');
-		$rs = DB::queryFirstRow("SELECT * FROM restaurants_hongkong_csv WHERE LICNO = %s" , $merchantID);
+		$userId = $app->request()->params('user_id');
+		$rs = DB::queryFirstRow("SELECT * FROM restaurants_hongkong_csv rhkc LEFT JOIN user_merchant_vip umv ON rhkc.LICNO = umv.LICNO WHERE rhkc.LICNO = %s AND umv.user_id = %d" , $merchantID, $userId);
 		
 		$photos = DB::queryOneColumn('filename', "SELECT * FROM merchant_photos WHERE merchant_id = %d AND type =%d AND status = %d", $merchantID, 1, 1);
 		foreach($photos as $idx => $photo) {
@@ -479,10 +480,17 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		if (!empty($bookingDatetime) && !empty($covers)) {
 			global $restaurantBookingService;
 			$availabilityArr = $restaurantBookingService->getTimeslotAvailability($merchantID, $bookingDatetime, $covers);
+			$VIPavailabilityArr = $restaurantBookingService->getTimeslotAvailability($merchantID, $bookingDatetime, $covers, 1);
 			$timeslotsArr = array();
 			foreach($availabilityArr as $key => $availability) {
 				if ($availability == 1) {
 					$timeslotsArr[] = $key;
+				}
+			}
+			$VIPtimeslotsArr = array();
+			foreach($VIPavailabilityArr as $key => $availability) {
+				if ($availability == 1) {
+					$VIPtimeslotsArr[] = $key;
 				}
 			}
 		}
@@ -492,6 +500,7 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 			"RESTAURANT_NAME"=>$rs['SS'],
 			"RESTAURANT_ADDRESS" => $rs['ADR'],
 			"RESTAURANT_BOOKING_SLOTS" => $timeslotsArr,
+			"RESTAURANT_BOOKING_VIP_SLOTS" => $VIPtimeslotsArr,
 			"RESTAURANT_LAT" => $rs['lat'],
 			"RESTAURANT_LONG" => $rs['long'],
 			"RESTAURANT_PHONE" => $rs['phone'],
@@ -596,6 +605,7 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		$unavailableTables = array();
 		if(!empty($merchantTemplate)){
 			$targetOpeningSession = $merchantTemplate->getOpeningSession($datetime);
+			$VIPTablesArr = $restaurantBookingService->getVIPTableArr($merchantID, $datetime);
 			if(!empty($targetOpeningSession)){
 				$availableTables = $restaurantBookingService->getAvailableTables($merchantID, $datetime, $bookingLength, $covers, $targetOpeningSession, $bookingId);
 				$unavailableTables = $restaurantBookingService->getUnavailableTables($merchantID, $datetime, $bookingLength, $covers, $targetOpeningSession, $bookingId);
@@ -603,7 +613,7 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 				$unavailableTables = $restaurantBookingService->getAllTables($merchantID);
 			}
 		}
-		$returnValue = array("available"=>$availableTables, "unavailable"=>$unavailableTables);
+		$returnValue = array("available"=>$availableTables, "unavailable"=>$unavailableTables, "vip"=>$VIPTables);
 		echo json_encode($returnValue);
 	});
 	
@@ -613,6 +623,7 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		//$actions[]  = $action;
 		$keyword = $app->request()->params('k');
 		$page = $app->request()->params('p');
+		$userId = $app->request()->params('userId');
 		$latMin= $app->request()->params('latmin');
 		$latMax= $app->request()->params('latmax');
 		$lngMin= $app->request()->params('lngmin');
@@ -642,11 +653,13 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		if(!is_null($latMin) && !is_null($latMax) && !is_null($lngMin) && !is_null($lngMax))
 			$actions[] = "mapRange";
 
+		$actions[] = "VIPHandling";
+
 		if(!in_array("hasLocationRadius", $actions))
 			$sql = "SELECT * FROM restaurants_hongkong_csv ";
 		else{	
 			$unit = ($distanceUnit =="km"?6371:3959);
-			$sql = "SELECT *,  (" . $unit . "* acos( cos( radians(" . $lat . "))* cos( radians( lat_dec ))* cos( radians( lng_dec )- radians( " . $lng . "))+ sin( radians(" . $lat . "))* sin( radians( lat)))) AS distance FROM restaurants_hongkong_csv LEFT JOIN merchant_photos mp ON LICNO = mp.merchant_id AND mp.status = 1 AND mp.type = 2";
+			$sql = "SELECT *,  (" . $unit . "* acos( cos( radians(" . $lat . "))* cos( radians( lat_dec ))* cos( radians( lng_dec )- radians( " . $lng . "))+ sin( radians(" . $lat . "))* sin( radians( lat)))) AS distance FROM restaurants_hongkong_csv rhkc LEFT JOIN user_merchant_vip umv ON rhkc.LICNO = umv.LICNO LEFT JOIN merchant_photos mp ON LICNO = mp.merchant_id AND mp.status = 1 AND mp.type = 2";
 		}
 
 		if(sizeof($actions) > 0){
@@ -661,6 +674,10 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 						break;
 					case 'hasKeyword':
 						$tempWhereClause = " (SS LIKE '%" . $keyword . "%' OR ADR LIKE '%" . $keyword . "%') ";
+						$needAnd++;
+						break;
+					case 'VIPHandling':
+						$tempWhereClause = " umv.user_id = " . $userId;
 						$needAnd++;
 						break;
 				}
@@ -678,7 +695,7 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 			$sql = $sql . ' HAVING distance < ' . $distance . ' ';
 
 
-		$sql = $sql . ' ORDER BY LICNO LIMIT ' . $page * $resultPerPage .  ',' . $resultPerPage;
+		$sql = $sql . ' ORDER BY rhkc.LICNO LIMIT ' . $page * $resultPerPage .  ',' . $resultPerPage;
 
 		$rs = DB::query($sql);
 			
@@ -736,6 +753,14 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 					}
 				}
 				$rs[$idx]['timeslotAvailability'] = $timeslotsArr;
+				$VIPavailabilityArr = $restaurantBookingService->getTimeslotAvailability($rs[$idx]['LICNO'], $bookingDatetime , $covers, 1);
+				$VIPtimeslotsArr = array();
+				foreach($VIPavailabilityArr as $key => $availability) {
+					if ($availability == 1) {
+						$VIPtimeslotsArr[] = $key;
+					}
+				}
+				$rs[$idx]['VIPTimeslotAvailability'] = $VIPtimeslotsArr;
 			}
 			if (empty($rs[$idx]['filename'])) {
 				$rs[$idx]['IMAGE'] = $images[array_rand($images)];

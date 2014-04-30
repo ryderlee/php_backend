@@ -13,7 +13,7 @@ interface BookingServiceInterface {
 
 class RestaurantBookingService implements BookingServiceInterface {
 	private static $bookingModuleList = "RestaurantTableBookingModule";
-	public static function getTimeslotAvailability($merchantId, $bookingDatetime, $covers){
+	public static function getTimeslotAvailability($merchantId, $bookingDatetime, $covers, $type=0){
 		$moduleArr = explode(",", RestaurantBookingService::$bookingModuleList);
 		$returnValue = array();
 		foreach($moduleArr as $m){
@@ -35,7 +35,8 @@ class RestaurantBookingService implements BookingServiceInterface {
 		$restaurantTables= array();
 		if (!empty($targetOpeningSession)) {
 			$floorPlanId = $targetOpeningSession->getFloorPlanId();
-			$tables = DB::query('SELECT * FROM restaurant_table WHERE merchant_id = %d AND floor_plan_id = %d AND restaurant_table_id IN (SELECT restaurant_table_id FROM booking b JOIN booking_restaurant_table bt ON b.booking_id = bt.booking_id WHERE b.merchant_id = %d AND (NOT ((DATE_ADD(booking_ts, INTERVAL booking_length MINUTE) <= %s) OR (%s <= booking_ts))) AND b.booking_id <> %d AND status>-1) AND (%d BETWEEN min_cover AND max_cover) ORDER BY max_cover ASC, min_cover ASC', $merchantId, $floorPlanId, $merchantId, $datetime, $bookingEndDatetime, $excludeBookingId, $noOfParticipants);
+			$sql = 'SELECT * FROM restaurant_table WHERE merchant_id = %d AND floor_plan_id = %d AND restaurant_table_id IN (SELECT restaurant_table_id FROM booking b JOIN booking_restaurant_table bt ON b.booking_id = bt.booking_id WHERE b.merchant_id = %d AND (NOT ((DATE_ADD(booking_ts, INTERVAL booking_length MINUTE) <= %s) OR (%s <= booking_ts))) AND b.booking_id <> %d AND status>-1) AND (%d BETWEEN min_cover AND max_cover) ORDER BY max_cover ASC, min_cover ASC';
+			$tables = DB::query($sql, $merchantId, $floorPlanId, $merchantId, $datetime, $bookingEndDatetime, $excludeBookingId, $noOfParticipants);
 			for($i = 0; $i < sizeof($tables); $i++){
 				$bestTable = $tables[$i];
 				$restaurantTables[] = new RestaurantTable($bestTable['merchant_id'], $bestTable['restaurant_table_id'], $bestTable['restaurant_table_name'], $bestTable['actual_cover'], $bestTable['min_cover'], $bestTable['max_cover']);
@@ -45,9 +46,20 @@ class RestaurantBookingService implements BookingServiceInterface {
 		}
 		return null;
 	}
+	public function getVIPTableArr($merchantID, $datetime){
+		$templateObj = RestaurantTemplateService::getTemplate($merchantId, $datetime);
 
-	public function getBestTable($merchantId, $datetime, $tableBookingLength, $noOfParticipants, $targetOpeningSession) {
-		$tables = $this->getAvailableTables($merchantId, $datetime, $tableBookingLength, $noOfParticipants, $targetOpeningSession);
+		return split(',',$templateObj->getVIPTableIds());
+
+	}
+	public function getBestTable($merchantId, $datetime,$bookingLength, $noOfParticipants, $targetOpeningSession, $type=0) {
+		$tables = $this->getAvailableTables($merchantId, $datetime, $bookingLength, $noOfParticipants, $targetOpeningSession, $type);
+		if($type <> 0){
+			$VIPTableArr = $this->getVIPTableArr($merchantId, $datetime);
+			foreach($tables as $key=>$table)
+				if(!in_array($table['table_id'], $VIPTableArr))
+					unset($table[$key]);
+		}
 		if(sizeof($tables) > 0)
 			return $tables[0];
 		else
@@ -61,7 +73,8 @@ class RestaurantBookingService implements BookingServiceInterface {
 		$restaurantTables = array();
 		if (!empty($targetOpeningSession)) {
 			$floorPlanId = $targetOpeningSession->getFloorPlanId();
-			$tables = DB::query('SELECT * FROM restaurant_table WHERE merchant_id = %d AND floor_plan_id = %d AND restaurant_table_id NOT IN (SELECT restaurant_table_id FROM booking b JOIN booking_restaurant_table bt ON b.booking_id = bt.booking_id WHERE b.merchant_id = %d AND (NOT ((DATE_ADD(booking_ts, INTERVAL booking_length MINUTE) <= %s) OR (%s <= booking_ts))) AND b.booking_id<> %d AND status>-1) AND (%d BETWEEN min_cover AND max_cover) ORDER BY max_cover ASC, min_cover ASC', $merchantId, $floorPlanId, $merchantId, $datetime, $bookingEndDatetime, $excludeBookingId, $noOfParticipants);
+			$sql = 'SELECT * FROM restaurant_table WHERE merchant_id = %d AND floor_plan_id = %d AND restaurant_table_id NOT IN (SELECT restaurant_table_id FROM booking b JOIN booking_restaurant_table bt ON b.booking_id = bt.booking_id WHERE b.merchant_id = %d AND (NOT ((DATE_ADD(booking_ts, INTERVAL booking_length MINUTE) <= %s) OR (%s <= booking_ts))) AND b.booking_id<> %d AND status>-1) AND (%d BETWEEN min_cover AND max_cover) ORDER BY max_cover ASC, min_cover ASC';
+			$tables = DB::query($sql, $merchantId, $floorPlanId, $merchantId, $datetime, $bookingEndDatetime, $excludeBookingId, $noOfParticipants);
 			for($i = 0; $i < sizeof($tables); $i++){
 				$bestTable = $tables[$i];
 				$restaurantTables[] = new RestaurantTable($bestTable['merchant_id'], $bestTable['restaurant_table_id'], $bestTable['restaurant_table_name'], $bestTable['actual_cover'], $bestTable['min_cover'], $bestTable['max_cover']);
@@ -297,6 +310,16 @@ class RestaurantBookingService implements BookingServiceInterface {
 		return true;
 			
 	}
+
+	public function getVIPType($userId, $merchantId){
+		$sql = "SELECT * FROM user_merchant_vip WHERE user_id = %d AND LICNO=%s";
+		$result = DB::query($sql, $userId, $merchantId);
+		if(sizeof($result) > 0){
+			return $result[0]['type'];
+		}else{
+			return 0;
+		}
+	}
 	public function makeBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest) {
 		$arr = array('tableBookingLength' => 120, 'tableBookingInterval' => 15, 'tableCoverList'=>'1,2,3,4,5,6');
 		setMerchantSettings($merchantId, $arr);
@@ -307,8 +330,9 @@ class RestaurantBookingService implements BookingServiceInterface {
 			if(!empty($merchantTemplate)){
 				$targetOpeningSession = $merchantTemplate->getOpeningSession($datetime);
 				if(!empty($targetOpeningSession)){
+					$type = $this->getVIPType($userId, $merchantId);
 					$tableBookingLength = $targetOpeningSession->getMealDuration();
-					$table = $this->getBestTable($merchantId, $datetime, $tableBookingLength, $noOfParticipants, $targetOpeningSession);
+					$table = $this->getBestTable($merchantId, $datetime, $tableBookingLength, $noOfParticipants, $targetOpeningSession, $type);
 					if($this->isBookingOverlap($userId, $datetime, $tableBookingLength, 0))
 						return -1;
 					if (!empty($table)) {
