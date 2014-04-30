@@ -5,7 +5,7 @@ require_once 'MerchantTemplateService.php';
 $restaurantTemplateService = new RestaurantTemplateService();
 
 interface BookingServiceInterface {
-	public function getBestTable($merchantId, $datetime, $noOfParticipants, $targetOpeningSession);
+	public function getBestTable($merchantId, $datetime, $bookingLength, $noOfParticipants, $targetOpeningSession);
 	public function makeBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest);
 	public function makeBookingByMerchant($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength);
 
@@ -52,8 +52,8 @@ class RestaurantBookingService implements BookingServiceInterface {
 		return split(',',$templateObj->getVIPTableIds());
 
 	}
-	public function getBestTable($merchantId, $datetime, $noOfParticipants, $targetOpeningSession, $type=0) {
-		$tables = $this->getAvailableTables($merchantId, $datetime, $noOfParticipants, $targetOpeningSession, $type);
+	public function getBestTable($merchantId, $datetime,$bookingLength, $noOfParticipants, $targetOpeningSession, $type=0) {
+		$tables = $this->getAvailableTables($merchantId, $datetime, $bookingLength, $noOfParticipants, $targetOpeningSession, $type);
 		if($type <> 0){
 			$VIPTableArr = $this->getVIPTableArr($merchantId, $datetime);
 			foreach($tables as $key=>$table)
@@ -331,8 +331,8 @@ class RestaurantBookingService implements BookingServiceInterface {
 				$targetOpeningSession = $merchantTemplate->getOpeningSession($datetime);
 				if(!empty($targetOpeningSession)){
 					$type = $this->getVIPType($userId, $merchantId);
-					$table = $this->getBestTable($merchantId, $datetime, $noOfParticipants, $targetOpeningSession, $type);
 					$tableBookingLength = $targetOpeningSession->getMealDuration();
+					$table = $this->getBestTable($merchantId, $datetime, $tableBookingLength, $noOfParticipants, $targetOpeningSession, $type);
 					if($this->isBookingOverlap($userId, $datetime, $tableBookingLength, 0))
 						return -1;
 					if (!empty($table)) {

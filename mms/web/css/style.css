@@ -6,18 +6,18 @@ html, body { font-family: Georgia; margin: 0px; padding: 0px; overflow: hidden; 
 .header-background { position: fixed; width: 100%; height: 100px; z-index: 1; background: url('../images/bg.jpg'); background-position: center; background-size: 100%; -webkit-filter: blur(3px); -moz-filter: blur(3px); -ms-filter: blur(3px); filter: blur(3px); }
 
 .header .notification { position: absolute; padding: 10px 16px 10px 16px; top: 13px; right: 20px; background-color: #F0F0F0; float: right; border-radius: 3px; display: none; }
-.header .notification a { font-weight: bold; font-size: 14px; color: #555 }
+.header .notification a { font-weight: bold; font-size: 1.1em; color: #555 }
 
 .header .button { position: absolute; padding: 2px 8px 2px 8px; bottom: 13px; background-color: #F0F0F0; float: right; border-radius: 3px; }
-.header .button a { font-weight: bold; font-size: 14px; color: #888; text-decoration: none; }
+.header .button a { font-weight: bold; font-size: 1.2em; color: #888; text-decoration: none; }
 .header .logout { right: 20px; }
 .header .settings { right: 106px; }
-.header .name { position: absolute; font-weight: bold; font-size: 24px; top: 30px; left: 20px; text-shadow: 0px 0px 8px #888; }
-.header .address { position: absolute; font-size: 14px; top: 70px; left: 20px; text-shadow: 0px 0px 6px #222; }
+.header .name { position: absolute; font-weight: bold; font-size: 2.2em; top: 30px; left: 20px; text-shadow: 0px 0px 8px #888; }
+.header .address { position: absolute; font-size: 1.2em; top: 70px; left: 20px; text-shadow: 0px 0px 6px #222; }
 .header .address a { color: #F0F0F0; }
 
-.lightbutton { padding: 3px 4px 3px 4px; background-color: #F0F0F0; border-radius: 3px; text-align: center; cursor: pointer; float: left; margin: 0px 3px 0px 3px; height: 25px; }
-.lightbutton a { font-weight: bold; font-size: 14px; color: #888; text-decoration: none; cursor: pointer; margin: 5px; }
+.lightbutton { padding: 6px 8px 6px 8px; background-color: #F0F0F0; border-radius: 3px; text-align: center; cursor: pointer; float: left; margin: 0px 3px 0px 3px; height: 34px; }
+.lightbutton a { font-weight: bold; font-size: 1.2em; color: #888; text-decoration: none; cursor: pointer; margin: 5px; }
 
 
 
@@ -29,18 +29,21 @@ html, body { font-family: Georgia; margin: 0px; padding: 0px; overflow: hidden; 
 
 .calendar-header { height: 42px; }
 
-.current-date { position: absolute; top: 8px; right: 0px; font-size: 20px; height: 24px; }
+.current-date { position: absolute; top: 8px; right: 0px; font-size: 1.8em; height: 24px; }
 .current-month { font-weight: bold; }
 
-.buttons-panel { position: absolute; top: 10px; font-size: 16px; font-weight: bold; -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none; }
+.buttons-panel { position: absolute; top: 10px; font-size: 1em; font-weight: bold; -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none; }
 
 .week { height: 20px; }
-.week .week-cell { text-align: right; font-weight: bold; height:19px; border-bottom: 1px solid #bbb; margin-left: 4px; margin-right: 4px; padding-left: 4px; padding-right: 4px; }
+.week .week-cell { text-align: right; font-weight: bold; height: 24px; border-bottom: 1px solid #bbb; margin-left: 4px; margin-right: 4px; padding-left: 4px; padding-right: 4px; font-size: 1.2em; }
 
-.calendar { margin: 0px; padding: 0px; position: absolute; top: 61px; bottom: 0px; overflow: hidden; }
+.calendar { margin: 0px; padding: 0px; position: absolute; top: 66px; bottom: 0px; overflow: hidden; }
 
-.calendar .calendar-cell { text-align: right; height: 128px; border-top: 1px solid #bbb; border-bottom: 1px solid #fff; margin-left: 4px; margin-right: 4px; padding-left: 4px; padding-right: 4px; }
+.calendar .calendar-cell { text-align: right; height: 128px; border-top: 1px solid #bbb; border-bottom: 1px solid #fff; margin-left: 4px; margin-right: 4px; padding-left: 4px; padding-right: 4px; font-size: 1.2em; }
 .calendar .today { border: 1px solid #E41A1E; color: #E41A1E; font-weight: bold; }
+
+.calendar-month { font-weight: bold; font-size: 1.3em; }
+.calendar-year { font-size: 1.3em; }
 
 
 
@@ -50,15 +53,36 @@ html, body { font-family: Georgia; margin: 0px; padding: 0px; overflow: hidden; 
 
 .dayview-header { height: 42px; }
 
-.daylist { position: absolute; top: 42px; bottom: 0px; left: 0px; right: 0px; overflow-y: scroll; -webkit-overflow-scrolling: touch; }
+.daylist { position: absolute; top: 50px; bottom: 0px; left: 0px; right: 0px; overflow-y: scroll; -webkit-overflow-scrolling: touch; }
+
+.daylist-table { list-style-type: none; padding: 0px; display: table; width: 100%; }
+.daylist-table li { width: 100%; display: inherit; }
+.daylist-header { font-weight: bold; }
+.daylist-row { display: table-row; width: 100%; }
+.daylist-row.past { text-decoration: line-through; }
+.daylist-row div { font-size: 1.1em; border-left: 1px solid #E1EEF4; height: 40px; vertical-align: middle; display: table-cell; }
+.daylist-row div:first-child { border: none; }
+.daylist-name { width: calc(100% - 237px); width: -webkit-calc(100% - 237px); width: -moz-calc(100% - 237px); padding-left: 6px; }
+.daylist-tablename { width: 80px; text-align: center; }
+.daylist-part {  width: 31px; text-align: center; }
+.daylist-status { width: 86px; text-align: center; }
+.daylist-header div { border: none; } 
+.daylist-picture { width: 40px; padding-left: 2px; }
+.daylist-picture img { width: 36px; height: 36px; }
+.daylist-time { display: table-caption; font-weight: bold; font-size: 1.1em; padding-left: 4px; background-color: #EBF5FA; }
+
+.daylist-empty { text-align: center; }
+
+
 
 .datagrid { border-bottom: 1px solid #E1EEF4; }
 
 .datagrid thead tr { border-bottom: 1px solid #E1EEF4; }
+.datagrid thead th { font-size: 1.1em; }
 
 .datagrid tbody tr.past td { text-decoration: line-through; }
 .datagrid tbody tr.past td:last-child { text-decoration: none; }
-.datagrid tbody tr:hover { background-color: #EBF5FA; }
+/*.datagrid tbody tr:hover { background-color: #EBF5FA; }*/
 
 .datagrid tbody td.red, td.red { color: #c6003d; }
 .datagrid tbody td.green, td.green { color: #009677; }
@@ -77,13 +101,13 @@ html, body { font-family: Georgia; margin: 0px; padding: 0px; overflow: hidden; 
 /*.datagrid thead th { background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #006699), color-stop(1, #00557F) );background:-moz-linear-gradient( center top, #006699 5%, #00557F 100% );filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#006699', endColorstr='#00557F');background-color:#006699; color:#FFFFFF; font-size: 14px; font-weight: bold; border-left: 1px solid #0070A8; }
 .datagrid thead th a { color:#FFFFFF; }*/
 .datagrid thead th:first-child { border: none; }
-.datagrid tbody td { color: #222; border-left: 1px solid #E1EEF4;font-size: 14px;font-weight: normal; }
+.datagrid tbody td { color: #222; border-left: 1px solid #E1EEF4;font-size: 1.1em;font-weight: normal; }
 /*.datagrid tbody td { color: #00557F; border-left: 1px solid #E1EEF4;font-size: 14px;font-weight: normal; }*/
 .datagrid tbody .alt td { background: #E1EEf4; color: #00557F; }
 .datagrid tbody td:first-child { border-left: none; }
 .datagrid tbody tr:last-child td { border-bottom: none; }
 .datagrid tfoot td div { border-top: 1px solid #006699;background: #E1EEf4; }
-.datagrid tfoot td { padding: 0; font-size: 14px }
+.datagrid tfoot td { padding: 0; font-size: 1.2em }
 .datagrid tfoot td div { padding: 2px; }
 .datagrid tfoot td ul { margin: 0; padding:0; list-style: none; text-align: right; }
 .datagrid tfoot  li { display: inline; }
@@ -91,13 +115,13 @@ html, body { font-family: Georgia; margin: 0px; padding: 0px; overflow: hidden; 
 .datagrid tfoot ul.active, .datagrid tfoot ul a:hover { text-decoration: none;border-color: #00557F; color: #FFFFFF; background: none; background-color:#006699; }
 div.dhtmlx_window_active, div.dhx_modal_cover_dv { position: fixed !important; }
 
-.datagrid .time { width: 82px; text-align: center; }
+.datagrid .time { width: 86px; text-align: center; }
 .datagrid .part { width: 24px; text-align: center; }
 .datagrid .status { width: 60px; text-align: center; }
 .datagrid .table { width: 80px; text-align: center; }
 
 .dayview-message-table { display: table; width: 100%; height: 100%; }
-.dayview-message-cell { font-size: 28px; display: table-cell; width: 100%; height: 100%; text-align: center; vertical-align: middle; color: #888; }
+.dayview-message-cell { font-size: 2.2em; display: table-cell; width: 100%; height: 100%; text-align: center; vertical-align: middle; color: #888; }
 
 .conflict { background-color: #EE9DAD; }
 
@@ -105,42 +129,44 @@ div.dhtmlx_window_active, div.dhx_modal_cover_dv { position: fixed !important; }
 
 .bookingdetail-wrapper { position: fixed; top: 101px; bottom: 0px; right: 10px; width: calc(60% - 10px); width: -webkit-calc(60% - 10px); width: -moz-calc(60% - 10px); overflow-y: scroll; -webkit-overflow-scrolling: touch; }
 .bookingdetail-message-table { display: table; width: 100%; height: 100%; }
-.bookingdetail-message-cell { font-size: 28px; display: table-cell; width: 100%; height: 100%; text-align: center; vertical-align: middle; color: #888; }
+.bookingdetail-message-cell { font-size: 2.4em; display: table-cell; width: 100%; height: 100%; text-align: center; vertical-align: middle; color: #888; }
 
 .bookingdetail { padding: 20px; color: #222; }
-.bookingdetail-basic .highlight { font-weight: bold; font-size: 18px; }
+.bookingdetail-basic .highlight { font-weight: bold; font-size: 1.5em; }
 .bookingdetail-cover { position: relative; }
-.bookingdetail-name { font-size: 22px; font-weight: bold; }
+.bookingdetail-name { font-size: 1.9em; font-weight: bold; }
+.bookingdetail-name input { width: 200px; }
 .bookingdetail-profile-pic { float: left; }
 .bookingdetail-profile-pic img { border: 2px solid #ccc; width:150px; height: 150px; background:url("http://static.ak.fbcdn.net/rsrc.php/v2/yL/r/HsTZSDw4avx.gif"); background-size: cover; background-position: 50% 50%; }
 
 .bookingdetail-current { position: absolute; bottom: 6px; right: 0px; width: calc(100% - 164px); width: -webkit-calc(100% - 164px); width: -moz-calc(100% - 164px); }
 .bookingdetail-col1 { float: left; margin-right: 15px; }
 .bookingdetail-col2 { float: left; }
-.bookingdetail-table { font-size: 14px; width: 100%; }
+.bookingdetail-table { font-size: 1.1em; width: 100%; margin-top: 10px; }
+.bookingdetail-table tr { height: 30px; }
 .bookingdetail-table tr td:first-child { font-weight: bold; padding-right: 8px; }
 
 .bookingdetail-rating table tr td:first-child { width: 116px; } 
 
 .bookingdetail-request { vertical-align: top; }
 
-.bookingdetail-table textarea { width: 100%; height: 40px; max-width: 400px; }
+.bookingdetail-table textarea { width: 100%; height: 100px; width: 440px; resize: none; }
 
 .bookingdetail-tables-line { height: 1px; border-top: 1px solid #E1EEF4; width: 100%; margin-top: 10px; margin-bottom: 10px; }
 
 .bookingdetail-buttonpanel { height: 28px; margin-top: 6px; margin-bottom: 6px; }
 
 .bookingdetail-history { border: 1px solid #E1EEF4; border-radius: 6px; margin-top: 20px; }
-.bookingdetail-history-title { font-size: 18px; font-weight: bold; text-align: center; border-bottom: 1px solid #E1EEF4; padding: 8px; }
+.bookingdetail-history-title { font-size: 1.5em; font-weight: bold; text-align: center; border-bottom: 1px solid #E1EEF4; padding: 8px; }
 
-.bookingdetail-history-message { font-size: 18px; width: 100%; padding-top: 20px; margin-bottom: 20px; text-align: center; color: #888; }
+.bookingdetail-history-message { font-size: 1.5em; width: 100%; padding-top: 20px; margin-bottom: 20px; text-align: center; color: #888; }
 .bookingdetail-history .datagrid { border-bottom: none; }
 
-.bookingdetail-details { float: left; margin-right: 10px; }
-.bookingdetail-edit-details { float: left; margin-right: 10px; }
+.bookingdetail-details { float: left; margin-right: 10px; font-size: 1.2em; }
+.bookingdetail-edit-details { float: left; margin-right: 10px; font-size: 1.2em; }
 
-.bookingdetail-edit-details div { float: left; }
-.bookingdetail-edit-details .dropdown { width: 240px; margin-left: 10px; }
+/*.bookingdetail-edit-details div { float: left; }*/
+.bookingdetail-edit-details .dropdown { width: 240px; margin-top: 10px; margin-bottom: 10px; }
 
 .bookingdetail-edit-details .input-group span { height: 26px; padding-top: 2px; padding-bottom: 2px; }
 .bookingdetail-edit-details .input-group-addon { padding-top: 4px; padding-bottom: 4px; }

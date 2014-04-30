@@ -73,7 +73,7 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 				}
 				if (value.social_network_user_id) {
 					value.picture = "http://graph.facebook.com/"+value.social_network_user_id+"/picture?type=large&width=150&height=150";
-					value.pictureSmall = "http://graph.facebook.com/"+value.social_network_user_id+"/picture?type=square&width=32&height=32";
+					value.pictureSmall = "http://graph.facebook.com/"+value.social_network_user_id+"/picture?type=square&width=36&height=36";
 				} else {
 					value.picture = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 					value.pictureSmall = "http://static.ak.fbcdn.net/rsrc.php/v2/yo/r/UlIqmHJn-SK.gif";
@@ -128,17 +128,22 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 			if ($scope.current && d.getTime() == $scope.current.date.getTime()) {
 				Booking.getBookings({bookingId:json.bookingId}).$promise.then(function(newBookings) {
 					/** To be replaced: Server Timestamp **/
+					var bookingFound = false;
 					$rootScope.lastResponseTs = Math.floor(new Date().getTime()/1000);
 					$scope.processBooking(newBookings);
 					angular.forEach($scope.bookings, function(oBooking, key) {
 						angular.forEach(newBookings, function(nBooking, key2) {
 							$rootScope.$emit("updateBookingDetail", nBooking);
 							if (oBooking.booking_id == nBooking.booking_id) {
+								bookingFound = true;
 								nBooking.flash = true;
 								$scope.bookings[key] = nBooking;
 							}
 						});
 					});
+					if (!bookingFound) {
+						$scope.bookings = $scope.bookings.concat(newBookings);
+					}
 				});
 			}
 		});
@@ -269,6 +274,9 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 		$rootScope.$on('newBooking', function() {
 			$scope.refreshOccupancyRate();
 		});
+		$rootScope.$on('updateBooking', function() {
+			$scope.refreshOccupancyRate();
+		});
 		$rootScope.$on('wake', function() {
 			$scope.refreshOccupancyRate();
 		});
@@ -305,7 +313,9 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 				var occupancyRate = $rootScope.occupancyRates[start.getTime()];
 				var caldate = {
 					date:new Date(start.getTime()),
-					displayDate:start.getDate()==1?start.getDate()+' '+monthNames[start.getMonth()]:start.getDate(),
+					displayDay:start.getDate(),
+					displayMonth:start.getDate()==1?' '+monthNames[start.getMonth()]:'',
+					displayYear:start.getDate()==1&&start.getMonth()==0?' '+start.getFullYear():'',
 					bgColor:$scope.getBgColor(occupancyRate)
 				};
 				if (start.getTime()==today.getTime()) {
@@ -360,6 +370,7 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 			return {"background-color":bgColor};
 		};
 		$scope.refreshOccupancyRate = function() {
+			$rootScope.occupancyRates = new Array();
 			Booking.getOccupancyRate().$promise.then(function(occupancy) {
 				/** To be replaced: Server Timestamp **/
 				$rootScope.lastResponseTs = Math.floor(new Date().getTime()/1000);
@@ -389,7 +400,7 @@ mmsControllers.controller('BookingListCtrl', ['$scope', 'Booking', '$rootScope',
 						jQuery(target).data('cancel', false);
 						setTimeout(function() {
 							jQuery(target).data('cancel', true);
-						}, 150);
+						}, 250);
 					} else if (e.type == 'touchend') {
 						if (!jQuery(target).data('cancel')) {
 							jQuery(target).click();

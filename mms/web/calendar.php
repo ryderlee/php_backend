@@ -36,7 +36,7 @@ include dirname(__FILE__) . '/common/header.php';
 	<div class="calendar" calendar-view>
 		<ul>
       		<li ng-repeat="caldate in caldates" id="{{caldate.id}}" calendar-cell>
-      			<div class="calendar-cell {{caldate.className}}" ng-click="dateClick(caldate)" ng-style="caldate.bgColor">{{caldate.displayDate}}</div></a>
+      			<div class="calendar-cell {{caldate.className}}" ng-click="dateClick(caldate)" ng-style="caldate.bgColor"><span>{{caldate.displayDay}}</span><span class="calendar-month">{{caldate.displayMonth}}</span><span class="calendar-year">{{caldate.displayYear}}</span></div></a>
       		</li>
 		</ul>
 	</div>
@@ -46,13 +46,16 @@ include dirname(__FILE__) . '/common/header.php';
 	<div class="dayview-message-table" ng-show="loading">
 		<div class="dayview-message-cell">Loading...</div>
 	</div>
+	<div class="dayview-message-table" ng-show="bookings.length==0">
+		<div class="dayview-message-cell">No booking found</div>
+	</div>
 	<div class="dayview-header">
 		<div class="buttons-panel">
 			<div ng-click="back()" class="lightbutton">
 				<a>&#x25C0&nbsp;&nbsp;Back</a>
 			</div>
 			<div ng-click="newBooking()" class="lightbutton">
-				<a>&#43;&nbsp;New Booking</a>
+				<a>&#43;&nbsp;Booking</a>
 			</div>
 		</div>
 		<div class="current-date">
@@ -61,34 +64,31 @@ include dirname(__FILE__) . '/common/header.php';
 			<span>{{current.year}}</span>
 		</div>
 	</div>
-	<div class="daylist" ng-hide="loading">
-		<table class="datagrid">
-			<thead>
-				<tr>
-					<!-- <th class="time"><a href="" ng-click="predicate='booking_ts'; reverse=!reverse">Time</a></th>
-					<th class="name"><a href="" ng-click="predicate='name'; reverse=!reverse">Name</a></th>
-					<th class="part"><a href="" ng-click="predicate='no_of_participants'; reverse=!reverse">#</a></th>
-					<th class="status"><a href="" ng-click="predicate='status'; reverse=!reverse">Status</a></th> -->
-					<th class="time">Time</th>
-					<th class="name">Name</th>
-					<th class="table">Table</th>
-					<th class="part">#</th>
-					<th class="status">Status</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr ng-show="!loading && bookings.length==0">
-					<td class="center" colspan="4">No booking found</td>
-				</tr>
-				<tr ng-repeat="booking in bookings | orderBy:predicate:reverse" class="bookingRow" booking-row ng-class="{'past':booking.past||booking.status==2, 'conflict':booking.conflict_code!=0}" ng-click="showDetail(booking)">
-					<td class="time">{{booking.booking_ts | bookingDatetime}}</td>
-					<td class="customer"><div class="picture"><img ng-if="booking.pictureSmall != null" ng-src="{{booking.pictureSmall}}"></div><div class="name">{{booking.name}}</div></td>
-					<td class="table">{{booking.table_names}}</th>
-					<td class="part">{{booking.no_of_participants}}<span ng-if="booking.special_request">&nbsp;*</span></td>
-					<td class="status" ng-class="{'-1':'red', '0':'blue', '1':'green', '2':'lightgreen'}[booking.status]">{{booking.status | bookingStatus}}</td>
-				</tr>
-			</tbody>
-		</table>
+	<div class="daylist" ng-hide="loading||bookings.length==0">
+		<ul class="daylist-table">
+			<li>
+				<div class="daylist-row daylist-header">
+					<div class="daylist-picture"></div>
+					<div class="daylist-name">Name</div>
+					<div class="daylist-tablename">Table</div>
+					<div class="daylist-part">#</div>
+					<div class="daylist-status">Status</div>
+				</div>
+			</li>
+			<li ng-repeat="booking in bookings | orderBy:predicate:reverse | groupBy:'booking_ts'" booking-row ng-class="{'past':booking.past||booking.status==2, 'conflict':booking.conflict_code!=0}">
+				<div class="daylist-time" ng-show="booking.booking_ts_CHANGED">
+					{{booking.booking_ts | bookingDatetime}}
+				</div>
+				<div class="daylist-row" ng-click="showDetail(booking)">
+					<div class="daylist-picture"><img ng-if="booking.pictureSmall != null" ng-src="{{booking.pictureSmall}}"></div>
+					<div class="daylist-name">{{booking.name}}</div>
+					<div class="daylist-tablename">{{booking.table_names}}</div>
+					<div class="daylist-part">{{booking.no_of_participants}}<span ng-if="booking.special_request">&nbsp;*</span></div>
+					<div class="daylist-status" ng-class="{'-1':'red', '0':'blue', '1':'green', '2':'lightgreen'}[booking.status]">{{booking.status | bookingStatus}}</div>
+				</div>
+			</li>
+		</ul>
+		
 	</div>
 </div>
 

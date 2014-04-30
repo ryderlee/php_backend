@@ -471,6 +471,7 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		//var_dump($rs);
 		
 		$availabilityArr = array();
+		$timeslotsArr = array();
 		if (!empty($bookingDatetime) && !empty($covers)) {
 			global $restaurantBookingService;
 			$availabilityArr = $restaurantBookingService->getTimeslotAvailability($merchantID, $bookingDatetime, $covers);
@@ -493,22 +494,18 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 			"RESTAURANT_ID"=>$rs['LICNO'],
 			"RESTAURANT_NAME"=>$rs['SS'],
 			"RESTAURANT_ADDRESS" => $rs['ADR'],
-			"RESTAURANT_PHONE" => "(852)1234567",
-			"RESTAURANT_CUISINE" => "Italian with little india style",
-			"RESTAURANT_PRICE" => "100 - 5000",
-			"RESTAURANT_HOURS" => "4AM - 5AM",
-			"RESTAURANT_PARKING" => "YES with tickets every 15 mins",
-			"RESTAURANT_DESCRIPTION" => "Description of a restaurant which is Italy with little india style",
-			"RESTAURANT_MENU" => "1 dish only",
-			"RESTAURANT_REVIEW_OVERALL" => 4,
-			"RESTAURANT_REVIEW_FOOD" => 4,
-			"RESTAURANT_REVIEW_SERVICE" => 4,
-			"RESTAURANT_REVIEW_AMBIANCE" => 4,
-			"RESTAURANT_REVIEWS" => array("good","bad", "good", "bad"),
 			"RESTAURANT_BOOKING_SLOTS" => $timeslotsArr,
 			"RESTAURANT_BOOKING_VIP_SLOTS" => $VIPtimeslotsArr,
 			"RESTAURANT_LAT" => $rs['lat'],
-			"RESTAURANT_LONG" => $rs['long']
+			"RESTAURANT_LONG" => $rs['long'],
+			"RESTAURANT_PHONE" => $rs['phone'],
+			"RESTAURANT_CUISINE" => $rs['cuisine'],
+			"RESTAURANT_PRICE_LOW" => $rs['price_low'],
+			"RESTAURANT_PRICE_HIGH" => $rs['price_high'],
+			"RESTAURANT_OPENING_TIME" => $rs['opening_time'],
+			"RESTAURANT_CLOSING_TIME" => $rs['closing_time'],
+			"RESTAURANT_PARKING" => $rs['parking'],
+			"RESTAURANT_DESCRIPTION" => $rs['description'],
 		);
 		echo json_encode($returnValue);
 	});
@@ -656,7 +653,7 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 			$sql = "SELECT * FROM restaurants_hongkong_csv ";
 		else{	
 			$unit = ($distanceUnit =="km"?6371:3959);
-			$sql = "SELECT *,  (" . $unit . "* acos( cos( radians(" . $lat . "))* cos( radians( lat_dec ))* cos( radians( lng_dec )- radians( " . $lng . "))+ sin( radians(" . $lat . "))* sin( radians( lat)))) AS distance FROM restaurants_hongkong_csv rhkc LEFT JOIN user_merchant_vip umv ON rhkc.LICNO = umv.LICNO ";
+			$sql = "SELECT *,  (" . $unit . "* acos( cos( radians(" . $lat . "))* cos( radians( lat_dec ))* cos( radians( lng_dec )- radians( " . $lng . "))+ sin( radians(" . $lat . "))* sin( radians( lat)))) AS distance FROM restaurants_hongkong_csv rhkc LEFT JOIN user_merchant_vip umv ON rhkc.LICNO = umv.LICNO LEFT JOIN merchant_photos mp ON LICNO = mp.merchant_id AND mp.status = 1 AND mp.type = 2";
 		}
 
 		if(sizeof($actions) > 0){
@@ -706,8 +703,17 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		//echo "test";
 		//var_dump($rs);
 		*/
+		
 		$images = array(
-			"http://giverny.org/hotels/corniche/piscine2.jpg",
+			"http://ikky-phpapp-env.elasticbeanstalk.com/images/thumbnails/01.png",
+			"http://ikky-phpapp-env.elasticbeanstalk.com/images/thumbnails/02.png",
+			"http://ikky-phpapp-env.elasticbeanstalk.com/images/thumbnails/03.png",
+			"http://ikky-phpapp-env.elasticbeanstalk.com/images/thumbnails/04.png",
+			"http://ikky-phpapp-env.elasticbeanstalk.com/images/thumbnails/05.png",
+			"http://ikky-phpapp-env.elasticbeanstalk.com/images/thumbnails/06.png",
+			"http://ikky-phpapp-env.elasticbeanstalk.com/images/thumbnails/07.png"
+			
+			/*"http://giverny.org/hotels/corniche/piscine2.jpg",
 			"http://giverny.org/hotels/corniche/terrasse-resto.jpg",
 			"http://giverny.org/hotels/corniche/restaurant-room.jpg",
 			"http://giverny.org/hotels/corniche/standard-bedroom.jpg",
@@ -726,7 +732,7 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 			"http://giverny.org/hotels/corniche/cuisine3.jpg",
 			"http://giverny.org/hotels/corniche/cuisine1.jpg",
 			"http://giverny.org/tour/versailles.jpg",
-			"http://giverny.org/tour/ravoux.jpg"
+			"http://giverny.org/tour/ravoux.jpg"*/
 		);
 
 		foreach ($rs as $idx => $restaurant) {
@@ -750,7 +756,11 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 				}
 				$rs[$idx]['VIPTimeslotAvailability'] = $VIPtimeslotsArr;
 			}
-			$rs[$idx]['IMAGE'] = $images[array_rand($images)]; 
+			if (empty($rs[$idx]['filename'])) {
+				$rs[$idx]['IMAGE'] = $images[array_rand($images)];
+			} else {
+				$rs[$idx]['IMAGE'] = 'http://ikky-phpapp-env.elasticbeanstalk.com/upload/'.$rs[$idx]['filename'];
+			}
 		}
 		
 		echo json_encode($rs);
@@ -801,6 +811,7 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		}
 		echo json_encode($returnValue);
 	});
+	
 	$app->get('/restaurant/:merchantID/:date/:noOfParticipants', function($merchantID, $date, $noOfParticipants) use ($app) {
 		global $restaurantTemplateService;
 		print_r($restaurantTemplateService->getTemplate(1, '2014-03-10 18:00:00'));
@@ -878,6 +889,48 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		}
 		echo json_encode($returnValue);
 	});
+	
+	$app->put('/mms/updateProfile/:merchantID', function($merchantID) use ($app) {
+		$toUpdate = array();
+		$keysForUpdate = array(
+			'SS',
+			'ADR',
+			'phone',
+			'cuisine',
+			'price_low',
+			'price_high',
+			'opening_time',
+			'closing_time',
+			'parking',
+			'description'
+		);
+		foreach ($keysForUpdate as $key) {
+			if (!empty($app->request()->params($key))) {
+				$toUpdate[$key] = $app->request()->params($key);
+			}
+		}
+		
+		DB::update('restaurants_hongkong_csv', $toUpdate, 'LICNO=%d', $merchantID);
+	});
+	
+	$app->post('/mms/photo/:merchantID/upload', function($merchantID) use ($app) {
+		$filename = randomStr().".".pathinfo($_FILES['photo']['name'], PATHINFO_EXTENSION);
+		$dest = dirname(__FILE__).'/upload/'. $filename;
+		$type = $app->request()->params('type');
+		if (move_uploaded_file($_FILES['photo']['tmp_name'], $dest)) {
+			if ($type==2) {
+				DB::update('merchant_photos', array(
+					'status' => 2
+				), 'type=%d', 2);
+			}
+			DB::insert('merchant_photos', array(
+				'merchant_id' => $merchantID,
+				'filename' => $filename,
+				'type' => $app->request()->params('type'),
+				'create_ts' => DB::sqleval('NOW()')
+			));
+		}
+	});
 
 	//var_dump($rs);
 });
@@ -909,6 +962,15 @@ function sendEmailNotification($name, $numberOfParticipant, $ts, $bookingId) {
 		'ReplyToAddresses' => array('mms_no_reply@ikky.com'),
 		'ReturnPath' => 'mms_no_reply@ikky.com'
 	));
+}
+
+function randomStr($length = 16) {
+    $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    $randomString = '';
+    for ($i = 0; $i < $length; $i++) {
+        $randomString .= $characters[rand(0, strlen($characters) - 1)];
+    }
+    return $randomString;
 }
 
 
