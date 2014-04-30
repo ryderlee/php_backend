@@ -129,17 +129,19 @@ class RestaurantTableBookingModule{
 	private static $currentSessionEndTimestamp= null;
 	private static $bookingLength = null;
 	private static $merchantTemplate = null;
+	private static $VIPType = null;
 	
 	private static $openingSessions = null;
 
 
-	private static function setStaticVar($mid, $bookingDatetime, $covers){
+	private static function setStaticVar($mid, $bookingDatetime, $VIPType, $covers){
 		if(isset(RestaurantTableBookingModule::$mid) && ( RestaurantTableBookingModule::$mid == $mid) && 
 			isset(RestaurantTableBookingModule::$bookingDatetime) && (RestaurantTableBookingModule::$bookingDatetime = $bookingDatetime)){
 
 		}else{
 			RestaurantTableBookingModule::$merchantID = $mid;
 			RestaurantTableBookingModule::$bookingDatetime = $bookingDatetime;
+			RestaurantTableBookingModule::$VIPType = $VIPType;
 			global $restaurantTemplateService;
 			$merchantTemplate = $restaurantTemplateService->getTemplate($mid, $bookingDatetime);
 			RestaurantTableBookingModule::$merchantTemplate = $merchantTemplate;
@@ -184,16 +186,16 @@ class RestaurantTableBookingModule{
 		return true;
 	}
 	private static function getKey($cover){
-		return ("restaurantTableCache|" . RestaurantTableBookingModule::$merchantID . '|' . date('Ymd', strtotime(RestaurantTableBookingModule::$currentSessionDate)) . '|' . $cover);
+		return ("restaurantTableCache|" . RestaurantTableBookingModule::$merchantID . '|' . date('Ymd', strtotime(RestaurantTableBookingModule::$currentSessionDate)) . '|' . RestaurantTableBookingModule::$VIPType . '|' . $cover);
 	}
-	public static function isAvailable($mid, $bookingDatetime, $covers){
-		RestaurantTableBookingModule::setStaticVar($mid, $bookingDatetime, $covers);
+	public static function isAvailable($mid, $bookingDatetime, $VIPType, $covers){
+		RestaurantTableBookingModule::setStaticVar($mid, $bookingDatetime, $VIPType, $covers);
 		$setting = getMerchantSettings($mid);
 		$bookingLength = RestaurantTableBookingModule::$bookingLength;
 		$bookingInterval = intval($setting['tableBookingInterval']);
 		$returnValue = true;
 		
-		$cache = RestaurantTableBookingModule::getCache($mid, $bookingDatetime, $covers);
+		$cache = RestaurantTableBookingModule::getCache($mid, $bookingDatetime, $VIPType, $covers);
 		$startDatetime = RestaurantTableBookingModule::$bookingStartDatetime;
 		$startTimestamp = RestaurantTableBookingModule::$bookingStartTimestamp;
 		for($i = 0; ($i < $bookingLength) && ($returnValue == true); $i = $i + $bookingInterval){
@@ -243,8 +245,8 @@ class RestaurantTableBookingModule{
 		}
 		return true;
 	}
-	public static function lock($mid, $bookingDatetime, $covers, $tables, $bookingLength){
-		RestaurantTableBookingModule::setStaticVar($mid, $bookingDatetime, $covers);
+	public static function lock($mid, $bookingDatetime, $VIPType, $covers, $tables, $bookingLength){
+		RestaurantTableBookingModule::setStaticVar($mid, $bookingDatetime, $VIPType, $covers);
 		$mSetting = getMerchantSettings($mid);
 
 		$bookingLength = RestaurantTableBookingModule::$bookingLength;
@@ -261,12 +263,12 @@ class RestaurantTableBookingModule{
 	}
 	
 	public static function unlock($mid, $bookingDatetime, $covers, $restaurantTables, $bookingLength){
-		RestaurantTableBookingModule::setStaticVar($mid, $bookingDatetime, $covers);
+		RestaurantTableBookingModule::setStaticVar($mid, $bookingDatetime, $VIPType, $covers);
 		$mSetting = getMerchantSettings($mid);
-		$cache = RestaurantTableBookingModule::getCache($mid, $bookingDatetime, $covers);
+		$cache = RestaurantTableBookingModule::getCache($mid, $bookingDatetime, $VIPType, $covers);
 		
 		if(sizeof($cache) == 0){
-			RestaurantTableBookingModule::resetCache($mid, $bookingDatetime, $covers);
+			RestaurantTableBookingModule::resetCache($mid, $bookingDatetime, $VIPType, $covers);
 		}
 		if(RestaurantTableBookingModule::unlockDB($restaurantTables)){
 			return 1;
@@ -294,11 +296,10 @@ class RestaurantTableBookingModule{
 		}
 	}
 
-	public static function commit($mid, $bookingDatetime, $covers, $restaurantTable, $bookingLength){
-
-		RestaurantTableBookingModule::setStaticVar($mid, $bookingDatetime, $covers);
+	public static function commit($mid, $bookingDatetime, $VIPType, $covers, $restaurantTable, $bookingLength){
+		RestaurantTableBookingModule::setStaticVar($mid, $bookingDatetime, $VIPType, $covers);
 		$mSetting = getMerchantSettings($mid);
-		RestaurantTableBookingModule::resetCache($mid, $bookingDatetime, $covers);
+		RestaurantTableBookingModule::resetCache($mid, $bookingDatetime, $VIPType, $covers);
 		return true;
 		/*
 		$bookingLength = intval($mSetting['tableBookingLength']);
@@ -339,8 +340,8 @@ class RestaurantTableBookingModule{
 		*/
 	}
 
-	public static function resetCache($mid, $bookingDatetime, $covers){
-		RestaurantTableBookingModule::setStaticVar($mid, $bookingDatetime, $covers);
+	public static function resetCache($mid, $bookingDatetime, $VIPType, $covers){
+		RestaurantTableBookingModule::setStaticVar($mid, $bookingDatetime, $VIPType, $covers);
 		$OSCache = getMerchantSettings($mid);
 
 		$seatArr = array();
@@ -384,17 +385,22 @@ class RestaurantTableBookingModule{
 	
 			$maxBookingCover = max($bookingCoverList);
 			$minBookingCover = min($bookingCoverList);
+			$templateObj = RestaurantTemplateService::getTemplate($mid, $bookingDatetime);
+			$VIPTablesArr = split(',', $templateObj->getVIPTableIds());
 			$sql = "SELECT * FROM restaurant_table WHERE merchant_id = %d AND max_cover <= %d AND min_cover >= %d";
 			$rs = DB::query($sql, $mid, $maxBookingCover, $minBookingCover);
 			$tableArr = array();
+
 			foreach($bookingCoverList as $cover){
 				for($i = 0; $i < sizeof($rs) ; $i++){
-					if(intval($rs[$i]['min_cover']) <= $cover && intval($rs[$i]['max_cover']) >= $cover){
-						for($j = $currentSessionStartTimestamp; $j <= $currentSessionEndTimestamp; $j = $j + ($bookingInterval * 60) ){
-							$timeKey = date('Hi', $j);
-							if(!isset($tableArr[$cover]["" . $timeKey]))
-								$tableArr[$cover]["" . $timeKey] = 0;
-							$tableArr[$cover]["" . $timeKey] ++;
+					if($VIPType == 0 || in_array($rs[$i]['restaurant_table_id'] , $VIPTablesArr)){
+						if(intval($rs[$i]['min_cover']) <= $cover && intval($rs[$i]['max_cover']) >= $cover){
+							for($j = $currentSessionStartTimestamp; $j <= $currentSessionEndTimestamp; $j = $j + ($bookingInterval * 60) ){
+								$timeKey = date('Hi', $j);
+								if(!isset($tableArr[$cover]["" . $timeKey]))
+									$tableArr[$cover]["" . $timeKey] = 0;
+								$tableArr[$cover]["" . $timeKey] ++;
+							}
 						}
 					}
 				}
@@ -403,13 +409,15 @@ class RestaurantTableBookingModule{
 			$rs2 = DB::query($sql , $mid, date("Y-m-d H:i:s", $currentSessionStartTimestamp), date("Y-m-d H:i:s", $currentSessionEndTimestamp));
 			
 			for($j = 0; $j < sizeof($rs2); $j++){
-				for($k = intval($rs2[$j]['min_cover']) ; $k <= intval($rs2[$j]['max_cover']) ; $k++){
-					if(in_array($k, $bookingCoverList)){
-						for($t = convertDatetime($rs2[$j]['booking_ts']) ; $t < convertDatetime($rs2[$j]['booking_end_ts']) ; $t = $t + 60){
-							$timeKey = date('Hi', $t);
-							if(isset($tableArr[$k]["" . $timeKey]) && ($tableArr[$k]["".$timeKey] > 0)){
-								$tableArr[$k]["" . $timeKey] -- ;
-	
+				if($VIPType == 0 || in_array($rs2[$j]['restaurant_table_id'] , $VIPTablesArr)){
+					for($k = intval($rs2[$j]['min_cover']) ; $k <= intval($rs2[$j]['max_cover']) ; $k++){
+						if(in_array($k, $bookingCoverList)){
+							for($t = convertDatetime($rs2[$j]['booking_ts']) ; $t < convertDatetime($rs2[$j]['booking_end_ts']) ; $t = $t + 60){
+								$timeKey = date('Hi', $t);
+								if(isset($tableArr[$k]["" . $timeKey]) && ($tableArr[$k]["".$timeKey] > 0)){
+									$tableArr[$k]["" . $timeKey] -- ;
+		
+								}
 							}
 						}
 					}
@@ -433,8 +441,8 @@ class RestaurantTableBookingModule{
 
 	}
 
-	public static function getCache($mid, $bookingDatetime, $covers){
-		RestaurantTableBookingModule::setStaticVar($mid, $bookingDatetime, $covers);
+	public static function getCache($mid, $bookingDatetime, $VIPType, $covers){
+		RestaurantTableBookingModule::setStaticVar($mid, $bookingDatetime, $VIPType, $covers);
 		$OSCache = getMerchantSettings($mid);
 		$returnValue = array();
 		$key = RestaurantTableBookingModule::getKey($covers);
@@ -445,7 +453,7 @@ class RestaurantTableBookingModule{
 		while($safeCount > 0 && (!$generated) && sizeof($tempArr) == 0 && !isset($tempArr[date("Hi", strtotime($bookingDatetime))]) ){
 			$generated = true;
 			$safeCount -- ;
-			RestaurantTableBookingModule::resetCache($mid, $bookingDatetime, $covers);
+			RestaurantTableBookingModule::resetCache($mid, $bookingDatetime, $VIPType, $covers);
 		}
 		if(sizeof($tempArr) == 0){
 			if($generated){

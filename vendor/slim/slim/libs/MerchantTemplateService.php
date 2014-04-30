@@ -1,12 +1,13 @@
 <?php
 
 class MerchantTemplate {
-	private $merchantId, $templateId, $templateName, $openingSessions, $templateDate;
-	public function __construct($merchantId, $templateId, $templateName, $templateDate) {
+	private $merchantId, $templateId, $templateName, $openingSessions, $templateDate, $VIPTableIds;
+	public function __construct($merchantId, $templateId, $templateName, $templateDate, $VIPTableIds) {
 		$this->merchantId = $merchantId;
 		$this->templateId = $templateId;
 		$this->templateName = $templateName;
 		$this->templateDate = $templateDate;
+		$this->VIPTableIds= $VIPTableIds;
 		$this->openingSessions = array();
 	}
 	public function putOpeningSession($openingSession) {
@@ -15,6 +16,9 @@ class MerchantTemplate {
 	
 	public function getMerchantId() {
 		return $this->merchantId;
+	}
+	public function getVIPTableIds() {
+		return $this->VIPTableIds;
 	}
 	public function getTemplateId() {
 		return $this->templateId;
@@ -167,7 +171,7 @@ class RestaurantTemplateService implements MerchantTemplateServiceInterface {
 				} else {
 					$assign_date = $row['recurrence']==$dayofweekExact?$dateExact:$dateBefore;
 				}
-				$merchantTemplate = new MerchantTemplate($row['merchant_id'], $row['template_id'], $row['template_name'], $assign_date);
+				$merchantTemplate = new MerchantTemplate($row['merchant_id'], $row['template_id'], $row['template_name'], $assign_date, $row['vip_table_ids']);
 				$merchantTemplates[$key] = $merchantTemplate;
 			} else {
 				$merchantTemplate = $merchantTemplates[$key];

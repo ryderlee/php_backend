@@ -13,7 +13,7 @@ interface BookingServiceInterface {
 
 class RestaurantBookingService implements BookingServiceInterface {
 	private static $bookingModuleList = "RestaurantTableBookingModule";
-	public static function getTimeslotAvailability($merchantId, $bookingDatetime, $covers){
+	public static function getTimeslotAvailability($merchantId, $bookingDatetime, $covers, $type=0){
 		$moduleArr = explode(",", RestaurantBookingService::$bookingModuleList);
 		$returnValue = array();
 		foreach($moduleArr as $m){
@@ -46,20 +46,19 @@ class RestaurantBookingService implements BookingServiceInterface {
 		}
 		return null;
 	}
-	public function getVIPTables($merchantID, $datetime){
-		//TODO: add SQL for getting all VIP table records
+	public function getVIPTableArr($merchantID, $datetime){
+		$templateObj = RestaurantTemplateService::getTemplate($merchantId, $datetime);
+
+		return split(',',$templateObj->getVIPTableIds());
 
 	}
 	public function getBestTable($merchantId, $datetime, $noOfParticipants, $targetOpeningSession, $type=0) {
 		$tables = $this->getAvailableTables($merchantId, $datetime, $noOfParticipants, $targetOpeningSession, $type);
 		if($type <> 0){
-			$VIPTables = $this->getVIPTables($merchantId, $datetime);
-			$VIPTableArr = array();
-			foreach($VIPTables as $table)
-				$VIPTableArr[] = $table['table_id'];
+			$VIPTableArr = $this->getVIPTableArr($merchantId, $datetime);
 			foreach($tables as $key=>$table)
-				if(!in_array($table['table_id'], $key))
-					unset($tables[$key]);
+				if(!in_array($table['table_id'], $VIPTableArr))
+					unset($table[$key]);
 		}
 		if(sizeof($tables) > 0)
 			return $tables[0];
