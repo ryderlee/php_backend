@@ -467,6 +467,11 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		$bookingDatetime = $app->request()->params('booking_datetime');
 		$covers = $app->request()->params('no_of_participants');
 		$rs = DB::queryFirstRow("SELECT * FROM restaurants_hongkong_csv WHERE LICNO = %s" , $merchantID);
+		
+		$photos = DB::queryOneColumn('filename', "SELECT * FROM merchant_photos WHERE merchant_id = %d AND type =%d AND status = %d", $merchantID, 1, 1);
+		foreach($photos as $idx => $photo) {
+			$photos[$idx] = 'http://ikky-phpapp-env.elasticbeanstalk.com/upload/'.$photos[$idx];
+		}
 		//var_dump($rs);
 		
 		$availabilityArr = array();
@@ -497,6 +502,7 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 			"RESTAURANT_CLOSING_TIME" => $rs['closing_time'],
 			"RESTAURANT_PARKING" => $rs['parking'],
 			"RESTAURANT_DESCRIPTION" => $rs['description'],
+			"RESTAURANT_IMAGES" => $photos
 		);
 		echo json_encode($returnValue);
 	});
