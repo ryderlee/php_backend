@@ -17,7 +17,7 @@ class RestaurantBookingService implements BookingServiceInterface {
 		$moduleArr = explode(",", RestaurantBookingService::$bookingModuleList);
 		$returnValue = array();
 		foreach($moduleArr as $m){
-			$cache = call_user_func(array($m, "getCache"), $merchantId, $bookingDatetime, $covers);
+			$cache = call_user_func(array($m, "getCache"), $merchantId, $bookingDatetime, $type, $covers);
 			foreach($cache as $key=>$value){
 				if(!isset($returnValue[$key]))
 					$returnValue[$key] = 1;
@@ -47,9 +47,10 @@ class RestaurantBookingService implements BookingServiceInterface {
 		return null;
 	}
 	public function getVIPTableArr($merchantID, $datetime){
-		$templateObj = RestaurantTemplateService::getTemplate($merchantId, $datetime);
+		global $restaurantTemplateService;
+		$templateObj = $restaurantTemplateService->getTemplate($merchantID, $datetime);
 
-		return split(',',$templateObj->getVIPTableIds());
+		return explode(',',$templateObj->getVIPTableIds());
 
 	}
 	public function getBestTable($merchantId, $datetime,$bookingLength, $noOfParticipants, $targetOpeningSession, $type=0) {

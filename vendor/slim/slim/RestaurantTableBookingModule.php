@@ -380,13 +380,13 @@ class RestaurantTableBookingModule{
 			$currentSessionEndTimestamp= $currentSessionStartTimestamp + 60 * $os->getSessionLength();
 			//$bookingStartDatetime = mktime(intval(substr($bookingStart, 0, 2)), intval(substr($bookingStart, 2, 2)),   0,  date("n", $this->theDate), date("j", $this->theDate), date("Y", $this->theDate));
 			//$bookingEndDatetime = mktime(intval(substr($bookingStart, 0, 2)), intval(substr($bookingStart, 2, 2)) + intval($OSCache['tableBookingEnd']),   0,  date("n", $bookingStartDatetime), date("j", $bookingStartDatetime), date("Y", $bookingStartDatetime));
-			
+			global $restaurantTemplateService;	
 			
 	
 			$maxBookingCover = max($bookingCoverList);
 			$minBookingCover = min($bookingCoverList);
-			$templateObj = RestaurantTemplateService::getTemplate($mid, $bookingDatetime);
-			$VIPTablesArr = split(',', $templateObj->getVIPTableIds());
+			$templateObj = $restaurantTemplateService->getTemplate($mid, $bookingDatetime);
+			$VIPTablesArr = explode(',', $templateObj->getVIPTableIds());
 			$sql = "SELECT * FROM restaurant_table WHERE merchant_id = %d AND max_cover <= %d AND min_cover >= %d";
 			$rs = DB::query($sql, $mid, $maxBookingCover, $minBookingCover);
 			$tableArr = array();

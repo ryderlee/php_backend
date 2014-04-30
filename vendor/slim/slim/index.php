@@ -467,7 +467,7 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		$bookingDatetime = $app->request()->params('booking_datetime');
 		$covers = $app->request()->params('no_of_participants');
 		$userId = $app->request()->params('user_id');
-		$rs = DB::queryFirstRow("SELECT * FROM restaurants_hongkong_csv rhkc LEFT JOIN user_merchant_vip umv ON rhkc.LICNO = umv.LICNO WHERE rhkc.LICNO = %s AND umv.user_id = %d" , $merchantID, $userId);
+		$rs = DB::queryFirstRow("SELECT rhkc.*, if(isnull(umv.user_id), 0, 1) is_vip FROM restaurants_hongkong_csv rhkc LEFT JOIN user_merchant_vip umv ON rhkc.LICNO = umv.LICNO AND umv.user_id = %d WHERE rhkc.LICNO = %s" , $userId, $merchantID);
 		
 		$photos = DB::queryOneColumn('filename', "SELECT * FROM merchant_photos WHERE merchant_id = %d AND type =%d AND status = %d", $merchantID, 1, 1);
 		foreach($photos as $idx => $photo) {
@@ -496,6 +496,7 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		}
 		
 		$returnValue = array(
+			"IS_VIP"=>$rs['is_vip'],
 			"RESTAURANT_ID"=>$rs['LICNO'],
 			"RESTAURANT_NAME"=>$rs['SS'],
 			"RESTAURANT_ADDRESS" => $rs['ADR'],
@@ -596,6 +597,7 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 	});
 
 	$app->get('/restaurant/:merchantID/tables', function ($merchantID) use ($app, $restaurantBookingService, $restaurantTemplateService){
+		global $restaurantBookingService;
 		$datetime = $app->request()->params('datetime');
 		$covers = $app->request()->params('no_of_participants');
 		$bookingId = $app->request()->params('booking_id');
@@ -613,7 +615,7 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 				$unavailableTables = $restaurantBookingService->getAllTables($merchantID);
 			}
 		}
-		$returnValue = array("available"=>$availableTables, "unavailable"=>$unavailableTables, "vip"=>$VIPTables);
+		$returnValue = array("available"=>$availableTables, "unavailable"=>$unavailableTables, "vip"=>$VIPTablesArr);
 		echo json_encode($returnValue);
 	});
 	
@@ -623,7 +625,7 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		//$actions[]  = $action;
 		$keyword = $app->request()->params('k');
 		$page = $app->request()->params('p');
-		$userId = $app->request()->params('userId');
+		$userId = $app->request()->params('user_id');
 		$latMin= $app->request()->params('latmin');
 		$latMax= $app->request()->params('latmax');
 		$lngMin= $app->request()->params('lngmin');
@@ -653,13 +655,13 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		if(!is_null($latMin) && !is_null($latMax) && !is_null($lngMin) && !is_null($lngMax))
 			$actions[] = "mapRange";
 
-		$actions[] = "VIPHandling";
+		//$actions[] = "VIPHandling";
 
 		if(!in_array("hasLocationRadius", $actions))
 			$sql = "SELECT * FROM restaurants_hongkong_csv ";
 		else{	
 			$unit = ($distanceUnit =="km"?6371:3959);
-			$sql = "SELECT *,  (" . $unit . "* acos( cos( radians(" . $lat . "))* cos( radians( lat_dec ))* cos( radians( lng_dec )- radians( " . $lng . "))+ sin( radians(" . $lat . "))* sin( radians( lat)))) AS distance FROM restaurants_hongkong_csv rhkc LEFT JOIN user_merchant_vip umv ON rhkc.LICNO = umv.LICNO LEFT JOIN merchant_photos mp ON LICNO = mp.merchant_id AND mp.status = 1 AND mp.type = 2";
+			$sql = "SELECT rhkc.*, mp.*, if(isnull(umv.user_id), 0, 1) is_vip, (" . $unit . "* acos( cos( radians(" . $lat . "))* cos( radians( lat_dec ))* cos( radians( lng_dec )- radians( " . $lng . "))+ sin( radians(" . $lat . "))* sin( radians( lat)))) AS distance FROM restaurants_hongkong_csv rhkc LEFT JOIN user_merchant_vip umv ON rhkc.LICNO = umv.LICNO AND umv.user_id = ".$userId." LEFT JOIN merchant_photos mp ON rhkc.LICNO = mp.merchant_id AND mp.status = 1 AND mp.type = 2";
 		}
 
 		if(sizeof($actions) > 0){
@@ -676,10 +678,10 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 						$tempWhereClause = " (SS LIKE '%" . $keyword . "%' OR ADR LIKE '%" . $keyword . "%') ";
 						$needAnd++;
 						break;
-					case 'VIPHandling':
+					/*case 'VIPHandling':
 						$tempWhereClause = " umv.user_id = " . $userId;
 						$needAnd++;
-						break;
+						break;*/
 				}
 				if($needAnd > 1)
 					$whereClause = $whereClause . " AND " . $tempWhereClause;
@@ -699,17 +701,6 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 
 		$rs = DB::query($sql);
 			
-		/*
-		if (is_null($keyword)){ 
-			//echo $page * $resultPerPage;
-			$rs= DB::query("SELECT * FROM restaurants_hongkong_csv ORDER BY LICNO LIMIT %d, %d",  $page * $resultPerPage , $resultPerPage);
-		}else{
-			$rs= DB::query("SELECT * FROM restaurants_hongkong_csv WHERE SS LIKE %s OR ADR LIKE %s ORDER BY LICNO LIMIT %d, %d", '%'.$keyword.'%', '%'.$keyword.'%', $page * $resultPerPage , $resultPerPage);
-		}
-		//echo "test";
-		//var_dump($rs);
-		*/
-		
 		$images = array(
 			"http://ikky-phpapp-env.elasticbeanstalk.com/images/thumbnails/01.png",
 			"http://ikky-phpapp-env.elasticbeanstalk.com/images/thumbnails/02.png",
@@ -718,27 +709,6 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 			"http://ikky-phpapp-env.elasticbeanstalk.com/images/thumbnails/05.png",
 			"http://ikky-phpapp-env.elasticbeanstalk.com/images/thumbnails/06.png",
 			"http://ikky-phpapp-env.elasticbeanstalk.com/images/thumbnails/07.png"
-			
-			/*"http://giverny.org/hotels/corniche/piscine2.jpg",
-			"http://giverny.org/hotels/corniche/terrasse-resto.jpg",
-			"http://giverny.org/hotels/corniche/restaurant-room.jpg",
-			"http://giverny.org/hotels/corniche/standard-bedroom.jpg",
-			"http://giverny.org/hotels/corniche/superior-bedroom.jpg",
-			"http://giverny.org/hotels/corniche/cuisine2.jpg",
-			"http://giverny.org/hotels/corniche/cuisine3.jpg",
-			"http://giverny.org/hotels/corniche/cuisine1.jpg",
-			"http://giverny.org/tour/versailles.jpg",
-			"http://giverny.org/tour/ravoux.jpg",
-			"http://giverny.org/hotels/corniche/piscine2.jpg",
-			"http://giverny.org/hotels/corniche/terrasse-resto.jpg",
-			"http://giverny.org/hotels/corniche/restaurant-room.jpg",
-			"http://giverny.org/hotels/corniche/standard-bedroom.jpg",
-			"http://giverny.org/hotels/corniche/superior-bedroom.jpg",
-			"http://giverny.org/hotels/corniche/cuisine2.jpg",
-			"http://giverny.org/hotels/corniche/cuisine3.jpg",
-			"http://giverny.org/hotels/corniche/cuisine1.jpg",
-			"http://giverny.org/tour/versailles.jpg",
-			"http://giverny.org/tour/ravoux.jpg"*/
 		);
 
 		foreach ($rs as $idx => $restaurant) {
