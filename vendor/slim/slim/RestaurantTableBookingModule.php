@@ -262,7 +262,7 @@ class RestaurantTableBookingModule{
 		
 	}
 	
-	public static function unlock($mid, $bookingDatetime, $covers, $restaurantTables, $bookingLength){
+	public static function unlock($mid, $bookingDatetime, $VIPType, $covers, $restaurantTables, $bookingLength){
 		RestaurantTableBookingModule::setStaticVar($mid, $bookingDatetime, $VIPType, $covers);
 		$mSetting = getMerchantSettings($mid);
 		$cache = RestaurantTableBookingModule::getCache($mid, $bookingDatetime, $VIPType, $covers);

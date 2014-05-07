@@ -57,14 +57,16 @@ class RestaurantBookingService implements BookingServiceInterface {
 		$tables = $this->getAvailableTables($merchantId, $datetime, $bookingLength, $noOfParticipants, $targetOpeningSession, $type);
 		if($type <> 0){
 			$VIPTableArr = $this->getVIPTableArr($merchantId, $datetime);
-			foreach($tables as $key=>$table)
-				if(!in_array($table['table_id'], $VIPTableArr))
-					unset($table[$key]);
+			foreach($tables as $key => $table)
+				if(!in_array($table->getTableId(), $VIPTableArr))
+					unset($tables[$key]);
 		}
-		if(sizeof($tables) > 0)
-			return $tables[0];
-		else
+		if(sizeof($tables) > 0) {
+			$values = array_values($tables);
+			return $values[0];
+		} else {
 			return null;
+		}
 	}
 	public function getAvailableTables($merchantId, $datetime, $bookingLength, $noOfParticipants, $targetOpeningSession, $excludeBookingId=-1) {
 		$datetimeParts = explode(' ', $datetime);
@@ -98,12 +100,12 @@ class RestaurantBookingService implements BookingServiceInterface {
 		return null;
 	}
 
-	private function lockModules($merchantID, $datetime, $noOfParticipants, $restaurantTable, $bookingLength){
+	private function lockModules($merchantID, $datetime, $vipType, $noOfParticipants, $restaurantTable, $bookingLength){
 		$moduleArr = explode(",", RestaurantBookingService::$bookingModuleList);
 
 		$passed = true;
 		foreach($moduleArr as $m){
-			$passed = call_user_func(array($m, "lock") , $merchantID, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);	
+			$passed = call_user_func(array($m, "lock") , $merchantID, $datetime, $vipType, $noOfParticipants, $restaurantTable, $bookingLength);	
 			if(!$passed)
 				break;
 
@@ -111,24 +113,24 @@ class RestaurantBookingService implements BookingServiceInterface {
 		return $passed;
 	}
 	
-	private function unlockModules($merchantID, $datetime, $noOfParticipants, $restaurantTable, $bookingLength){
+	private function unlockModules($merchantID, $datetime, $vipType, $noOfParticipants, $restaurantTable, $bookingLength){
 		$moduleArr = explode(",", RestaurantBookingService::$bookingModuleList);
 
 		$passed = true;
 		foreach($moduleArr as $m){
-			$passed = call_user_func(array($m, "unlock") , $merchantID, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);	
+			$passed = call_user_func(array($m, "unlock") , $merchantID, $datetime, $vipType, $noOfParticipants, $restaurantTable, $bookingLength);	
 			if(!$passed)
 				break;
 
 		}
 		return $passed;
 	}	
-	private function commitModules($merchantID, $datetime, $noOfParticipants, $restaurantTable, $bookingLength){
+	private function commitModules($merchantID, $datetime, $vipType, $noOfParticipants, $restaurantTable, $bookingLength){
 		$moduleArr = explode(",", RestaurantBookingService::$bookingModuleList);
 
 		$passed = true;
 		foreach($moduleArr as $m){
-			$passed = call_user_func(array($m, "commit") , $merchantID, $datetime, $noOfParticipants, $restaurantTable, $bookingLength);	
+			$passed = call_user_func(array($m, "commit") , $merchantID, $datetime, $vipType, $noOfParticipants, $restaurantTable, $bookingLength);	
 			if(!$passed)
 				break;
 
@@ -136,12 +138,12 @@ class RestaurantBookingService implements BookingServiceInterface {
 		return $passed;
 	}	
 
-	public function isAvailableModules($merchantId, $bookingDatetime, $noOfParticipants){
+	public function isAvailableModules($merchantId, $bookingDatetime, $vipType, $noOfParticipants){
 		$moduleArr = explode(",", RestaurantBookingService::$bookingModuleList);
 
 		$passed = true;
 		foreach($moduleArr as $m){
-			$passed = call_user_func(array($m, "isAvailable") , $merchantId, $bookingDatetime, $noOfParticipants);	
+			$passed = call_user_func(array($m, "isAvailable") , $merchantId, $bookingDatetime, $vipType, $noOfParticipants);	
 			if(!$passed)
 				break;
 		}
@@ -290,10 +292,12 @@ class RestaurantBookingService implements BookingServiceInterface {
 			if(sizeof($returnValue) > 0)
 				return $returnValue;
 		}
+		
+		$vipType = $this->getVIPType($userId, $merchantId);
 
-		if( $this->lockModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength)){
+		if( $this->lockModules($merchantId, $datetime, $vipType, $noOfParticipants, $arrOfTables, $bookingLength)){
 			if( $bookingId = $this->addBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrOfTables, $bookingLength)){
-				$this->commitModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength);
+				$this->commitModules($merchantId, $datetime, $vipType, $noOfParticipants, $arrOfTables, $bookingLength);
 			}
 			$templateObj = $restaurantTemplateService->getTemplate($merchantId, $datetime);
 			$this->markAllBookingConflictByTemplate($templateObj);
@@ -301,12 +305,12 @@ class RestaurantBookingService implements BookingServiceInterface {
 				DB::update('booking', array('conflict_code'=>'3'), 'booking_id=%d', $bookingId);
 			
 			}
-			$this->unlockModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength);
+			$this->unlockModules($merchantId, $datetime, $vipType, $noOfParticipants, $arrOfTables, $bookingLength);
 			return $bookingId;
 		}
 
 
-		$this->unlockModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength);
+		$this->unlockModules($merchantId, $datetime, $vipType, $noOfParticipants, $arrOfTables, $bookingLength);
 		//TODO return something?!?
 		return true;
 			
@@ -325,13 +329,13 @@ class RestaurantBookingService implements BookingServiceInterface {
 		$arr = array('tableBookingLength' => 120, 'tableBookingInterval' => 15, 'tableCoverList'=>'1,2,3,4,5,6');
 		setMerchantSettings($merchantId, $arr);
 		global $restaurantTemplateService;
-		if($this->isAvailableModules($merchantId, $datetime, $noOfParticipants)){
+		$type = $this->getVIPType($userId, $merchantId);
+		if($this->isAvailableModules($merchantId, $datetime, $type, $noOfParticipants)){
 		
 			$merchantTemplate = $restaurantTemplateService->getTemplate($merchantId, $datetime);
 			if(!empty($merchantTemplate)){
 				$targetOpeningSession = $merchantTemplate->getOpeningSession($datetime);
 				if(!empty($targetOpeningSession)){
-					$type = $this->getVIPType($userId, $merchantId);
 					$tableBookingLength = $targetOpeningSession->getMealDuration();
 					$table = $this->getBestTable($merchantId, $datetime, $tableBookingLength, $noOfParticipants, $targetOpeningSession, $type);
 					if($this->isBookingOverlap($userId, $datetime, $tableBookingLength, 0))
@@ -339,14 +343,14 @@ class RestaurantBookingService implements BookingServiceInterface {
 					if (!empty($table)) {
 						$bookingLength = $tableBookingLength;
 						$arrOfTables = array($table);
-						if( $this->lockModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength)){
+						if( $this->lockModules($merchantId, $datetime, $type, $noOfParticipants, $arrOfTables, $bookingLength)){
 							if( $bookingId = $this->addBooking($userId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, 0, 0, $arrOfTables, $bookingLength)){
-								$this->commitModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength);
+								$this->commitModules($merchantId, $datetime, $type, $noOfParticipants, $arrOfTables, $bookingLength);
 							}
-							$this->unlockModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength);
+							$this->unlockModules($merchantId, $datetime, $type, $noOfParticipants, $arrOfTables, $bookingLength);
 							return $bookingId;
 						}
-						$this->unlockModules($merchantId, $datetime, $noOfParticipants, $arrOfTables, $bookingLength);
+						$this->unlockModules($merchantId, $datetime, $type, $noOfParticipants, $arrOfTables, $bookingLength);
 						//TODO return something?!?
 					}
 				}
@@ -413,8 +417,11 @@ class RestaurantBookingService implements BookingServiceInterface {
 		}
 	}
 	public function editBooking($bookingId, $merchantId, $isGuest, $sessionId, $firstName, $lastName, $phone, $datetime, $noOfParticipants, $specialRequest, $status, $attendance, $arrayOfTables, $bookingLength) {
+		
+		$userId = DB::queryOneField('userId', "SELECT user_id FROM booking WHERE booking_id = %d", $bookingId);
+		$vipType = $this->getVIPType($userId, $merchantId);
 
-		if( $this->lockModules($merchantId, $datetime, $noOfParticipants, $arrayOfTables, $bookingLength)){
+		if( $this->lockModules($merchantId, $datetime, $vipType, $noOfParticipants, $arrayOfTables, $bookingLength)){
 			$values = array(
 				'is_guest' => $isGuest,
 				'first_name' => $firstName,
@@ -459,11 +466,11 @@ class RestaurantBookingService implements BookingServiceInterface {
 			/* end:for booking_restaurant_table */
 
 
-			$this->commitModules($merchantId, $datetime, $noOfParticipants, $arrayOfTables, $bookingLength);
-			$this->unlockModules($merchantId, $datetime, $noOfParticipants, $arrayOfTables, $bookingLength);
+			$this->commitModules($merchantId, $datetime, $vipType, $noOfParticipants, $arrayOfTables, $bookingLength);
+			$this->unlockModules($merchantId, $datetime, $vipType, $noOfParticipants, $arrayOfTables, $bookingLength);
 			return $bookingId;
 		}
-		$this->unlockModules($merchantId, $datetime, $noOfParticipants, $arrayOfTables, $bookingLength);
+		$this->unlockModules($merchantId, $datetime, $vipType, $noOfParticipants, $arrayOfTables, $bookingLength);
 		//TODO always return true
 		return false;
 	}
