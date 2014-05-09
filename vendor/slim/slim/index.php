@@ -658,7 +658,7 @@ $app->group('/api', function () use($app, $restaurantBookingService, $restaurant
 		//$actions[] = "VIPHandling";
 
 		if(!in_array("hasLocationRadius", $actions))
-			$sql = "SELECT * FROM restaurants_hongkong_csv ";
+			$sql = "SELECT rhkc.*, mp.*, if(isnull(umv.user_id), 0, 1) is_vip FROM restaurants_hongkong_csv rhkc LEFT JOIN user_merchant_vip umv ON rhkc.LICNO = umv.LICNO AND umv.user_id = ".$userId." LEFT JOIN merchant_photos mp ON rhkc.LICNO = mp.merchant_id AND mp.status = 1 AND mp.type = 2";
 		else{	
 			$unit = ($distanceUnit =="km"?6371:3959);
 			$sql = "SELECT rhkc.*, mp.*, if(isnull(umv.user_id), 0, 1) is_vip, (" . $unit . "* acos( cos( radians(" . $lat . "))* cos( radians( lat_dec ))* cos( radians( lng_dec )- radians( " . $lng . "))+ sin( radians(" . $lat . "))* sin( radians( lat)))) AS distance FROM restaurants_hongkong_csv rhkc LEFT JOIN user_merchant_vip umv ON rhkc.LICNO = umv.LICNO AND umv.user_id = ".$userId." LEFT JOIN merchant_photos mp ON rhkc.LICNO = mp.merchant_id AND mp.status = 1 AND mp.type = 2";
